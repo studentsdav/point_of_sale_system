@@ -1,16 +1,21 @@
-# point_of_sale_system
+# Point of Sale System
 
-A new Flutter project.
+A Flutter-based Point of Sale (POS) system for restaurant billing, order management, and inventory tracking.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+This project serves as the starting point for your **Point of Sale** Flutter application. To get up and running, follow the instructions below.
 
-A few resources to get you started if this is your first Flutter project:
+### Prerequisites
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Before you begin, ensure you have the following installed:
+- **Flutter SDK**: Install Flutter from [Flutter Installation Guide](https://flutter.dev/docs/get-started/install).
+- **Android Studio or VS Code**: For Flutter development. [Install Android Studio](https://developer.android.com/studio) or [VS Code](https://code.visualstudio.com/Download).
+- **Xcode (for macOS users)**: Required for iOS development. [Install Xcode](https://developer.apple.com/xcode/).
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Installation Steps
+
+1. **Clone the repository**:
+   Clone this repository to your local machine using the following command:
+   ```bash
+   git clone https://github.com/your-username/point_of_sale_system.git
