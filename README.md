@@ -18,4 +18,4 @@ Before you begin, ensure you have the following installed:
 1. **Clone the repository**:
    Clone this repository to your local machine using the following command:
    ```bash
-   git clone https://github.com/your-username/point_of_sale_system.git
+   git clone https://github.com/webpmswebline/point_of_sale_system.git
