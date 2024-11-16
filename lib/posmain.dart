@@ -54,7 +54,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
           children: [
             UserAccountsDrawerHeader(
               decoration: const BoxDecoration(color: Colors.purple),
-              accountName: const Text('Rakesh Bisht'),
+              accountName: const Text('User A'),
               accountEmail: const Text('Session Started: 4h ago'),
               currentAccountPicture: const CircleAvatar(
                 backgroundColor: Colors.white,

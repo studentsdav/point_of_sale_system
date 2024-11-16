@@ -56,3 +56,4 @@ build/
 .vscode/
 .idea/
 .env
+/lib/posloginoff.dart
