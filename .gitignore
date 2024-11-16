@@ -55,3 +55,4 @@ build/
 # IDE settings (e.g., Visual Studio Code)
 .vscode/
 .idea/
+.env
