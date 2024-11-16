@@ -12,20 +12,21 @@ const pool = new Pool({
 module.exports = pool;
 
 
+//start server//
 //node server.js
 //nodemon server.js
 
-
-// Explanation of Commands:
-// git checkout main: Ensures you're on the main branch (adjust if you want to use master or another branch).
-// git add .: Stages all the files in your project for commit.
-// git commit -m "message": Commits the staged files with a message.
-// git pull origin main: Pushes the commit to the main branch on GitHub.
- //git init
- //git add .
-//git commit -m "Initial commit with complete Flutter project"
-// /git remote add origin YOUR_GITHUB_REPO_URL
-// /git push -u origin main
+// for new project///
+// git init
+// git add .
+// git commit -m "Initial commit with complete Flutter project"
+// git remote add origin YOUR_GITHUB_REPO_URL
+// git push -u origin main
 // git push --set-upstream origin main
+// for update///
+// git add .
+// git commit -m "Describe the changes or updates made"
+// git push origin main
+
 
 
