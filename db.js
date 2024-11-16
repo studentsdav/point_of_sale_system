@@ -20,4 +20,12 @@ module.exports = pool;
 // git checkout main: Ensures you're on the main branch (adjust if you want to use master or another branch).
 // git add .: Stages all the files in your project for commit.
 // git commit -m "message": Commits the staged files with a message.
-// git push origin main: Pushes the commit to the main branch on GitHub.
+// git pull origin main: Pushes the commit to the main branch on GitHub.
+ //git init
+ //git add .
+//git commit -m "Initial commit with complete Flutter project"
+// /git remote add origin YOUR_GITHUB_REPO_URL
+// /git push -u origin main
+// git push --set-upstream origin main
+
+
