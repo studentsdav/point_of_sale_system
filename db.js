@@ -26,7 +26,7 @@ module.exports = pool;
 // git push --set-upstream origin main
 // for update///
 // git add .
-// git commit -m "Describe the changes or updates made"
+// git commit -m "Node js api intergration with flutter "
 // git push origin main
 
 
