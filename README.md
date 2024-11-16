@@ -12,6 +12,9 @@ Before you begin, ensure you have the following installed:
 - **Flutter SDK**: Install Flutter from [Flutter Installation Guide](https://flutter.dev/docs/get-started/install).
 - **Android Studio or VS Code**: For Flutter development. [Install Android Studio](https://developer.android.com/studio) or [VS Code](https://code.visualstudio.com/Download).
 - **Xcode (for macOS users)**: Required for iOS development. [Install Xcode](https://developer.apple.com/xcode/).
+- **PostgreSQL**: Install PostgreSQL from [PostgreSQL Downloads](https://www.postgresql.org/download/).
+- **Node.js**: Install Node.js from [Node.js Downloads](https://nodejs.org/).
+- **Visual Studio**: Install Visual Studio from [Visual Studio Downloads](https://visualstudio.microsoft.com/downloads/), and ensure you select the **Desktop development with C++** workload for building Windows desktop applications.
 
 # Point of Sale Restaurant Billing Software
 
