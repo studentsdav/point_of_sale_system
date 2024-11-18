@@ -16,7 +16,8 @@ module.exports = pool;
 //node server.js
 //nodemon server.js
 
-// for new project///
+
+// for new project repo///
 // git init
 // git add .
 // git commit -m "Initial commit with complete Flutter project"
