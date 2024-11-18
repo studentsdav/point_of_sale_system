@@ -160,13 +160,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                           itemCount: entry.value.length,
                           itemBuilder: (context, index) {
                             return GestureDetector(onTap: (){
-
-
-
-       Navigator.push(context, MaterialPageRoute(builder: (context)=>KOTFormScreen()));
-                        
-
-                              
+                                Navigator.push(context, MaterialPageRoute(builder: (context)=>KOTFormScreen()));
                             },
                               child: Container(
                                 width: 50,

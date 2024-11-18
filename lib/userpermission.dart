@@ -18,7 +18,7 @@ class _UserPermissionFormState extends State<UserPermissionForm> {
     {'id': '3', 'name': 'User 3'},
   ];
 
-  List<Map<String, dynamic>> permissions = [
+  List<Map<String, dynamic>> permissions = [  
     {'name': 'View Sales', 'description': 'Allows viewing sales reports'},
     {'name': 'Generate KOT', 'description': 'Allows generating KOT'},
     {'name': 'Modify', 'description': 'Allows modifying records'},
