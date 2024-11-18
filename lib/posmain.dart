@@ -1,20 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/ItemMaster.dart';
 import 'package:point_of_sale_system/admin.dart';
-import 'package:point_of_sale_system/billconfig.dart';
 import 'package:point_of_sale_system/billing.dart';
-
 import 'package:point_of_sale_system/guest_info.dart';
-
-
 import 'package:point_of_sale_system/kotform.dart';
-
 import 'package:point_of_sale_system/payments.dart';
 import 'package:point_of_sale_system/poslogin.dart';
-
 import 'package:point_of_sale_system/reservation.dart';
-import 'package:point_of_sale_system/tablemaster.dart';
-import 'package:point_of_sale_system/usermaster.dart';
 
 class POSMainScreen extends StatefulWidget {
   const POSMainScreen({super.key});

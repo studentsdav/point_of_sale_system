@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:point_of_sale_system/backend/property_service.dart';
 
 class PropertyConfigurationForm extends StatefulWidget {
   @override
@@ -16,7 +17,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
   String taxRegNo = '';  // New field for Tax Registration Number
   String propertyId = '';    // Property ID as string to hold the datetime-based ID
   bool isSaved = false;
-
+PropertyService _propertyService = PropertyService();
   void _savePropertyConfiguration() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
@@ -24,7 +25,39 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
         // Generate Property ID with the current date and time
         propertyId = _generatePropertyId();
         isSaved = true;
+        _submitForm();
       });
+    }
+  }
+
+
+    Future<void> _submitForm() async {
+    try {
+      // Call the createProperty API
+      final response = await _propertyService.createProperty(
+        propertyId:  int.parse( _generatePropertyId()),
+        propertyName: propertyName,
+        address: address,
+        contactNumber: contactNumber,
+        email: email,
+        businessHours: businessHours,
+        taxRegNo: taxRegNo,
+        state: "Uttarakahnd",
+        district:"Dehradun",
+        country: "India",
+        currency: "\$",
+        is_saved: isSaved
+      );
+
+      // Handle successful response (for example, show a success message)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Property created successfully: ${response['property_name']}')),
+      );
+    } catch (error) {
+      // Handle error (for example, show an error message)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $error')),
+      );
     }
   }
 

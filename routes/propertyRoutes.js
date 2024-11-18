@@ -16,14 +16,14 @@ router.post('/properties', async (req, res) => {
       state,
       district,
       country,
-      currency,
+      currency, is_saved
     } = req.body;
 
     const result = await pool.query(
       `INSERT INTO properties 
        (property_id, property_name, address, contact_number, email, business_hours, 
-        tax_reg_no, state, district, country, currency) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+        tax_reg_no, state, district, country, currency, is_saved) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
        RETURNING *`,
       [
         property_id,
@@ -37,6 +37,7 @@ router.post('/properties', async (req, res) => {
         district,
         country,
         currency,
+        is_saved
       ]
     );
 
