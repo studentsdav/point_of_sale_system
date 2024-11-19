@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:point_of_sale_system/backend/bill_api_service.dart';
 
 class BillConfigurationForm extends StatefulWidget {
   @override
@@ -7,6 +8,7 @@ class BillConfigurationForm extends StatefulWidget {
 
 class _BillConfigurationFormState extends State<BillConfigurationForm> {
   final _formKey = GlobalKey<FormState>();
+   final BillApiService apiService = BillApiService('http://localhost:3000/api/bill-config'); // Update with your backend URL
   String? selectedOutlet;
   String billPrefix = '';
   String? billSuffix;
@@ -16,22 +18,78 @@ class _BillConfigurationFormState extends State<BillConfigurationForm> {
   String dateFormat = 'dd-MM-yyyy';
   final List<Map<String, dynamic>> _configurations = [];
 
-  void _saveConfiguration() {
+  // void _saveConfiguration() {
+  //   if (_formKey.currentState!.validate() && seriesStartDate != null && selectedOutlet != null) {
+  //     _formKey.currentState!.save();
+      
+  //     setState(() {
+  //       _configurations.add({
+  //         'outlet': selectedOutlet,
+  //         'billPrefix': billPrefix,
+  //         'billSuffix': billSuffix,
+  //         'startingBillNumber': startingBillNumber,
+  //         'seriesStartDate': seriesStartDate,
+  //         'currencySymbol': currencySymbol,
+  //         'dateFormat': dateFormat,
+  //         'savedOn': DateTime.now(),
+  //       });
+  //     });
+  //   } else {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Please fill all required fields.')),
+  //     );
+  //   }
+  // }
+
+    @override
+  void initState() {
+    super.initState();
+    _loadConfigurations();
+  }
+
+void _loadConfigurations() async {
+  try {
+    final configurations = await apiService.fetchConfigurations();
+
+    setState(() {
+      _configurations.clear();
+      _configurations.addAll(
+        configurations.cast<Map<String, dynamic>>(), // Explicitly cast the list
+      );
+    });
+  } catch (error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to load configurations')),
+    );
+  }
+}
+
+
+  void _saveConfiguration() async {
     if (_formKey.currentState!.validate() && seriesStartDate != null && selectedOutlet != null) {
       _formKey.currentState!.save();
-      
-      setState(() {
-        _configurations.add({
-          'outlet': selectedOutlet,
-          'billPrefix': billPrefix,
-          'billSuffix': billSuffix,
-          'startingBillNumber': startingBillNumber,
-          'seriesStartDate': seriesStartDate,
-          'currencySymbol': currencySymbol,
-          'dateFormat': dateFormat,
-          'savedOn': DateTime.now(),
+
+      final newConfig = {
+        'property_id': 1, // Example property ID
+        'selected_outlet': selectedOutlet,
+        'bill_prefix': billPrefix,
+        'bill_suffix': billSuffix,
+        'starting_bill_number': startingBillNumber,
+        'series_start_date': seriesStartDate!.toIso8601String(),
+        'currency_symbol': currencySymbol,
+        'date_format': dateFormat,
+      };
+
+      try {
+        final createdConfig = await apiService.createConfiguration(newConfig);
+        setState(() {
+          _configurations.add(createdConfig);
         });
-      });
+      } catch (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save configuration')),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please fill all required fields.')),
@@ -147,17 +205,22 @@ class _BillConfigurationFormState extends State<BillConfigurationForm> {
                       itemCount: _configurations.length,
                       itemBuilder: (context, index) {
                         final config = _configurations[index];
-                        final billNumberFormat = '${config['billPrefix']}${config['startingBillNumber']}${config['billSuffix']}';
-                        final seriesStartDate = config['seriesStartDate'];
-                        final savedOn = config['savedOn'];
+                        final billNumberFormat = '${config['bill_prefix']}${config['starting_bill_number']}${config['bill_suffix']}';
+                        final seriesStartDate = config['series_start_date'];
+                        final savedOn = config['updated_at'];
                     
-                        return ListTile(
-                          leading: Icon(Icons.receipt),
-                          title: Text(
-                            'Your bill no starts from $billNumberFormat from ${seriesStartDate?.day}-${seriesStartDate?.month}-${seriesStartDate?.year} updated on ${savedOn.day}-${savedOn.month}-${savedOn.year} for ${config['outlet']}',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        );
+                      return ListTile(
+  leading: Icon(Icons.receipt),
+  title: Text(
+    'Your bill no starts from $billNumberFormat from '
+ '${seriesStartDate != null ? _formatDate(seriesStartDate) : "N/A"} '
+    'updated on '
+    '${savedOn != null ? _formatDate(savedOn) : "N/A"} '
+    'for ${config['selected_outlet'] ?? "Unknown Outlet"}',
+    style: TextStyle(fontWeight: FontWeight.bold),
+  ),
+);
+
                       },
                     ),
                   ),
@@ -169,6 +232,21 @@ class _BillConfigurationFormState extends State<BillConfigurationForm> {
       ),
     );
   }
+String _formatDate(dynamic date) {
+  try {
+    if (date is String) {
+      final parsedDate = DateTime.parse(date).toLocal(); // Convert to local timezone
+      return "${parsedDate.day}-${parsedDate.month}-${parsedDate.year}";
+    } else if (date is DateTime) {
+      return "${date.toLocal().day}-${date.toLocal().month}-${date.toLocal().year}";
+    }
+  } catch (e) {
+    print("Error formatting date: $e");
+  }
+  return "Invalid Date";
+}
+
+
 }
 
 void main() {

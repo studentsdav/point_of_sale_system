@@ -7,18 +7,50 @@ class PropertyConfigurationForm extends StatefulWidget {
       _PropertyConfigurationFormState();
 }
 
-class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
+class _PropertyConfigurationFormState
+    extends State<PropertyConfigurationForm> {
   final _formKey = GlobalKey<FormState>();
   String propertyName = '';
   String address = '';
   String contactNumber = '';
   String email = '';
   String businessHours = '';
-  String taxRegNo = '';  // New field for Tax Registration Number
-  String propertyId = '';    // Property ID as string to hold the datetime-based ID
+  String taxRegNo = '';
+  String propertyId = '';
   bool isSaved = false;
-PropertyService _propertyService = PropertyService();
-  void _savePropertyConfiguration() {
+
+  PropertyService _propertyService = PropertyService();
+  List propertyList = [];
+  bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProperties();
+  }
+
+  // Fetch properties from the service
+  Future<void> _fetchProperties() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final properties = await _propertyService.getAllProperties(); // Fetch the list of properties
+      setState(() {
+        propertyList = properties; // Store the fetched properties in the list
+        isLoading = false;
+      });
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching properties: $error')),
+      );
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+  
+    void _savePropertyConfiguration() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       setState(() {
@@ -30,41 +62,32 @@ PropertyService _propertyService = PropertyService();
     }
   }
 
-
-    Future<void> _submitForm() async {
+  Future<void> _submitForm() async {
     try {
-      // Call the createProperty API
       final response = await _propertyService.createProperty(
-        propertyId:  int.parse( _generatePropertyId()),
+        propertyId: int.parse(_generatePropertyId()),
         propertyName: propertyName,
         address: address,
         contactNumber: contactNumber,
         email: email,
         businessHours: businessHours,
         taxRegNo: taxRegNo,
-        state: "Uttarakahnd",
-        district:"Dehradun",
+        state: "Uttarakhand",
+        district: "Dehradun",
         country: "India",
         currency: "\$",
-        is_saved: isSaved
+        is_saved: isSaved,
       );
 
-      // Handle successful response (for example, show a success message)
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Property created successfully: ${response['property_name']}')),
+        SnackBar(content: Text('Property created: ${response['property_name']}')),
       );
+      _fetchProperties();
     } catch (error) {
-      // Handle error (for example, show an error message)
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $error')),
+        SnackBar(content: Text('Error creating property: $error')),
       );
     }
-  }
-
-  void _editPropertyConfiguration() {
-    setState(() {
-      isSaved = false;
-    });
   }
 
   String _generatePropertyId() {
@@ -73,157 +96,199 @@ PropertyService _propertyService = PropertyService();
     return "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}";
   }
 
+  void _editPropertyConfiguration(Map<String, dynamic> property) {
+    setState(() {
+           
+      propertyId = property['property_id'].toString();
+      propertyName = property['property_name'];
+      address = property['address'];
+      contactNumber = property['contact_number'];
+      email = property['email'];
+      businessHours = property['business_hours'];
+      taxRegNo = property['tax_reg_no'];
+      isSaved = true;
+    });
+  }
+
+  Future<void> _updateProperty() async {
+    try {
+      await _propertyService.updateProperty(
+        state: "Uttarakhand",
+        district: "Dehradun",
+        country: "india",
+        currency: "\$",
+        propertyId: int.parse(propertyId),
+        propertyName: propertyName,
+        address: address,
+        contactNumber: contactNumber,
+        email: email,
+        businessHours: businessHours,
+        taxRegNo: taxRegNo,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Property updated successfully')),
+      );
+      _fetchProperties();
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating property: $error')),
+      );
+    }
+  }
+
+  Future<void> _deleteProperty(int propertyId) async {
+    try {
+      await _propertyService.deleteProperty(propertyId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Property deleted successfully')),
+      );
+      _fetchProperties();
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting property: $error')),
+      );
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Property Configuration')),
-      body: SingleChildScrollView(  // Make the entire body scrollable
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Property Configuration Form Panel
-            Text('Enter Property Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Enter Property Details',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Form(
               key: _formKey,
               child: Column(
                 children: [
                   TextFormField(
+                    initialValue: propertyName,
                     decoration: InputDecoration(
                       labelText: 'Property Name',
                       icon: Icon(Icons.business),
                     ),
-                    validator: (value) => value!.isEmpty ? 'Please enter property name' : null,
+                    validator: (value) =>
+                        value!.isEmpty ? 'Please enter property name' : null,
                     onSaved: (value) => propertyName = value!,
                   ),
                   TextFormField(
+                    initialValue: address,
                     decoration: InputDecoration(
                       labelText: 'Address',
                       icon: Icon(Icons.location_on),
                     ),
-                    validator: (value) => value!.isEmpty ? 'Please enter address' : null,
+                    validator: (value) =>
+                        value!.isEmpty ? 'Please enter address' : null,
                     onSaved: (value) => address = value!,
                   ),
                   TextFormField(
+                    initialValue: contactNumber,
                     decoration: InputDecoration(
                       labelText: 'Contact Number',
                       icon: Icon(Icons.phone),
                     ),
                     keyboardType: TextInputType.phone,
-                    validator: (value) => value!.isEmpty ? 'Please enter contact number' : null,
+                    validator: (value) =>
+                        value!.isEmpty ? 'Please enter contact number' : null,
                     onSaved: (value) => contactNumber = value!,
                   ),
                   TextFormField(
+                    initialValue: email,
                     decoration: InputDecoration(
                       labelText: 'Email',
                       icon: Icon(Icons.email),
                     ),
                     keyboardType: TextInputType.emailAddress,
-                    validator: (value) => value!.isEmpty ? 'Please enter email' : null,
+                    validator: (value) =>
+                        value!.isEmpty ? 'Please enter email' : null,
                     onSaved: (value) => email = value!,
                   ),
                   TextFormField(
+                    initialValue: businessHours,
                     decoration: InputDecoration(
                       labelText: 'Business Hours',
                       icon: Icon(Icons.access_time),
                     ),
-                    validator: (value) => value!.isEmpty ? 'Please enter business hours' : null,
+                    validator: (value) =>
+                        value!.isEmpty ? 'Please enter business hours' : null,
                     onSaved: (value) => businessHours = value!,
                   ),
                   TextFormField(
+                    initialValue: taxRegNo,
                     decoration: InputDecoration(
                       labelText: 'Tax Registration Number (GST No)',
                       icon: Icon(Icons.card_giftcard),
                     ),
-                    validator: (value) => value!.isEmpty ? 'Please enter GST No' : null,
+                    validator: (value) =>
+                        value!.isEmpty ? 'Please enter GST No' : null,
                     onSaved: (value) => taxRegNo = value!,
                   ),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _savePropertyConfiguration,
-                    child: Text('Save Property Configuration'),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+              if(isSaved){
+                _updateProperty();
+              }else{
+          _savePropertyConfiguration();
+              }
+             
+                        
+                        },
+                        child: Text(isSaved ? 'Update Property' : 'Save Property'),
+                      ),
+                      const SizedBox(width: 10),
+              
+                        ElevatedButton(
+                          onPressed: () => setState(() {
+                            isSaved = false;
+                            _formKey.currentState!.reset();
+                          }),
+                          child: Text('Clear'),
+                        ),
+                    ],
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-
-            // Show Property Profile (if saved)
-            if (isSaved)
-              Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.blue, width: 2),
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.blue.shade50,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Property Profile', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 10),
-                    Row(
+            if (isLoading) Center(child: CircularProgressIndicator()),
+            if (!isLoading && propertyList.isNotEmpty)
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: propertyList.length,
+                itemBuilder: (context, index) {
+                  final property = propertyList[index];
+                  return ListTile(
+                    title: Text(property['property_name']),
+                    subtitle: Text(property['address']),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.business, size: 30, color: Colors.blue),
-                        const SizedBox(width: 10),
-                        Text(propertyName, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () {
+                            setState(() {
+                               isSaved = false;
+                                 _formKey.currentState!.reset();
+                            });
+                            _editPropertyConfiguration(property);
+                 } ),
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () =>
+                              _deleteProperty( int.parse(  property['property_id'])),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.location_on, size: 30, color: Colors.blue),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(address, style: TextStyle(fontSize: 14))),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.phone, size: 30, color: Colors.blue),
-                        const SizedBox(width: 10),
-                        Text(contactNumber, style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.email, size: 30, color: Colors.blue),
-                        const SizedBox(width: 10),
-                        Text(email, style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.access_time, size: 30, color: Colors.blue),
-                        const SizedBox(width: 10),
-                        Text(businessHours, style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.card_giftcard, size: 30, color: Colors.blue),
-                        const SizedBox(width: 10),
-                        Text(taxRegNo, style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.assignment_ind, size: 30, color: Colors.blue),
-                        const SizedBox(width: 10),
-                        Text('Property ID: $propertyId', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: _editPropertyConfiguration,
-                      child: Text('Edit Property Configuration'),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
           ],
         ),

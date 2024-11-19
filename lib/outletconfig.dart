@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:point_of_sale_system/backend/outlet_service.dart';
 
 class OutletConfigurationForm extends StatefulWidget {
   @override
@@ -7,6 +8,10 @@ class OutletConfigurationForm extends StatefulWidget {
 }
 
 class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
+    final OutletApiService apiService = OutletApiService(baseUrl: 'http://localhost:3000/api');
+  List<dynamic> properties = [];
+  List<dynamic> outletConfigurations = [];
+  bool isLoading = true;
   final _formKey = GlobalKey<FormState>();
   String? selectedProperty;
   String outletName = '';
@@ -16,29 +21,89 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
   String openingHours = '';
   bool isSaved = false;
 
-  final List<String> properties = [
-    'Property 1',
-    'Property 2',
-    'Property 3',
-  ]; // List of properties to select from
+@override
+void initState(){
+  _loadData();
+  super.initState();
+}
 
-  void _saveOutletConfiguration() {
-    if (_formKey.currentState!.validate() && selectedProperty != null) {
-      _formKey.currentState!.save();
+
+  Future<void> _loadData() async {
+    try {
+      final fetchedProperties = await apiService.getAllProperties();
+      final fetchedOutletConfigurations = await apiService.fetchOutletConfigurations();
       setState(() {
-        isSaved = true;
+        properties = fetchedProperties;
+        outletConfigurations = fetchedOutletConfigurations;
+        isLoading = false;
       });
-    } else {
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill all required fields.')),
+        SnackBar(content: Text('Failed to load data: $error')),
       );
     }
   }
 
+
+void _saveOutletConfiguration() async {
+  if (_formKey.currentState!.validate() && selectedProperty != null) {
+    _formKey.currentState!.save();
+    final outletData = {
+      'property_id': int.parse(selectedProperty!),
+      'outlet_name': outletName,
+      'address': address,
+      'contact_number': contactNumber,
+      'manager_name': managerName,
+      'opening_hours': openingHours,
+      'currency':"\$",
+      'city':"Dehradun",
+      'country':"India",
+      'state':"Uttarakhand"
+    };
+
+    try {
+      await apiService.createOutletConfiguration(outletData);
+      setState(() {
+        isSaved = true;
+        _loadData();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Outlet configuration saved successfully!')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save outlet configuration: $error')),
+      );
+    }
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please fill all required fields.')),
+    );
+  }
+}
+
   void _editOutletConfiguration() {
+
     setState(() {
       isSaved = false;
     });
+  }
+
+    Future<void> deleteOutletConfiguration(id) async {
+       try {
+   await apiService.deleteOutletConfiguration(id);
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Outlet deleted successfully!')),
+      );
+  _loadData();
+       }catch (e) {
+  ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete outlet: $e')),
+      );
+       }
   }
 
   @override
@@ -57,9 +122,12 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                 labelText: 'Select Property',
                 icon: Icon(Icons.home),
               ),
-              items: properties.map((property) {
-                return DropdownMenuItem(value: property, child: Text(property));
-              }).toList(),
+      items: properties.map<DropdownMenuItem<String>>((property) {
+                    return DropdownMenuItem<String>(
+                      value: property['property_id'].toString(),
+                      child: Text(property['property_name']),
+                    );
+                  }).toList(),
               onChanged: (value) => setState(() => selectedProperty = value),
               validator: (value) => value == null ? 'Please select a property' : null,
             ),
@@ -123,8 +191,21 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
             const SizedBox(height: 20),
 
             // Show Outlet Profile (if saved)
-            if (isSaved)
-              Container(
+       isLoading
+    ? Center(child: CircularProgressIndicator())
+    : SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Outlet Profiles',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            ...outletConfigurations.map((config) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16.0),
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.blue, width: 2),
@@ -134,13 +215,35 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Outlet Profile', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Row(
+                      children: [
+                        Text(
+                          'Outlet Profile: ${config['property_id']}',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        Spacer(),
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.green),
+                          onPressed: () {
+                            // Implement edit functionality here
+                            _editOutletConfiguration();
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            // Implement delete functionality here
+                            deleteOutletConfiguration(config['id'].toString());
+                          },
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
                         Icon(Icons.store, size: 30, color: Colors.blue),
                         const SizedBox(width: 10),
-                        Text(outletName, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        Text(config['outlet_name'], style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -148,7 +251,9 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                       children: [
                         Icon(Icons.location_on, size: 30, color: Colors.blue),
                         const SizedBox(width: 10),
-                        Expanded(child: Text(address, style: TextStyle(fontSize: 14))),
+                        Expanded(
+                          child: Text(config['address'], style: TextStyle(fontSize: 14)),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -156,7 +261,7 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                       children: [
                         Icon(Icons.phone, size: 30, color: Colors.blue),
                         const SizedBox(width: 10),
-                        Text(contactNumber, style: TextStyle(fontSize: 14)),
+                        Text(config['contact_number'], style: TextStyle(fontSize: 14)),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -164,7 +269,7 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                       children: [
                         Icon(Icons.person, size: 30, color: Colors.blue),
                         const SizedBox(width: 10),
-                        Text(managerName, style: TextStyle(fontSize: 14)),
+                        Text(config['manager_name'], style: TextStyle(fontSize: 14)),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -172,25 +277,17 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                       children: [
                         Icon(Icons.access_time, size: 30, color: Colors.blue),
                         const SizedBox(width: 10),
-                        Text(openingHours, style: TextStyle(fontSize: 14)),
+                        Text(config['opening_hours'], style: TextStyle(fontSize: 14)),
                       ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.home, size: 30, color: Colors.blue),
-                        const SizedBox(width: 10),
-                        Text('Property: $selectedProperty', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: _editOutletConfiguration,
-                      child: Text('Edit Outlet Configuration'),
                     ),
                   ],
                 ),
-              ),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+
           ],
         ),
       ),
