@@ -30,14 +30,26 @@ class _POSMainScreenState extends State<POSMainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.purple,
+        backgroundColor: Colors.teal.shade700,
         title: Row(
           children: [
-            const Text('Property name: Nourish Bistro and Cafe'),
+            const Text(
+              'Nourish Bistro and Cafe',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
             const Spacer(),
-            IconButton(onPressed: () {}, icon: const Icon(Icons.notifications)),
-            IconButton(onPressed: () {}, icon: const Icon(Icons.mail)),
-            Text('Software Date: ${DateTime.now()}'),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.notifications),
+            ),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.mail),
+            ),
+            Text(
+              'Date: ${DateTime.now().toLocal().toString().split(' ')[0]}',
+              style: const TextStyle(fontSize: 14),
+            ),
           ],
         ),
       ),
@@ -45,49 +57,45 @@ class _POSMainScreenState extends State<POSMainScreen> {
         child: Column(
           children: [
             UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(color: Colors.purple),
-              accountName: const Text('User A'),
-              accountEmail: const Text('Session Started: 4h ago'),
+              decoration: const BoxDecoration(color: Colors.teal),
+              accountName: const Text('User A', style: TextStyle(color: Colors.white)),
+              accountEmail: const Text('Session Started: 4h ago', style: TextStyle(color: Colors.white70)),
               currentAccountPicture: const CircleAvatar(
                 backgroundColor: Colors.white,
-                child: Icon(Icons.person, color: Colors.purple),
+                child: Icon(Icons.person, color: Colors.teal),
               ),
             ),
             Expanded(
               child: ListView(
                 children: [
-                  ListTile(leading: const Icon(Icons.home), title: const Text('Home'), onTap: () {
-           
+                  _buildDrawerItem(Icons.home, 'Home', () {}),
+                  _buildDrawerItem(Icons.book, 'Reservation', () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => ReservationFormScreen()));
                   }),
-                  ListTile(leading: const Icon(Icons.book), title: const Text('Reservation'), onTap: () {
-                                    Navigator.push(context, MaterialPageRoute(builder: (context)=>ReservationFormScreen()));
+                  _buildDrawerItem(Icons.swap_horiz, 'Table Shift', () {}),
+                  _buildDrawerItem(Icons.receipt, 'Orders', () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => KOTFormScreen()));
                   }),
-                  ListTile(leading: const Icon(Icons.swap_horiz), title: const Text('Table Shift'), onTap: () {
-          
+                  _buildDrawerItem(Icons.payment, 'Billing', () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => BillingFormScreen()));
                   }),
-                  ListTile(leading: const Icon(Icons.receipt), title: const Text('Orders'), onTap: () {
-                                      Navigator.push(context, MaterialPageRoute(builder: (context)=>KOTFormScreen()));
+                  _buildDrawerItem(Icons.payment, 'Payment', () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentFormScreen()));
                   }),
-                  ListTile(leading: const Icon(Icons.payment), title: const Text('Billing'), onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>BillingFormScreen()));
+                  _buildDrawerItem(Icons.report, 'Reports', () {}),
+                  _buildDrawerItem(Icons.add_box, 'Item Add', () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => ItemMasterScreen()));
                   }),
-                  ListTile(leading: const Icon(Icons.payment), title: const Text('Payment'), onTap: () {
-                                                       Navigator.push(context, MaterialPageRoute(builder: (context)=>PaymentFormScreen()));
+                  _buildDrawerItem(Icons.person_add, 'Add Guest', () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => GuestRegistrationScreen()));
                   }),
-                  ListTile(leading: const Icon(Icons.report), title: const Text('Reports'), onTap: () {}),
-                  ListTile(leading: const Icon(Icons.add_box), title: const Text('Item Add'), onTap: () {
-                     Navigator.push(context, MaterialPageRoute(builder: (context)=>ItemMasterScreen()));
+                  _buildDrawerItem(Icons.settings, 'Setting', () {}),
+                  _buildDrawerItem(Icons.nightlight_round, 'Night Audit', () {}),
+                  _buildDrawerItem(Icons.logout, 'Logout', () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => POSLoginScreen()));
                   }),
-                  ListTile(leading: const Icon(Icons.person_add), title: const Text('Add Guest'), onTap: () {
-                                                                           Navigator.push(context, MaterialPageRoute(builder: (context)=>GuestRegistrationScreen()));
-                  }),
-                  ListTile(leading: const Icon(Icons.settings), title: const Text('Setting'), onTap: () {}),
-                  ListTile(leading: const Icon(Icons.nightlight_round), title: const Text('Night Audit'), onTap: () {}),
-                  ListTile(leading: const Icon(Icons.logout), title: const Text('Logout'), onTap: () {
-               Navigator.push(context, MaterialPageRoute(builder: (context)=>POSLoginScreen()));
-                  }),
-                  ListTile(leading: const Icon(Icons.admin_panel_settings), title: const Text('Admin'), onTap: () {
-                                   Navigator.push(context, MaterialPageRoute(builder: (context)=>AdminDashboard()));
+                  _buildDrawerItem(Icons.admin_panel_settings, 'Admin', () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => AdminDashboard()));
                   }),
                 ],
               ),
@@ -100,17 +108,17 @@ class _POSMainScreenState extends State<POSMainScreen> {
         children: [
           // Outlet Tabs
           Container(
-            color: Colors.purple,
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            color: Colors.teal.shade700,
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: outlets.map((outlet) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      foregroundColor: selectedOutlet == outlet ? Colors.white : Colors.black,
-                      backgroundColor: selectedOutlet == outlet ? Colors.green : Colors.white,
+                      foregroundColor: selectedOutlet == outlet ? Colors.white : Colors.teal.shade700,
+                      backgroundColor: selectedOutlet == outlet ? Colors.teal.shade900 : Colors.white,
                     ),
                     onPressed: () {
                       setState(() {
@@ -137,33 +145,34 @@ class _POSMainScreenState extends State<POSMainScreen> {
                       children: [
                         Text(
                           entry.key,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.purple),
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal),
                         ),
                         const SizedBox(height: 8),
                         GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 12, // 12 columns per row for 50x50 tables
+                            crossAxisCount: 6,
                             crossAxisSpacing: 8,
                             mainAxisSpacing: 8,
-                            childAspectRatio: 1,
+                            childAspectRatio: 4,
                           ),
                           itemCount: entry.value.length,
                           itemBuilder: (context, index) {
-                            return GestureDetector(onTap: (){
-                                Navigator.push(context, MaterialPageRoute(builder: (context)=>KOTFormScreen()));
-                            },
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => KOTFormScreen()));
+                              },
                               child: Container(
-                                width: 50,
-                                height: 50,
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.purple, width: 2),
+                                  color: Colors.teal.shade100,
+                                  border: Border.all(color: Colors.teal.shade700, width: 2),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Center(
                                   child: Text(
                                     entry.value[index],
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.purple),
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal),
                                   ),
                                 ),
                               ),
@@ -181,27 +190,26 @@ class _POSMainScreenState extends State<POSMainScreen> {
 
           // Summary Stats
           Container(
-            color: Colors.grey[200],
-            padding: const EdgeInsets.all(8),
+            color: Colors.teal.shade50,
+            padding: const EdgeInsets.all(12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildStatBox('Today Reservation', '12', Colors.red),
-                _buildStatBox('Today Sale', '120 ₹', Colors.green),
-                _buildStatBox('Running Order', '120 ₹', Colors.blue),
-                _buildStatBox('Pending Payment', '120 ₹', Colors.orange),
-                _buildStatBox('Total Packing', '120 ₹', Colors.purple),
-                _buildStatBox('Today Collection', '120 ₹', Colors.yellow),
+                _buildStatBox('Today Sale', '₹120', Colors.green),
+                _buildStatBox('Running Order', '₹120', Colors.blue),
+                _buildStatBox('Pending Payment', '₹120', Colors.orange),
+                _buildStatBox('Total Packing', '₹120', Colors.purple),
+                _buildStatBox('Today Collection', '₹120', Colors.yellow),
               ],
             ),
           ),
         ],
       ),
-      
+
       // Floating Action Button
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // Action when Help is clicked
           showDialog(
             context: context,
             builder: (context) {
@@ -220,8 +228,16 @@ class _POSMainScreenState extends State<POSMainScreen> {
         },
         icon: const Icon(Icons.help),
         label: const Text("Help"),
-        backgroundColor: Colors.purple,
+        backgroundColor: Colors.teal,
       ),
+    );
+  }
+
+  Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.teal.shade700),
+      title: Text(title, style: TextStyle(color: Colors.teal.shade900)),
+      onTap: onTap,
     );
   }
 

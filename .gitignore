@@ -57,3 +57,4 @@ build/
 .idea/
 .env
 /lib/posloginoff.dart
+/lib/posmainold.dart
