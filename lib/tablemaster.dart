@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:point_of_sale_system/backend/table_api_service.dart';
 
 class TableManagementPage extends StatefulWidget {
   @override
@@ -11,11 +13,58 @@ class _TableManagementPageState extends State<TableManagementPage> {
   String _status = 'Vacant'; // default status
   String? _selectedOutlet; // Outlet selection
   List<Map<String, dynamic>> _tables = [];
-  List<String> outlets = ['Outlet 1', 'Outlet 2', 'Outlet 3']; // Example outlets
+  List<String> outlets = []; // Example outlets
+  final String apiUrl = 'http://localhost:3000/api';  // Replace with your backend API URL
+  List<dynamic> properties = [];
+  List<dynamic> outletConfigurations = [];
+  
+  final TableApiService _tableApiService = TableApiService(apiUrl: 'http://localhost:3000/api'); // Create the service instance
 
-  // Function to save table entry
-  void _saveTableEntry() {
-    // Ensure that the outlet is selected and table number is valid
+  // Fetch table configurations
+  Future<void> _fetchTableConfigs() async {
+    try {
+      final tables = await _tableApiService.getTableConfigs();
+      setState(() {
+        _tables = tables;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load tables')));
+    }
+  }
+
+ // Load data from Hive
+Future<void> _loadDataFromHive() async {
+  var box = await Hive.openBox('appData');
+  
+  // Retrieve the data
+  var properties = box.get('properties');
+  var outletConfigurations = box.get('outletConfigurations');
+  
+  // Check if outletConfigurations is not null
+  if (outletConfigurations != null) {
+    // Extract the outlet names into the outlets list
+    List<String> outletslist = [];
+    for (var outlet in outletConfigurations) {
+      if (outlet['outlet_name'] != null) {
+        outletslist.add(outlet['outlet_name'].toString());
+      }
+    }
+
+    setState(() {
+      this.properties = properties ?? [];
+      this.outletConfigurations = outletConfigurations ?? [];
+      this.outlets = outletslist; // Set the outlets list
+    });
+  }
+}
+
+
+  List<Map<String, dynamic>> _parseJson(String jsonString) {
+    // You can use a JSON decoder if you save the data in a valid JSON format
+    return jsonString.isNotEmpty ? List<Map<String, dynamic>>.from([]) : [];
+  }
+  // Save a new table entry
+  Future<void> _saveTableEntry() async {
     if (_selectedOutlet == null || _tableNo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please select an outlet and enter a valid table number')),
@@ -31,30 +80,32 @@ class _TableManagementPageState extends State<TableManagementPage> {
       return;
     }
 
-    setState(() {
-      // Add the new table to the list
-      _tables.add({
-        'outlet': _selectedOutlet,
-        'table_no': _tableNo,
-        'seats': _seats,
-        'status': _status,
-      });
+    final tableData = {
+      'table_no': _tableNo,
+      'seats': _seats,
+      'status': _status,
+      'outlet_name': _selectedOutlet, // Assuming outlet ID is the index + 1
+      'property_id': properties[0]['property_id'], // Or get this from input
+      'category': 'Regular', // Or get this from input
+      'location':'Main Hall'// Or get this from input
+    };
 
-      // Reset table-related form values but keep outlet selection
-      _tableNo = null;
-      _seats = 2;
-      _status = 'Vacant';
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Table created successfully!')),
-    );
+    try {
+      final success = await _tableApiService.createTableConfig(tableData);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Table created successfully!')));
+        _fetchTableConfigs();  // Fetch updated table configurations
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to create table')));
+    }
   }
 
-  // Function to edit a table entry
-  void _editTableEntry(int index) {
+  // Edit an existing table entry
+  Future<void> _editTableEntry(int id) async {
+    final table = _tables.firstWhere((table) => table['id'] == id);
+
     setState(() {
-      final table = _tables[index];
       _selectedOutlet = table['outlet'];
       _tableNo = table['table_no'];
       _seats = table['seats'];
@@ -62,15 +113,24 @@ class _TableManagementPageState extends State<TableManagementPage> {
     });
   }
 
-  // Function to delete a table entry
-  void _deleteTableEntry(int index) {
-    setState(() {
-      _tables.removeAt(index);
-    });
+  // Delete a table entry
+  Future<void> _deleteTableEntry(int id) async {
+    try {
+      final success = await _tableApiService.deleteTableConfig(id);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Table deleted successfully!')));
+        _fetchTableConfigs();  // Fetch updated table configurations
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete table')));
+    }
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Table deleted successfully!')),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _loadDataFromHive();
+    _fetchTableConfigs();  // Fetch table configurations when the page is loaded
   }
 
   @override
@@ -181,65 +241,27 @@ class _TableManagementPageState extends State<TableManagementPage> {
               ),
             ],
 
-            SizedBox(height: 32),
-
-            // Display Created Tables
-            Text(
-              'Created Tables for ${_selectedOutlet ?? ''}',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            _tables.isEmpty
-                ? Text('No tables created yet for this outlet.')
-                : Expanded(
-                    child: ListView.builder(
-                      itemCount: _tables.length,
-                      itemBuilder: (context, index) {
-                        final table = _tables[index];
-                        if (table['outlet'] == _selectedOutlet) {
-                          return Card(
-                            margin: EdgeInsets.symmetric(vertical: 8),
-                            elevation: 4,
-                            child: ListTile(
-                              leading: Icon(Icons.table_chart, color: Colors.blue),
-                              title: Text('Table ${table['table_no']}'),
-                              subtitle: Text(
-                                  'Seats: ${table['seats']} | Status: ${table['status']}'),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Edit Icon
-                                  IconButton(
-                                    icon: Icon(Icons.edit, color: Colors.orange),
-                                    onPressed: () {
-                                      _editTableEntry(index);
-                                    },
-                                  ),
-                                  // Delete Icon
-                                  IconButton(
-                                    icon: Icon(Icons.delete, color: Colors.red),
-                                    onPressed: () {
-                                      _deleteTableEntry(index);
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-                        return SizedBox.shrink(); // If the table is not for the selected outlet, hide it
-                      },
+            // Table List
+            Expanded(
+              child: ListView.builder(
+                itemCount: _tables.length,
+                itemBuilder: (context, index) {
+                  final table = _tables[index];
+                  return ListTile(
+                    title: Text('Table ${table['table_no']}'),
+                    subtitle: Text('Seats: ${table['seats']} | Status: ${table['status']}'),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () => _deleteTableEntry(table['id']),
                     ),
-                  ),
+                    onTap: () => _editTableEntry(table['id']),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
   }
-}
-
-void main() {
-  runApp(MaterialApp(
-    home: TableManagementPage(),
-  ));
 }

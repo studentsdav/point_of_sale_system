@@ -8,6 +8,8 @@ const forgotPasswordRoute = require('./routes/forgotPassword');
 const waiterMasterRoute = require('./routes/waiterMaster');
 const propertyRoutes = require('./routes/propertyRoutes');
 const outletRoutes = require('./routes/outlet');
+const tableRoutes = require('./routes/tableconfigs');
+
 
 
 const app = express();
@@ -24,6 +26,7 @@ app.use('/api', forgotPasswordRoute);
 app.use('/api', waiterMasterRoute);
 app.use('/api', propertyRoutes);
 app.use('/api', outletRoutes);
+app.use('/api', tableRoutes);
 
 // Root route
 app.get('/', (req, res) => {

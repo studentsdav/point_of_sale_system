@@ -1,11 +1,9 @@
 // //node server.js
 // //nodemon server.js
 
-//Create database DatabaseName
-
 // CREATE TABLE properties (
 //     sno SERIAL PRIMARY KEY,                     -- Auto-incremented serial number
-//     property_id VARCHAR(20) UNIQUE NOT NULL,    -- Property ID (WIPLdatemonthyearhoursec format)
+//     property_id VARCHAR(50) UNIQUE NOT NULL,    -- Property ID (WIPLdatemonthyearhoursec format)
 //     property_name VARCHAR(255) NOT NULL,        -- Property name
 //     address TEXT NOT NULL,                     -- Property address
 //     contact_number VARCHAR(20) NOT NULL,       -- Property contact number
@@ -30,7 +28,7 @@
 //     mobile VARCHAR(15),                      -- Mobile number (optional)
 //     email VARCHAR(100) UNIQUE NOT NULL,      -- Unique email (mandatory)
 //     outlet VARCHAR(100),                     -- Outlet associated with the user
-//     property_id VARCHAR(20) NOT NULL,        -- Associated property ID (mandatory, matches properties table type)
+//     property_id VARCHAR(50) NOT NULL,        -- Associated property ID (mandatory, matches properties table type)
 //     join_date DATE DEFAULT CURRENT_DATE,     -- Date of joining (default to current date)
 //     role VARCHAR(50),                        -- Role of the user (e.g., Admin, Manager, etc.)
 //     status BOOLEAN DEFAULT TRUE,             -- Account status: TRUE for active, FALSE for inactive
@@ -40,7 +38,7 @@
 
 // CREATE TABLE waiters (
 //     waiter_id SERIAL PRIMARY KEY,                -- Auto-incremented unique ID
-//     property_id VARCHAR(20) NOT NULL,           -- Associated property ID (foreign key)
+//     property_id VARCHAR(50) NOT NULL,           -- Associated property ID (foreign key)
 //     selected_outlet VARCHAR(100),               -- Outlet associated with the waiter
 //     waiter_name VARCHAR(255) NOT NULL,          -- Waiter name (mandatory)
 //     contact_number VARCHAR(15),                 -- Waiter contact number (optional)
@@ -54,7 +52,7 @@
 
 // CREATE TABLE bill_config (
 //     config_id SERIAL PRIMARY KEY,                 -- Auto-incrementing unique ID
-//     property_id VARCHAR(20) NOT NULL,            -- Associated property ID (foreign key)
+//     property_id VARCHAR(50) NOT NULL,            -- Associated property ID (foreign key)
 //     selected_outlet VARCHAR(100),                -- Outlet associated with the configuration
 //     bill_prefix VARCHAR(50) DEFAULT '',          -- Bill prefix
 //     bill_suffix VARCHAR(50),                     -- Bill suffix (optional)
@@ -69,7 +67,7 @@
 
 // CREATE TABLE categories (
 //     category_id SERIAL PRIMARY KEY,                 -- Auto-incrementing unique ID for the category
-//     property_id VARCHAR(20) NOT NULL,              -- Property ID (mandatory, foreign key)
+//     property_id VARCHAR(50) NOT NULL,              -- Property ID (mandatory, foreign key)
 //     outlet VARCHAR(100) NOT NULL,                  -- Outlet name (mandatory)
 //     category_name VARCHAR(255) NOT NULL,           -- Name of the category
 //     category_description TEXT,                     -- Description of the category
@@ -81,7 +79,7 @@
 
 // CREATE TABLE subcategories (
 //     sub_category_id SERIAL PRIMARY KEY,           -- Auto-incremented unique ID
-//     property_id VARCHAR(20) NOT NULL,             -- Associated property ID (foreign key)
+//     property_id VARCHAR(50) NOT NULL,             -- Associated property ID (foreign key)
 //     outlet VARCHAR(100),                          -- Outlet associated with the subcategory
 //     category_id INT NOT NULL,                     -- Associated category ID (foreign key)
 //     sub_category_name VARCHAR(255) NOT NULL,      -- Subcategory name (mandatory)
@@ -92,7 +90,7 @@
 
 // CREATE TABLE date_config (
 //     date_config_id SERIAL PRIMARY KEY,           -- Auto-incremented unique ID
-//     property_id VARCHAR(20) NOT NULL,             -- Associated property ID (foreign key)
+//     property_id VARCHAR(50) NOT NULL,             -- Associated property ID (foreign key)
 //     outlet VARCHAR(100),                          -- Outlet associated with the date config
 //     selected_date DATE,                           -- Date configuration (mandatory)
 //     description TEXT,                             -- Description of the date configuration
@@ -113,14 +111,14 @@
 //     company_name VARCHAR(255),                -- Company name
 //     discount DECIMAL(5, 2),                   -- Discount (percentage)
 //     g_suggestion TEXT,                        -- Guest suggestions or comments
-//     property_id VARCHAR(20) NOT NULL,         -- Associated Property ID (Foreign Key)
+//     property_id VARCHAR(50) NOT NULL,         -- Associated Property ID (Foreign Key)
 //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp for record creation
 //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- Timestamp for record updates
 // );
 
 // CREATE TABLE happy_hour_config (
 //     id SERIAL PRIMARY KEY,                -- Auto-incremented unique ID
-//     property_id VARCHAR(20) NOT NULL,      -- Associated Property ID (Foreign Key)
+//     property_id VARCHAR(50) NOT NULL,      -- Associated Property ID (Foreign Key)
 //     selected_outlet VARCHAR(100),         -- Outlet associated with the happy hour
 //     selected_happy_hour VARCHAR(255),     -- Happy hour name or description
 //     start_time TIME,                      -- Happy hour start time
@@ -134,7 +132,7 @@
 
 // CREATE TABLE inventory (
 //     id SERIAL PRIMARY KEY,                      -- Auto-incremented unique ID
-//     property_id VARCHAR(20) NOT NULL,            -- Associated Property ID (Foreign Key)
+//     property_id VARCHAR(50) NOT NULL,            -- Associated Property ID (Foreign Key)
 //     selected_outlet VARCHAR(100),               -- Outlet associated with the inventory transaction
 //     selected_item VARCHAR(255) NOT NULL,        -- Item name being updated
 //     quantity INT DEFAULT 0,                     -- Quantity of the item being credited or debited
@@ -163,7 +161,7 @@
 //     on_sale BOOLEAN DEFAULT FALSE,              -- Whether the item is on sale
 //     happy_hour BOOLEAN DEFAULT FALSE,           -- Whether the item is eligible for happy hour
 //     discountable BOOLEAN DEFAULT TRUE,          -- Whether the item is eligible for discounts
-//     property_id VARCHAR(20) NOT NULL,           -- Associated Property ID (Foreign Key)
+//     property_id VARCHAR(50) NOT NULL,           -- Associated Property ID (Foreign Key)
 //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp for record creation
 //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Timestamp for updates
 // );
@@ -173,7 +171,7 @@
 //     kot_starting_number INT,             -- KOT starting number
 //     start_date DATE,                     -- Start date for the KOT configuration
 //     selected_outlet VARCHAR(100),        -- Outlet associated with the KOT configuration
-//     property_id VARCHAR(20) NOT NULL,    -- Property ID for association (Foreign Key)
+//     property_id VARCHAR(50) NOT NULL,    -- Property ID for association (Foreign Key)
 //     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Date when the KOT config was updated
 //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Timestamp for record creation
 // );
@@ -307,15 +305,18 @@
 // );
 
 // CREATE TABLE table_configurations (
-//     id SERIAL PRIMARY KEY,  -- Unique ID for the table configuration
-//     table_no INT NOT NULL,  -- Table number (unique for the outlet)
-//     seats INT DEFAULT 2,  -- Number of seats at the table
-//     status VARCHAR(50) DEFAULT 'Vacant',  -- Status of the table (Vacant, Occupied, Reserved, etc.)
-//     outlet_name VARCHAR(255) NOT NULL,  -- Name of the outlet to associate the table with a specific outlet
-//     property_id INT NOT NULL,  -- Property ID to associate the table with a specific property
+//     id SERIAL PRIMARY KEY,               -- Unique ID for the table configuration
+//     table_no INT NOT NULL,               -- Table number (unique for the outlet)
+//     seats INT DEFAULT 2,                 -- Number of seats at the table
+//     status VARCHAR(50) DEFAULT 'Vacant', -- Status of the table (Vacant, Occupied, Reserved, etc.)
+//     outlet_name VARCHAR(255) NOT NULL,   -- Name of the outlet to associate the table with a specific outlet
+//     property_id INT NOT NULL,            -- Property ID to associate the table with a specific property
+//     category VARCHAR(100),               -- Category of the table (e.g., Regular, VIP, etc.)
+//     location VARCHAR(255),               -- Location description of the table (e.g., Patio, Main Hall, etc.)
 //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp for when the table configuration is created
-//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- Timestamp for when the table configuration was last updated
+//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP   -- Timestamp for when the table configuration was last updated
 // );
+
 
 // CREATE TABLE tax_config (
 //     id SERIAL PRIMARY KEY,  -- Unique ID for the tax configuration
@@ -342,6 +343,19 @@
 //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp when the permission is updated
 //     CONSTRAINT user_permission_unique UNIQUE (user_id, outlet_id, permission_name, property_id)  -- Ensure unique permissions per user
 // );
+
+
+// ALTER TABLE outlet_configurations 
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
+
+// ALTER TABLE outlet_configurations 
+// ALTER COLUMN property_id SET NOT NULL;
+
+// ALTER TABLE outlet_configurations 
+// ADD CONSTRAINT unique_property_id UNIQUE (property_id);
+
+
+// git remote add origin https://github.com/FlutterX88/point_of_sale_system.git
 
 
 

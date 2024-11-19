@@ -13,11 +13,25 @@ router.get('/outlets', async (req, res) => {
   }
 });
 
+// GET outlet configuration by propertyid
+router.get('/outlets/:propertyId', async (req, res) => {
+  const outletId = req.params.propertyId;
+  try {
+    const result = await pool.query('SELECT * FROM outlet_configurations WHERE property_id = $1', [outletId]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Outlet configuration not found' });
+    }
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve outlet configuration', details: error.message });
+  }
+});
+
 // GET outlet configuration by ID
 router.get('/outlet/:id', async (req, res) => {
   const outletId = req.params.id;
   try {
-    const result = await pool.query('SELECT * FROM outlet_configurations WHERE id = $1', [outletId]);
+    const result = await pool.query('SELECT * FROM outlet_configurations WHERE property_id = $1', [outletId]);
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Outlet configuration not found' });
     }

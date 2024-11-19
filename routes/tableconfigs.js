@@ -29,13 +29,13 @@ router.get('/table-config/:id', async (req, res) => {
 
 // POST (Create) new table configuration
 router.post('/table-config', async (req, res) => {
-  const { table_no, seats, status, outlet_id } = req.body;
+  const { table_no, seats, status, outlet_name, property_id, category, location } = req.body;
 
   try {
     const result = await pool.query(
-      `INSERT INTO table_configurations (table_no, seats, status, outlet_id)
-      VALUES ($1, $2, $3, $4) RETURNING id`,
-      [table_no, seats, status, outlet_id]
+      `INSERT INTO table_configurations (table_no, seats, status, outlet_name, property_id, category, location)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [table_no, seats, status, outlet_name,property_id, category, location]
     );
     res.status(201).json({ message: 'Table configuration created successfully', tableConfigId: result.rows[0].id });
   } catch (error) {
@@ -46,14 +46,14 @@ router.post('/table-config', async (req, res) => {
 // PUT (Update) table configuration by ID
 router.put('/table-config/:id', async (req, res) => {
   const tableId = req.params.id;
-  const { table_no, seats, status, outlet_id } = req.body;
+  const { table_no, seats, status, outlet_name, category, location } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE table_configurations
-      SET table_no = $1, seats = $2, status = $3, outlet_id = $4, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $5 RETURNING id`,
-      [table_no, seats, status, outlet_id, tableId]
+      SET table_no = $1, seats = $2, status = $3, outlet_name = $4, category = $5, location= $6, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $7 RETURNING id`,
+      [table_no, seats, status, outlet_name, tableId,category, location]
     );
 
     if (result.rowCount === 0) {
