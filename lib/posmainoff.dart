@@ -23,7 +23,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
     'HALL': ['01', '02', '03', '04'],
     'ROOF TOP': ['04', '05', '01', '02', '03', '04'],
     'GARDEN': ['01', '02', '03', '04', '05', '06', '07'],
-    'VIP AREA': ['01', '02', '03', '04'],
+    'VIP AREA': ['01', '02', '03', '04'], 
   };
 
   @override

@@ -16,7 +16,12 @@ const kotconfigsRoutes =  require('./routes/kotConfig');
 const ordersRoutes =  require('./routes/order');
 const paymentRoutes =  require('./routes/payments');
 const printerRoutes =  require('./routes/printers');
-
+const reservationRoutes =  require('./routes/reservation');
+const servicechargeRoutes =  require('./routes/servicecharge_config');
+const subcategoriesRoutes =  require('./routes/subcategories');
+const taxconfigRoutes =  require('./routes/tax_config');
+const userpermissionsRoutes =  require('./routes/user_permissions');
+const waitersRoutes =  require('./routes/waiterMaster');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,7 +45,12 @@ app.use('/api/kotconfigs', kotconfigsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/printer', printerRoutes);
-
+app.use('/api/reservation', reservationRoutes);
+app.use('/api/servicecharge', servicechargeRoutes);
+app.use('/api/subcategories', subcategoriesRoutes);
+app.use('/api/taxconfig', taxconfigRoutes);
+app.use('/api/userpermissions', userpermissionsRoutes);
+app.use('/api/waiters', waitersRoutes);
 
 
 // Root route
