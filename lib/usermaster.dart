@@ -221,6 +221,31 @@ void editProfile(int index) {
               key: _formKey,
               child: Column(
                 children: [
+                  DropdownButtonFormField<String>(
+                    value: _selectedOutlet,
+                    onChanged: (newValue) {
+                      setState(() {
+                        _selectedOutlet = newValue;
+                      });
+                    },
+                    items: outlets.map((outlet) {
+                      return DropdownMenuItem<String>( 
+                        value: outlet,
+                        child: Text(outlet),
+                      );
+                    }).toList(),
+                    decoration: InputDecoration(
+                      labelText: 'Select Outlet',
+                      prefixIcon: Icon(Icons.store),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select an outlet';
+                      }
+                      return null;
+                    },
+                  ),
+                                SizedBox(height: 8),
                   TextFormField(
                     decoration: InputDecoration(
                       labelText: 'Username',
@@ -292,31 +317,7 @@ void editProfile(int index) {
                       return null;
                     },
                   ),
-                  SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: _selectedOutlet,
-                    onChanged: (newValue) {
-                      setState(() {
-                        _selectedOutlet = newValue;
-                      });
-                    },
-                    items: outlets.map((outlet) {
-                      return DropdownMenuItem<String>( 
-                        value: outlet,
-                        child: Text(outlet),
-                      );
-                    }).toList(),
-                    decoration: InputDecoration(
-                      labelText: 'Select Outlet',
-                      prefixIcon: Icon(Icons.store),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select an outlet';
-                      }
-                      return null;
-                    },
-                  ),
+          
                   SizedBox(height: 8),
                   TextFormField(
                     decoration: InputDecoration(

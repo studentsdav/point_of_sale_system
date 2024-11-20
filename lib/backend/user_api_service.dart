@@ -7,7 +7,7 @@ class UserApiService {
   UserApiService({required this.baseUrl});
 
   Future<List<Map<String, dynamic>>> getUsers() async {
-    final response = await http.get(Uri.parse('$baseUrl/users.json'));
+    final response = await http.get(Uri.parse('$baseUrl/users'));
 
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(json.decode(response.body));

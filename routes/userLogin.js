@@ -33,7 +33,7 @@ router.post('/', async (req, res) => {
 });
 
 // READ - Get all users
-router.get('/.json', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM user_login');
     res.json(result.rows);
@@ -44,7 +44,7 @@ router.get('/.json', async (req, res) => {
 });
 
 // READ - Get a user by ID
-router.get('/:id.json', async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('SELECT * FROM user_login WHERE user_id = $1', [id]);

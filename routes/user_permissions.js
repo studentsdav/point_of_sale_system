@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
 });
 
 // READ - Get all user permissions
-router.get('/.json', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM user_permissions');
     res.json(result.rows);
@@ -41,7 +41,7 @@ router.get('/.json', async (req, res) => {
 });
 
 // READ - Get a user permission by ID
-router.get('/:id.json', async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('SELECT * FROM user_permissions WHERE id = $1', [id]);

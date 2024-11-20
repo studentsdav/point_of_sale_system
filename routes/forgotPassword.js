@@ -4,7 +4,7 @@ const pool = require('../db');
 const router = express.Router();
 
 // Forgot password route
-router.post('/forgot-password.json', async (req, res) => {
+router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
     const result = await pool.query('SELECT * FROM user_login WHERE email = $1', [email]);

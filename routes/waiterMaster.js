@@ -84,7 +84,7 @@ router.delete('/:waiter_id', async (req, res) => {
 
   // Fetch all waiters
 
-router.get('/.json', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM waiters');
     res.json(result.rows);
@@ -97,7 +97,7 @@ router.get('/.json', async (req, res) => {
 
   // Fetch a waiter by ID
 
-router.get('/:waiter_id.json', async (req, res) => {
+router.get('/:waiter_id', async (req, res) => {
   try {
     const { waiter_id } = req.params;
 

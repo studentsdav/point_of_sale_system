@@ -7,7 +7,7 @@ class OutletApiService {
   OutletApiService({required this.baseUrl});
 
   Future<List<dynamic>> getAllProperties() async {
-    final url = Uri.parse("$baseUrl/properties.json");
+    final url = Uri.parse("$baseUrl/properties");
 
     try {
       final response = await http.get(url);

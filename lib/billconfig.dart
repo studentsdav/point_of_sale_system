@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:point_of_sale_system/backend/bill_api_service.dart';
 
 class BillConfigurationForm extends StatefulWidget {
@@ -17,33 +18,48 @@ class _BillConfigurationFormState extends State<BillConfigurationForm> {
   String currencySymbol = '₹';
   String dateFormat = 'dd-MM-yyyy';
   final List<Map<String, dynamic>> _configurations = [];
+  List<String> outlets = [];
+  List<dynamic> properties = [];
+  List<dynamic> outletConfigurations = [];
 
-  // void _saveConfiguration() {
-  //   if (_formKey.currentState!.validate() && seriesStartDate != null && selectedOutlet != null) {
-  //     _formKey.currentState!.save();
-      
-  //     setState(() {
-  //       _configurations.add({
-  //         'outlet': selectedOutlet,
-  //         'billPrefix': billPrefix,
-  //         'billSuffix': billSuffix,
-  //         'startingBillNumber': startingBillNumber,
-  //         'seriesStartDate': seriesStartDate,
-  //         'currencySymbol': currencySymbol,
-  //         'dateFormat': dateFormat,
-  //         'savedOn': DateTime.now(),
-  //       });
-  //     });
-  //   } else {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Please fill all required fields.')),
-  //     );
-  //   }
-  // }
+
+   // Load data from Hive
+Future<void> _loadDataFromHive() async {
+  var box = await Hive.openBox('appData');
+  
+  // Retrieve the data
+  var properties = box.get('properties');
+  var outletConfigurations = box.get('outletConfigurations');
+  
+  // Check if outletConfigurations is not null
+  if (outletConfigurations != null) {
+    // Extract the outlet names into the outlets list
+    List<String> outletslist = [];
+    for (var outlet in outletConfigurations) {
+      if (outlet['outlet_name'] != null) {
+        outletslist.add(outlet['outlet_name'].toString());
+      }
+    }
+
+    setState(() {
+      this.properties = properties ?? [];
+      this.outletConfigurations = outletConfigurations ?? [];
+      this.outlets = outletslist; // Set the outlets list
+    });
+  }
+}
+
+
+  List<Map<String, dynamic>> _parseJson(String jsonString) {
+    // You can use a JSON decoder if you save the data in a valid JSON format
+    return jsonString.isNotEmpty ? List<Map<String, dynamic>>.from([]) : [];
+  }
+
 
     @override
   void initState() {
     super.initState();
+    _loadDataFromHive();
     _loadConfigurations();
   }
 
@@ -70,7 +86,7 @@ void _loadConfigurations() async {
       _formKey.currentState!.save();
 
       final newConfig = {
-        'property_id': 1, // Example property ID
+        'property_id':properties[0]['property_id'], // Example property ID
         'selected_outlet': selectedOutlet,
         'bill_prefix': billPrefix,
         'bill_suffix': billSuffix,
@@ -81,10 +97,8 @@ void _loadConfigurations() async {
       };
 
       try {
-        final createdConfig = await apiService.createConfiguration(newConfig);
-        setState(() {
-          _configurations.add(createdConfig);
-        });
+        await apiService.createConfiguration(newConfig);
+       _loadConfigurations();
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to save configuration')),
@@ -96,6 +110,15 @@ void _loadConfigurations() async {
       );
     }
   }
+
+Future<void> _deleteConfiguration(id) async {
+  // Add the delete logic here, e.g., making an API call
+  // For example:
+  await apiService.deleteConfiguration(id);
+  setState(() {
+    _configurations.removeWhere((config) => config['config_id'] == id);
+  });
+}
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +140,7 @@ void _loadConfigurations() async {
                       labelText: 'Select Outlet',
                       icon: Icon(Icons.store),
                     ),
-                    items: ['Outlet 1', 'Outlet 2', 'Outlet 3'].map((outlet) {
+                    items: outlets.map((outlet) {
                       return DropdownMenuItem(value: outlet, child: Text(outlet));
                     }).toList(),
                     onChanged: (value) => setState(() => selectedOutlet = value),
@@ -199,31 +222,36 @@ void _loadConfigurations() async {
                   const SizedBox(height: 20),
                   Text('Saved Configurations:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   
-                  // Container to wrap the ListView.builder
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _configurations.length,
-                      itemBuilder: (context, index) {
-                        final config = _configurations[index];
-                        final billNumberFormat = '${config['bill_prefix']}${config['starting_bill_number']}${config['bill_suffix']}';
-                        final seriesStartDate = config['series_start_date'];
-                        final savedOn = config['updated_at'];
-                    
-                      return ListTile(
-  leading: Icon(Icons.receipt),
-  title: Text(
-    'Your bill no starts from $billNumberFormat from '
- '${seriesStartDate != null ? _formatDate(seriesStartDate) : "N/A"} '
-    'updated on '
-    '${savedOn != null ? _formatDate(savedOn) : "N/A"} '
-    'for ${config['selected_outlet'] ?? "Unknown Outlet"}',
-    style: TextStyle(fontWeight: FontWeight.bold),
-  ),
-);
+      Expanded(
+  child: ListView.builder(
+    itemCount: _configurations.length,
+    itemBuilder: (context, index) {
+      final config = _configurations[index];
+      final billNumberFormat = '${config['bill_prefix']}${config['starting_bill_number']}${config['bill_suffix']}';
+      final seriesStartDate = config['series_start_date'];
+      final savedOn = config['updated_at'];
 
-                      },
-                    ),
-                  ),
+      return ListTile(
+        leading: Icon(Icons.receipt),
+        title: Text(
+          'Your bill no starts from $billNumberFormat from '
+          '${seriesStartDate != null ? _formatDate(seriesStartDate) : "N/A"} '
+          'updated on '
+          '${savedOn != null ? _formatDate(savedOn) : "N/A"} '
+          'for ${config['selected_outlet'] ?? "Unknown Outlet"}',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        trailing: IconButton(
+          icon: Icon(Icons.delete),
+          onPressed: () {
+            // Trigger the delete functionality here
+            _deleteConfiguration(config['config_id']); // Assuming there's an ID in the configuration
+          },
+        ),
+      );
+    },
+  ),
+),
                 ],
               ),
             ),

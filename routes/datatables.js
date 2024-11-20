@@ -186,7 +186,7 @@
 //     waiter_name VARCHAR(255),
 //     person_count INT NOT NULL,
 //     remarks TEXT,
-//     property_id INT NOT NULL,  -- Added property_id to link to specific property
+//     property_id VARCHAR(100) NOT NULL,  -- Added property_id to link to specific property
 //     guest_id INT,  -- Added guest_id to identify the guest placing the order
 //     total_discount_value DECIMAL(10, 2) NOT NULL DEFAULT 0.00,  -- Total discount applied to the order
 //     total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,  -- Total amount for the order before tax
@@ -218,7 +218,7 @@
 //     subtotal DECIMAL(10, 2) NOT NULL,  -- Subtotal for this item (after applying discounts and tax)
 //     total DECIMAL(10, 2) NOT NULL,  -- Final total for this item (after all adjustments)
 //     cashier VARCHAR(255),  -- Cashier who processed the order item
-//     property_id INT NOT NULL,  -- Added property_id to link to specific property
+//     property_id VARCHAR(100) NOT NULL,  -- Added property_id to link to specific property
 //     bill_number VARCHAR(255) NOT NULL,  -- Added bill_number to track which bill the item belongs to
 //     status VARCHAR(255) NOT NULL,  -- Status of the order item
 //     order_type VARCHAR(255) NOT NULL,  -- Type of order (dine-in, takeaway, or delivery)
@@ -230,7 +230,7 @@
 
 // CREATE TABLE outlet_configurations (
 //     id SERIAL PRIMARY KEY,
-//     property_id INT NOT NULL,  -- Link to property
+//     property_id VARCHAR(100) NOT NULL,  -- Link to property
 //     outlet_name VARCHAR(255) NOT NULL,  -- Name of the outlet
 //     address TEXT NOT NULL,  -- Address of the outlet
 //     city VARCHAR(255) NOT NULL,  -- City of the outlet
@@ -248,7 +248,7 @@
 
 // CREATE TABLE payments (
 //     id SERIAL PRIMARY KEY,  -- Unique payment ID
-//     property_id INT NOT NULL,  -- Link to the property
+//     property_id VARCHAR(100) NOT NULL,  -- Link to the property
 //     outlet_id INT NOT NULL,  -- Link to the outlet
 //     payment_method VARCHAR(255) NOT NULL,  -- Payment method (e.g., Cash, Card, etc.)
 //     amount DECIMAL(10, 2) NOT NULL,  -- Payment amount
@@ -267,7 +267,7 @@
 //     ip_address VARCHAR(15) NOT NULL,  -- IP address of the printer
 //     port VARCHAR(5) NOT NULL,  -- Port number for the printer connection
 //     status VARCHAR(50) NOT NULL,  -- Printer status (e.g., active, inactive)
-//     property_id INT NOT NULL,  -- Property ID where the printer is located
+//     property_id VARCHAR(100) NOT NULL,  -- Property ID where the printer is located
 //     outlet_name VARCHAR(255) NOT NULL,  -- Name of the outlet where the printer is used
 //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp for record creation
 //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- Timestamp for record updates
@@ -286,7 +286,7 @@
 //     table_no INT NOT NULL,  -- Table number for the reservation
 //     status VARCHAR(50) NOT NULL,  -- Reservation status (e.g., confirmed, canceled)
 //     remark TEXT,  -- Additional remarks for the reservation
-//     property_id INT NOT NULL,  -- Property ID where the reservation was made
+//     property_id VARCHAR(100) NOT NULL,  -- Property ID where the reservation was made
 //     outlet_name VARCHAR(255) NOT NULL,  -- Name of the outlet for the reservation
 //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp for record creation
 //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- Timestamp for record updates
@@ -294,7 +294,7 @@
 
 // CREATE TABLE servicecharge_config (
 //     id SERIAL PRIMARY KEY,  -- Unique ID for the service charge configuration
-//     property_id INT NOT NULL,  -- Property ID the service charge is applied to
+//     property_id VARCHAR(100) NOT NULL,  -- Property ID the service charge is applied to
 //     service_charge DECIMAL(5, 2) NOT NULL,  -- Percentage of service charge to apply
 //     min_amount DECIMAL(10, 2) NOT NULL,  -- Minimum amount for the service charge to apply
 //     max_amount DECIMAL(10, 2) NOT NULL,  -- Maximum amount for the service charge to apply
@@ -311,7 +311,7 @@
 //     seats INT DEFAULT 2,                 -- Number of seats at the table
 //     status VARCHAR(50) DEFAULT 'Vacant', -- Status of the table (Vacant, Occupied, Reserved, etc.)
 //     outlet_name VARCHAR(255) NOT NULL,   -- Name of the outlet to associate the table with a specific outlet
-//     property_id INT NOT NULL,            -- Property ID to associate the table with a specific property
+//     property_id VARCHAR(100) NOT NULL,            -- Property ID to associate the table with a specific property
 //     category VARCHAR(100),               -- Category of the table (e.g., Regular, VIP, etc.)
 //     location VARCHAR(255),               -- Location description of the table (e.g., Patio, Main Hall, etc.)
 //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp for when the table configuration is created
@@ -325,7 +325,7 @@
 //     tax_percentage DECIMAL(5, 2) NOT NULL CHECK (tax_percentage > 0 AND tax_percentage <= 100),  -- Tax percentage with constraints
 //     tax_type VARCHAR(50) NOT NULL,  -- Type of the tax (e.g., inclusive or exclusive)
 //     outlet_name VARCHAR(255) NOT NULL,  -- Name of the outlet where this tax configuration applies
-//     property_id INT NOT NULL,  -- Property ID to associate the tax configuration with a specific property
+//     property_id VARCHAR(100) NOT NULL,  -- Property ID to associate the tax configuration with a specific property
 //     greater_than DECIMAL(10, 2) DEFAULT 0.00,  -- Minimum value for which tax applies
 //     less_than DECIMAL(10, 2) DEFAULT 0.00,  -- Maximum value for which tax applies
 //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp for when the tax configuration is created
@@ -339,7 +339,7 @@
 //     outlet_id INT NOT NULL,  -- The ID of the outlet (referencing outlet_configurations.outlet_id)
 //     outlet_name VARCHAR(255) NOT NULL,  -- The Name of the outlet (referencing outlet_configurations.outlet_name)
 //     permission_name VARCHAR(255) NOT NULL,  -- The name of the permission (e.g., 'View Sales', 'Generate KOT')
-//     property_id INT NOT NULL,  -- The property ID to associate the permission with a specific property
+//     property_id VARCHAR(100) NOT NULL,  -- The property ID to associate the permission with a specific property
 //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp when the permission is assigned
 //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp when the permission is updated
 //     CONSTRAINT user_permission_unique UNIQUE (user_id, outlet_id, permission_name, property_id)  -- Ensure unique permissions per user

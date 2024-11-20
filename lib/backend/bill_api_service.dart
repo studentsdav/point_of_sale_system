@@ -7,7 +7,7 @@ class BillApiService {
   BillApiService(this.baseUrl);
 
   Future<List<dynamic>> fetchConfigurations() async {
-    final response = await http.get(Uri.parse('$baseUrl/.json'));
+    final response = await http.get(Uri.parse('$baseUrl/'));
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {

@@ -24,7 +24,7 @@ class UserPermissionApiService {
   // 2. Get all user permissions
   Future<List<Map<String, dynamic>>> getAllUserPermissions() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/userpermissions.json'),
+      Uri.parse('$baseUrl/userpermissions'),
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -39,7 +39,7 @@ class UserPermissionApiService {
   // 3. Get user permission by ID
   Future<Map<String, dynamic>> getUserPermissionById(String id) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/userpermissions/$id.json'),
+      Uri.parse('$baseUrl/userpermissions/$id'),
       headers: {'Content-Type': 'application/json'},
     );
 

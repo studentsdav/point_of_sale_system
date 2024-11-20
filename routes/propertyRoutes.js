@@ -49,7 +49,7 @@ router.post('/', async (req, res) => {
 });
 
 // GET All Properties
-router.get('/.json', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM properties ORDER BY created_at DESC');
     res.json(result.rows);

@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
 });
 
 // READ - Get all bill configurations
-router.get('/.json', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM bill_config');
     res.json(result.rows);
@@ -52,7 +52,7 @@ router.get('/.json', async (req, res) => {
 });
 
 // READ - Get a bill configuration by ID
-router.get('/:id.json', async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('SELECT * FROM bill_config WHERE config_id = $1', [id]);

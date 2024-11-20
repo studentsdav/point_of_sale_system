@@ -51,7 +51,7 @@ class PropertyService {
   }
 
   Future<List<dynamic>> getAllProperties() async {
-    final url = Uri.parse("$_baseUrl/properties.json");
+    final url = Uri.parse("$_baseUrl/properties");
 
     try {
       final response = await http.get(url);

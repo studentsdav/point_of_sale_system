@@ -58,7 +58,7 @@ class WaiterApiService {
   // 4. Fetch all waiters
   Future<List<Map<String, dynamic>>> getAllWaiters() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/waiters.json'),
+      Uri.parse('$baseUrl/waiters'),
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -73,7 +73,7 @@ class WaiterApiService {
   // 5. Fetch a waiter by ID
   Future<Map<String, dynamic>> getWaiterById(String waiterId) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/waiters/$waiterId.json'),
+      Uri.parse('$baseUrl/waiters/$waiterId'),
       headers: {'Content-Type': 'application/json'},
     );
 
