@@ -4,7 +4,7 @@ const pool = require('../db'); // Replace with your database connection file
 const router = express.Router();
 
 // GET all payments
-router.get('/payments', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM payments');
     res.status(200).json(result.rows);
@@ -14,7 +14,7 @@ router.get('/payments', async (req, res) => {
 });
 
 // GET payment by ID
-router.get('/payment/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   const paymentId = req.params.id;
   try {
     const result = await pool.query('SELECT * FROM payments WHERE id = $1', [paymentId]);
@@ -28,7 +28,7 @@ router.get('/payment/:id', async (req, res) => {
 });
 
 // POST (Create) new payment
-router.post('/payment', async (req, res) => {
+router.post('/', async (req, res) => {
   const { property_id, outlet_id, payment_method, amount, payment_date, bill_id } = req.body;
 
   try {
@@ -44,7 +44,7 @@ router.post('/payment', async (req, res) => {
 });
 
 // PUT (Update) payment by ID
-router.put('/payment/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
   const paymentId = req.params.id;
   const { payment_method, amount, payment_date, bill_id } = req.body;
 
@@ -67,7 +67,7 @@ router.put('/payment/:id', async (req, res) => {
 });
 
 // DELETE payment by ID
-router.delete('/payment/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const paymentId = req.params.id;
   try {
     const result = await pool.query('DELETE FROM payments WHERE id = $1 RETURNING id', [paymentId]);

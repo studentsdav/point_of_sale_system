@@ -232,6 +232,7 @@ void _loadConfigurations() async {
       ),
     );
   }
+
 String _formatDate(dynamic date) {
   try {
     if (date is String) {
@@ -246,8 +247,9 @@ String _formatDate(dynamic date) {
   return "Invalid Date";
 }
 
-
 }
+
+
 
 void main() {
   runApp(MaterialApp(home: BillConfigurationForm()));

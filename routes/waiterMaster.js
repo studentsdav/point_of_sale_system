@@ -3,11 +3,10 @@ const pool = require('../db'); // Database connection module
 
 const router = express.Router();
 
-/**
- * Create a new waiter
- * @route POST /api/waiters
- */
-router.post('/waiters', async (req, res) => {
+
+  // Create a new waiter
+
+router.post('/', async (req, res) => {
   try {
     const { property_id, selected_outlet, waiter_name, contact_number, hire_date, status } = req.body;
 
@@ -30,11 +29,10 @@ router.post('/waiters', async (req, res) => {
   }
 });
 
-/**
- * Update an existing waiter
- * @route PUT /api/waiters/:waiter_id
- */
-router.put('/waiters/:waiter_id', async (req, res) => {
+
+ //Update an existing waiter
+
+router.put('/:waiter_id', async (req, res) => {
   try {
     const { waiter_id } = req.params;
     const { property_id, selected_outlet, waiter_name, contact_number, hire_date, status } = req.body;
@@ -64,11 +62,10 @@ router.put('/waiters/:waiter_id', async (req, res) => {
   }
 });
 
-/**
- * Delete a waiter
- * @route DELETE /api/waiters/:waiter_id
- */
-router.delete('/waiters/:waiter_id', async (req, res) => {
+
+  //Delete a waiter
+
+router.delete('/:waiter_id', async (req, res) => {
   try {
     const { waiter_id } = req.params;
 
@@ -84,11 +81,10 @@ router.delete('/waiters/:waiter_id', async (req, res) => {
   }
 });
 
-/**
- * Fetch all waiters
- * @route GET /api/waiters
- */
-router.get('/waiters.json', async (req, res) => {
+
+  // Fetch all waiters
+
+router.get('/.json', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM waiters');
     res.json(result.rows);
@@ -98,11 +94,10 @@ router.get('/waiters.json', async (req, res) => {
   }
 });
 
-/**
- * Fetch a waiter by ID
- * @route GET /api/waiters/:waiter_id
- */
-router.get('/waiters/:waiter_id.json', async (req, res) => {
+
+  // Fetch a waiter by ID
+
+router.get('/:waiter_id.json', async (req, res) => {
   try {
     const { waiter_id } = req.params;
 

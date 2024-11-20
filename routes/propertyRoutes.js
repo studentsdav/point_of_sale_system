@@ -3,7 +3,7 @@ const pool = require('../db'); // Database connection
 const router = express.Router();
 
 // CREATE Property
-router.post('/properties', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const {
       property_id,
@@ -49,7 +49,7 @@ router.post('/properties', async (req, res) => {
 });
 
 // GET All Properties
-router.get('/properties.json', async (req, res) => {
+router.get('/.json', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM properties ORDER BY created_at DESC');
     res.json(result.rows);
@@ -60,7 +60,7 @@ router.get('/properties.json', async (req, res) => {
 });
 
 // GET Property by ID
-router.get('/properties/:property_id', async (req, res) => {
+router.get('/:property_id', async (req, res) => {
   try {
     const { property_id } = req.params;
 
@@ -80,7 +80,7 @@ router.get('/properties/:property_id', async (req, res) => {
 });
 
 // UPDATE Property
-router.put('/properties/:property_id', async (req, res) => {
+router.put('/:property_id', async (req, res) => {
   try {
     const { property_id } = req.params;
     const {
@@ -130,7 +130,7 @@ router.put('/properties/:property_id', async (req, res) => {
 });
 
 // DELETE Property
-router.delete('/properties/:property_id', async (req, res) => {
+router.delete('/:property_id', async (req, res) => {
   try {
     const { property_id } = req.params;
 

@@ -4,7 +4,7 @@ const pool = require('../db');  // Replace with your database connection file
 const router = express.Router();
 
 // CREATE - Insert a new user permission
-router.post('/user-permissions', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const {
       user_id,
@@ -30,7 +30,7 @@ router.post('/user-permissions', async (req, res) => {
 });
 
 // READ - Get all user permissions
-router.get('/user-permissions.json', async (req, res) => {
+router.get('/.json', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM user_permissions');
     res.json(result.rows);
@@ -41,7 +41,7 @@ router.get('/user-permissions.json', async (req, res) => {
 });
 
 // READ - Get a user permission by ID
-router.get('/user-permissions/:id.json', async (req, res) => {
+router.get('/:id.json', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('SELECT * FROM user_permissions WHERE id = $1', [id]);
@@ -57,7 +57,7 @@ router.get('/user-permissions/:id.json', async (req, res) => {
 });
 
 // UPDATE - Edit a user permission by ID
-router.put('/user-permissions/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -87,7 +87,7 @@ router.put('/user-permissions/:id', async (req, res) => {
 });
 
 // DELETE - Remove a user permission by ID
-router.delete('/user-permissions/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('DELETE FROM user_permissions WHERE id = $1 RETURNING *', [id]);

@@ -4,7 +4,7 @@ const pool = require('../db'); // Replace with your database connection file
 const router = express.Router();
 
 // GET all printer configurations
-router.get('/printers', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM printer_config');
     res.status(200).json(result.rows);
@@ -14,7 +14,7 @@ router.get('/printers', async (req, res) => {
 });
 
 // GET printer configuration by ID
-router.get('/printer/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   const printerId = req.params.id;
   try {
     const result = await pool.query('SELECT * FROM printer_config WHERE id = $1', [printerId]);
@@ -28,7 +28,7 @@ router.get('/printer/:id', async (req, res) => {
 });
 
 // POST (Create) new printer configuration
-router.post('/printer', async (req, res) => {
+router.post('/', async (req, res) => {
   const { printer_number, printer_name, printer_type, ip_address, port, status, property_id, outlet_name } = req.body;
 
   try {
@@ -44,7 +44,7 @@ router.post('/printer', async (req, res) => {
 });
 
 // PUT (Update) printer configuration by ID
-router.put('/printer/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
   const printerId = req.params.id;
   const { printer_number, printer_name, printer_type, ip_address, port, status, property_id, outlet_name } = req.body;
 
@@ -67,7 +67,7 @@ router.put('/printer/:id', async (req, res) => {
 });
 
 // DELETE printer configuration by ID
-router.delete('/printer/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const printerId = req.params.id;
   try {
     const result = await pool.query('DELETE FROM printer_config WHERE id = $1 RETURNING id', [printerId]);

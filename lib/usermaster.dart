@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:point_of_sale_system/backend/user_api_service.dart';
 
 class UserProfilePage extends StatefulWidget {
   @override
@@ -9,7 +11,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController _dobController = TextEditingController();
   TextEditingController _joinDateController = TextEditingController();
-
+ UserApiService userApiService = UserApiService(baseUrl:'http://localhost:3000/api');
   String? _username;
   String? _fullName;
   DateTime _dob = DateTime(1990, 1, 1);
@@ -18,10 +20,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
   String? _password;
   String? _selectedOutlet;
   DateTime _joinDate = DateTime.now();
-  String _status = "Active";
+  bool _status = true;
   String? _role;
-  List<String> outlets = ["Outlet 1", "Outlet 2", "Outlet 3"];
+  List<String> outlets = [];
   String? selectedStatus;
+  List<dynamic> properties = [];
+  List<dynamic> outletConfigurations = [];
 
   // Simulated list of existing usernames
   List<String> existingUsernames = ["john_doe", "jane_doe", "admin"];
@@ -29,8 +33,48 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   void toggleStatus() {
     setState(() {
-      _status = (_status == "Active") ? "Inactive" : "Active";
+      _status = (_status == "Active") ? true : false;
     });
+  }
+
+  @override
+void initState() {
+  super.initState();
+  _loadDataFromHive();
+  fetchUsers();
+}
+
+
+ // Load data from Hive
+Future<void> _loadDataFromHive() async {
+  var box = await Hive.openBox('appData');
+  
+  // Retrieve the data
+  var properties = box.get('properties');
+  var outletConfigurations = box.get('outletConfigurations');
+  
+  // Check if outletConfigurations is not null
+  if (outletConfigurations != null) {
+    // Extract the outlet names into the outlets list
+    List<String> outletslist = [];
+    for (var outlet in outletConfigurations) {
+      if (outlet['outlet_name'] != null) {
+        outletslist.add(outlet['outlet_name'].toString());
+      }
+    }
+
+    setState(() {
+      this.properties = properties ?? [];
+      this.outletConfigurations = outletConfigurations ?? [];
+      this.outlets = outletslist; // Set the outlets list
+    });
+  }
+}
+
+
+  List<Map<String, dynamic>> _parseJson(String jsonString) {
+    // You can use a JSON decoder if you save the data in a valid JSON format
+    return jsonString.isNotEmpty ? List<Map<String, dynamic>>.from([]) : [];
   }
 
   Future<void> _selectDate(BuildContext context, bool isDob) async {
@@ -54,46 +98,102 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
-  void saveUserProfile() {
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() {
-        users.add({
-          "username": _username,
-          "fullName": _fullName,
-          "dob": _dob,
-          "mobileNo": _mobileNo,
-          "email": _email,
-          "joinDate": _joinDate,
-          "status": _status,
-          "selectedOutlet": _selectedOutlet,
-          "role": _role,
+Future<void> fetchUsers() async {
+  try {
+    final fetchedUsers = await userApiService.getUsers();
+    setState(() {
+      users = fetchedUsers;
+    });
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error fetching users: $e')),
+    );
+  }
+}
+
+Future<void> saveUserProfile() async {
+  if (_formKey.currentState?.validate() ?? false) {
+    final newUser = {
+      "username": _username,
+      "password_hash": _password, // Hash the password in production
+      "dob": _dob.toIso8601String(),
+      "mobile": _mobileNo,
+      "email": _email,
+      "outlet": _selectedOutlet,
+      "property_id": properties[0]['property_id'], // Add property ID logic if applicable
+      "role": _role,
+      "status": _status,
+      "full_name":_fullName,
+      "join_date":_joinDate.toIso8601String()
+    };
+
+    try {
+      if (users.any((user) => user['username'] == _username)) {
+        final userId = users.firstWhere((user) => user['username'] == _username)['user_id'];
+        final updatedUser = await userApiService.updateUser(userId.toString(), newUser);
+        setState(() {
+          final index = users.indexWhere((user) => user['user_id'] == userId);
+          users[index] = updatedUser;
         });
-      });
+      } else {
+        final createdUser = await userApiService.addUser(newUser);
+        setState(() {
+          users.add(createdUser);
+        });
+      }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("User Profile Saved")));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
     }
   }
+}
 
-  void editProfile(int index) {
-    // Populate the form fields with the selected user's data
-    setState(() {
-      _username = users[index]['username'];
-      _fullName = users[index]['fullName'];
-      _dob = users[index]['dob'];
-      _mobileNo = users[index]['mobileNo'];
-      _email = users[index]['email'];
-      _joinDate = users[index]['joinDate'];
-      _status = users[index]['status'];
-      _selectedOutlet = users[index]['selectedOutlet'];
-      _role = users[index]['role'];
-    });
-  }
-
-  void deleteProfile(int index) {
+void deleteProfile(int index) async {
+  final userId = users[index]['user_id'];
+  try {
+    await userApiService.deleteUser(userId.toString());
     setState(() {
       users.removeAt(index);
     });
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("User Profile Deleted")));
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error deleting user: $e")));
   }
+}
+
+
+
+
+void editProfile(int index) {
+  setState(() {
+    _username = users[index]['username'];
+    _fullName = users[index]['full_name'];
+    
+    // Parse 'dob' if it's not already a DateTime object
+    _dob = users[index]['dob'] is String 
+        ? DateTime.parse(users[index]['dob']) 
+        : users[index]['dob'];
+    
+    _mobileNo = users[index]['mobile'];
+    _email = users[index]['email'];
+    
+    // Parse 'join_date' if it's not already a DateTime object
+    _joinDate = users[index]['join_date'] is String 
+        ? DateTime.parse(users[index]['join_date']) 
+        : users[index]['join_date'];
+    
+    _status = users[index]['status'];
+    _selectedOutlet = users[index]['outlet'];
+    _role = users[index]['role'];
+
+    // Update text controllers
+    _dobController.text = "${_dob.toLocal()}".split(' ')[0];
+    _joinDateController.text = "${_joinDate.toLocal()}".split(' ')[0];
+  });
+}
+
+
+ 
 
   String? _usernameValidator(String? value) {
     if (value == null || value.isEmpty) {
@@ -291,7 +391,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   margin: EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
                     title: Text(user['username'] ?? ''),
-                    subtitle: Text(user['fullName'] ?? ''),
+                    subtitle: Text(user['full_name'] ?? ''),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -315,14 +415,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('Username: ${user['username']}'),
-                                Text('Full Name: ${user['fullName']}'),
-                                Text('Date of Birth: ${user['dob']}'),
-                                Text('Mobile No: ${user['mobileNo']}'),
+                                Text('Full Name: ${user['full_name']}'),
+                                Text('Date of Birth: ${_formatDate(user['dob'])}'),
+                                Text('Mobile No: ${user['mobile']}'),
                                 Text('Email: ${user['email']}'),
-                                Text('Join Date: ${user['joinDate']}'),
+                                Text('Join Date: ${ _formatDate(user['join_date'])}'),
                                 Text('Status: ${user['status']}'),
                                 Text('Role: ${user['role']}'),
-                                Text('Outlet: ${user['selectedOutlet']}'),
+                                Text('Outlet: ${user['outlet']}'),
                               ],
                             ),
                             actions: [
@@ -345,4 +445,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
       ),
     );
   }
+}
+
+String _formatDate(dynamic date) {
+  try {
+    if (date is String) {
+      final parsedDate = DateTime.parse(date).toLocal(); // Convert to local timezone
+      return "${parsedDate.day}-${parsedDate.month}-${parsedDate.year}";
+    } else if (date is DateTime) {
+      return "${date.toLocal().day}-${date.toLocal().month}-${date.toLocal().year}";
+    }
+  } catch (e) {
+    print("Error formatting date: $e");
+  }
+  return "Invalid Date";
 }

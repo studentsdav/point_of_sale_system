@@ -4,7 +4,7 @@ const pool = require('../db'); // Replace with your database connection file
 const router = express.Router();
 
 // GET all table configurations
-router.get('/table-configs', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM table_configurations');
     res.status(200).json(result.rows);
@@ -14,7 +14,7 @@ router.get('/table-configs', async (req, res) => {
 });
 
 // GET table configuration by ID
-router.get('/table-config/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   const tableId = req.params.id;
   try {
     const result = await pool.query('SELECT * FROM table_configurations WHERE id = $1', [tableId]);
@@ -28,7 +28,7 @@ router.get('/table-config/:id', async (req, res) => {
 });
 
 // POST (Create) new table configuration
-router.post('/table-config', async (req, res) => {
+router.post('/', async (req, res) => {
   const { table_no, seats, status, outlet_name, property_id, category, location } = req.body;
 
   try {
@@ -44,7 +44,7 @@ router.post('/table-config', async (req, res) => {
 });
 
 // PUT (Update) table configuration by ID
-router.put('/table-config/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
   const tableId = req.params.id;
   const { table_no, seats, status, outlet_name, category, location } = req.body;
 
@@ -67,7 +67,7 @@ router.put('/table-config/:id', async (req, res) => {
 });
 
 // DELETE table configuration by ID
-router.delete('/table-config/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const tableId = req.params.id;
   try {
     const result = await pool.query('DELETE FROM table_configurations WHERE id = $1 RETURNING id', [tableId]);

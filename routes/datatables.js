@@ -23,6 +23,7 @@
 // CREATE TABLE user_login (
 //     user_id SERIAL PRIMARY KEY,              -- Auto-incrementing unique ID
 //     username VARCHAR(50) UNIQUE NOT NULL,    -- Unique username (mandatory)
+//     full_name VARCHAR(255) NOT NULL,         -- Full Name 
 //     password_hash TEXT NOT NULL,             -- Password hash (mandatory)
 //     dob DATE,                                -- Date of birth
 //     mobile VARCHAR(15),                      -- Mobile number (optional)
@@ -306,7 +307,7 @@
 
 // CREATE TABLE table_configurations (
 //     id SERIAL PRIMARY KEY,               -- Unique ID for the table configuration
-//     table_no INT NOT NULL,               -- Table number (unique for the outlet)
+//     table_no VARCHAR(255) NOT NULL,      -- Table number (unique for the outlet)
 //     seats INT DEFAULT 2,                 -- Number of seats at the table
 //     status VARCHAR(50) DEFAULT 'Vacant', -- Status of the table (Vacant, Occupied, Reserved, etc.)
 //     outlet_name VARCHAR(255) NOT NULL,   -- Name of the outlet to associate the table with a specific outlet
@@ -353,6 +354,9 @@
 
 // ALTER TABLE outlet_configurations 
 // ADD CONSTRAINT unique_property_id UNIQUE (property_id);
+
+// ALTER TABLE user_login
+// ADD COLUMN full_name VARCHAR(255);
 
 
 // git remote add origin https://github.com/FlutterX88/point_of_sale_system.git

@@ -8,7 +8,7 @@ class TableApiService {
 
   // Get request: Fetch table configurations
   Future<List<Map<String, dynamic>>> getTableConfigs() async {
-    final response = await http.get(Uri.parse('$apiUrl/table-configs'));
+    final response = await http.get(Uri.parse('$apiUrl/table-config'));
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
       return data.map((table) => table as Map<String, dynamic>).toList();

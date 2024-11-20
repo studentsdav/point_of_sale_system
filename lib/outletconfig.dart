@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:point_of_sale_system/backend/outlet_service.dart';
 
 class OutletConfigurationForm extends StatefulWidget {
@@ -23,9 +25,67 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
 
 @override
 void initState(){
+  _initializeHive();
   _loadData();
   super.initState();
 }
+
+
+
+Future<void> _loadDatanew() async {
+  try {
+    final fetchedProperties = await apiService.getAllProperties();
+    final fetchedOutletConfigurations = await apiService.fetchOutletConfigurations();
+
+    // If your data is in JSON format, you should decode it first:
+    // List<dynamic> jsonData = json.decode(fetchedProperties);
+    List<Map<String, dynamic>> propertiesList = List<Map<String, dynamic>>.from(fetchedProperties);
+    List<Map<String, dynamic>> outletConfigurationsList = List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
+
+    // Save data to SharedPreferences
+    await _saveDataToHive(propertiesList, outletConfigurationsList);
+
+    setState(() {
+      properties = propertiesList;
+      outletConfigurations = outletConfigurationsList;
+      isLoading = false;
+    });
+  } catch (error) {
+    setState(() {
+      isLoading = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to load data: $error')),
+    );
+  }
+}
+
+   // Method to save fetched data into SharedPreferences
+Future<void> _initializeHive() async {
+  final appDocumentDir = await getApplicationDocumentsDirectory();
+  Hive.init(appDocumentDir.path);
+}
+
+Future<void> _saveDataToHive(
+    List<Map<String, dynamic>> properties,
+    List<Map<String, dynamic>> outletConfigurations) async {
+  var box = await Hive.openBox('appData');
+  
+  // Store the data in a Hive box
+  await box.put('properties', properties);
+  await box.put('outletConfigurations', outletConfigurations);
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
   Future<void> _loadData() async {
@@ -68,6 +128,7 @@ void _saveOutletConfiguration() async {
       await apiService.createOutletConfiguration(outletData);
       setState(() {
         isSaved = true;
+        _loadDatanew() ;
         _loadData();
       });
       ScaffoldMessenger.of(context).showSnackBar(

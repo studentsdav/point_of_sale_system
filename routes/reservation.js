@@ -2,7 +2,7 @@ const express = require('express');
 const pool = require('../db'); // Database connection
 const router = express.Router();
 // GET all reservations
-router.get('/reservations', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM reservation');
     res.status(200).json(result.rows);
@@ -12,7 +12,7 @@ router.get('/reservations', async (req, res) => {
 });
 
 // GET reservation by ID
-router.get('/reservation/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   const reservationId = req.params.id;
   try {
     const result = await pool.query('SELECT * FROM reservation WHERE id = $1', [reservationId]);
@@ -26,7 +26,7 @@ router.get('/reservation/:id', async (req, res) => {
 });
 
 // POST (Create) new reservation
-router.post('/reservation', async (req, res) => {
+router.post('/', async (req, res) => {
   const { guest_name, contact_info, address, email, reservation_date, reservation_time, table_no, status, remark, property_id, outlet_name } = req.body;
 
   try {
@@ -42,7 +42,7 @@ router.post('/reservation', async (req, res) => {
 });
 
 // PUT (Update) reservation by ID
-router.put('/reservation/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
   const reservationId = req.params.id;
   const { guest_name, contact_info, address, email, reservation_date, reservation_time, table_no, status, remark, property_id, outlet_name } = req.body;
 
@@ -65,7 +65,7 @@ router.put('/reservation/:id', async (req, res) => {
 });
 
 // DELETE reservation by ID
-router.delete('/reservation/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const reservationId = req.params.id;
   try {
     const result = await pool.query('DELETE FROM reservation WHERE id = $1 RETURNING id', [reservationId]);

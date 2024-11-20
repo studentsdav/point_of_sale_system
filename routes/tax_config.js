@@ -3,7 +3,7 @@ const pool = require('../db'); // Replace with your database connection file
 
 const router = express.Router();
 // 1. GET Tax Configuration by ID
-router.get('/tax-configurations/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -20,7 +20,7 @@ router.get('/tax-configurations/:id', async (req, res) => {
 });
 
 // 2. GET All Tax Configurations
-router.get('/tax-configurations', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM tax_config');
     res.status(200).json(result.rows);
@@ -30,7 +30,7 @@ router.get('/tax-configurations', async (req, res) => {
 });
 
 // 3. POST Create a New Tax Configuration
-router.post('/tax-configurations', async (req, res) => {
+router.post('/', async (req, res) => {
   const {
     tax_name,
     tax_percentage,
@@ -55,7 +55,7 @@ router.post('/tax-configurations', async (req, res) => {
 });
 
 // 4. PUT Update an Existing Tax Configuration
-router.put('/tax-configurations/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const {
     tax_name,
@@ -87,7 +87,7 @@ router.put('/tax-configurations/:id', async (req, res) => {
 });
 
 // 5. DELETE a Tax Configuration
-router.delete('/tax-configurations/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
 
   try {

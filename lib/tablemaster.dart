@@ -8,7 +8,7 @@ class TableManagementPage extends StatefulWidget {
 }
 
 class _TableManagementPageState extends State<TableManagementPage> {
-  int? _tableNo;
+  String? _tableNo;
   int _seats = 2;
   String _status = 'Vacant'; // default status
   String? _selectedOutlet; // Outlet selection
@@ -174,7 +174,7 @@ Future<void> _loadDataFromHive() async {
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
                   setState(() {
-                    _tableNo = int.tryParse(value);
+                    _tableNo = value;
                   });
                 },
                 validator: (value) {

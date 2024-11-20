@@ -4,7 +4,7 @@ const pool = require('../db'); // Your database connection module
 const router = express.Router();
 
 // GET all service charge configurations
-router.get('/servicecharge-configs', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM servicecharge_config');
     res.status(200).json(result.rows);
@@ -14,7 +14,7 @@ router.get('/servicecharge-configs', async (req, res) => {
 });
 
 // GET service charge configuration by ID
-router.get('/servicecharge-config/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   const configId = req.params.id;
   try {
     const result = await pool.query('SELECT * FROM servicecharge_config WHERE id = $1', [configId]);
@@ -28,7 +28,7 @@ router.get('/servicecharge-config/:id', async (req, res) => {
 });
 
 // POST (Create) new service charge configuration
-router.post('/servicecharge-config', async (req, res) => {
+router.post('/', async (req, res) => {
   const { property_id, service_charge, min_amount, max_amount, apply_on, status, start_date } = req.body;
 
   try {
@@ -44,7 +44,7 @@ router.post('/servicecharge-config', async (req, res) => {
 });
 
 // PUT (Update) service charge configuration by ID
-router.put('/servicecharge-config/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
   const configId = req.params.id;
   const { property_id, service_charge, min_amount, max_amount, apply_on, status, start_date } = req.body;
 
@@ -67,7 +67,7 @@ router.put('/servicecharge-config/:id', async (req, res) => {
 });
 
 // DELETE service charge configuration by ID
-router.delete('/servicecharge-config/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const configId = req.params.id;
   try {
     const result = await pool.query('DELETE FROM servicecharge_config WHERE id = $1 RETURNING id', [configId]);
