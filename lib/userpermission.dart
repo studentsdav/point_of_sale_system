@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:point_of_sale_system/backend/user_permissions.dart';
 
 class UserPermissionForm extends StatefulWidget {
   @override
@@ -7,17 +9,14 @@ class UserPermissionForm extends StatefulWidget {
 
 class _UserPermissionFormState extends State<UserPermissionForm> {
   final _formKey = GlobalKey<FormState>();
+  UserPermissionApiService userPermissionApiService = UserPermissionApiService(baseUrl: 'http://localhost:3000/api');
   List<String> selectedOutlets = [];
   List<String> selectedUsers = []; // List to store selected user ids
   Map<String, List<String>> userPermissions = {}; // Map to store user permissions
   
   // Example lists for outlets, users, and permissions
-  List<Map<String, dynamic>> users = [
-    {'id': '1', 'name': 'User 1'},
-    {'id': '2', 'name': 'User 2'},
-    {'id': '3', 'name': 'User 3'},
-  ];
-
+  List<Map<String, dynamic>> users = [ ];
+String? selectedOutlet; // Only one outlet can be selected
   List<Map<String, dynamic>> permissions = [  
     {'name': 'View Sales', 'description': 'Allows viewing sales reports'},
     {'name': 'Generate KOT', 'description': 'Allows generating KOT'},
@@ -28,9 +27,163 @@ class _UserPermissionFormState extends State<UserPermissionForm> {
     {'name': 'Reports', 'description': 'Access to reports generation'},
     // Add more permissions here
   ];
+String? selectedOutletName;
+List<String> savedOutlets = [];
+List<Map<String, dynamic>> outlets = [];
+Map<String, List<String>> savedUserPermissions = {}; // Store saved user permissions
 
-  List<String> savedOutlets = [];
-  Map<String, List<String>> savedUserPermissions = {}; // Store saved user permissions
+  List<dynamic> properties = [];
+  List<dynamic> outletConfigurations = [];
+@override
+void initState(){
+  super.initState();
+  _loadDataFromHive();
+  _loadPermissionsFromDatabase();
+}
+
+
+ // Load data from Hive
+Future<void> _loadDataFromHive() async {
+  var box = await Hive.openBox('appData');
+    var boxnew = await Hive.openBox('appDatauser');
+  
+  // Retrieve the data
+  var userlist = boxnew.get('users');
+  var properties = box.get('properties');
+  var outletConfigurations = box.get('outletConfigurations');
+  List<Map<String, dynamic>> userslist = [];
+  // Check if outletConfigurations is not null
+  if (outletConfigurations != null) {
+
+    // Extract the outlet names into the outlets list
+  List<Map<String, dynamic>> outletslist = [];
+    for (var outlet in outletConfigurations) {
+      if (outlet['outlet_name'] != null) {
+        outletslist.add({ 'outlet_id': outlet['id'].toString(),
+          'outlet_name': outlet['outlet_name'].toString(),
+        });
+      }
+    }
+     if (userlist != null) {
+    for (var user in userlist) {
+      if (user['username'] != null && user['user_id'] != null) {
+        userslist.add({
+          'username': user['username'].toString(),
+          'user_id': user['user_id'].toString(),
+        });
+      }
+    }
+  }
+    setState(() {
+      this.properties = properties ?? [];
+      this.outletConfigurations = outletConfigurations ?? [];
+      this.outlets = outletslist; // Set the outlets list
+      this.users= userslist;
+    });
+  }
+
+
+
+}
+
+ void _savePermissionsToDatabase() async {
+ 
+
+    try {
+      for (var userId in selectedUsers) {
+        for (var permission in userPermissions[userId] ?? []) {
+          Map<String, dynamic> data = {
+            'user_id': userId,
+            'outlet_id': selectedOutlet,
+            'outlet_name': selectedOutletName,
+            'permission_name': permission,
+          };
+          await userPermissionApiService.createUserPermission(data);
+        }
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Permissions saved to database successfully')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving permissions: $error')),
+      );
+    }
+  }
+
+void _loadPermissionsFromDatabase() async {
+  try {
+    // Ensure a single outlet is selected before loading data
+    if (selectedOutlets.isEmpty) {
+      throw Exception('No outlet selected. Please select an outlet first.');
+    }
+    String selectedOutlet = selectedOutlets.first; // Get the single selected outlet
+
+    // Fetch permissions from the API
+    List<Map<String, dynamic>> permissions = await userPermissionApiService.getAllUserPermissions();
+
+    setState(() {
+      savedUserPermissions = {}; // Clear previous data
+      savedOutlets = [];         // Clear previously saved outlets
+
+      for (var permission in permissions) {
+        // Check if the permission matches the selected outlet
+        if (permission['outlet_id'].toString() == selectedOutlet) {
+          String userId = permission['user_id'].toString();
+
+          // Initialize permissions for this user if not already
+          savedUserPermissions[userId] ??= [];
+          userPermissions[userId] ??= [];
+
+          // Add permission if not already added
+          if (!savedUserPermissions[userId]!.contains(permission['permission_name'])) {
+            savedUserPermissions[userId]!.add(permission['permission_name']);
+          }
+
+          // Synchronize with userPermissions
+          if (!userPermissions[userId]!.contains(permission['permission_name'])) {
+            userPermissions[userId]!.add(permission['permission_name']);
+          }
+        }
+      }
+
+      // Update saved outlets to match the selected one
+      savedOutlets = [selectedOutlet];
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Permissions loaded successfully for the selected outlet')),
+    );
+  } catch (error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error loading permissions: $error')),
+    );
+  }
+}
+
+
+
+void _updatePermission(String id, Map<String, dynamic> updatedData) async {
+  try {
+    await userPermissionApiService.updateUserPermission(id, updatedData);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Permission updated successfully')));
+  } catch (error) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error updating permission: $error')));
+  }
+}
+
+
+void _deletePermission(String id) async {
+  try {
+    await userPermissionApiService.deleteUserPermission(id);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Permission deleted successfully')));
+    _loadPermissionsFromDatabase(); // Reload the data
+  } catch (error) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error deleting permission: $error')));
+  }
+}
+
   
   void _savePermissions() {
     if (_formKey.currentState!.validate() && selectedUsers.isNotEmpty && selectedOutlets.isNotEmpty) {
@@ -40,6 +193,7 @@ class _UserPermissionFormState extends State<UserPermissionForm> {
       setState(() {
         savedOutlets = List.from(selectedOutlets);
         savedUserPermissions = Map.from(userPermissions);
+        _savePermissionsToDatabase();
       });
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Permissions saved successfully')));
@@ -62,33 +216,40 @@ class _UserPermissionFormState extends State<UserPermissionForm> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Multiple outlets selection
-                    DropdownButtonFormField<String>(
-                      decoration: InputDecoration(labelText: 'Select Outlet(s)', icon: Icon(Icons.store)),
-                      items: ['Outlet 1', 'Outlet 2', 'Outlet 3'].map((outlet) {
-                        return DropdownMenuItem<String>(
-                          value: outlet,
-                          child: Text(outlet),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() => selectedOutlets.add(value!)),
-                      validator: (value) => value == null ? 'Please select an outlet' : null,
-                      hint: Text('Select multiple outlets'),
-                      isExpanded: true,
-                    ),
+DropdownButtonFormField<String>(
+  decoration: InputDecoration(labelText: 'Select Outlet', icon: Icon(Icons.store)),
+  items: outlets.map((outlet) {
+    return DropdownMenuItem<String>(
+      value: outlet['outlet_id'],
+      child: Text(outlet['outlet_name']),
+    );
+  }).toList(),
+  value: selectedOutlets.isNotEmpty ? selectedOutlets.first : null,
+  onChanged: (value) {
+    setState(() {
+      selectedOutlets = [value!]; // Allow only one outlet at a time
+    });
+  },
+  validator: (value) => value == null ? 'Please select an outlet' : null,
+  hint: Text('Select an outlet'),
+  isExpanded: true,
+),
+
                     SizedBox(height: 16),
                     // Multi-select Users
                     Text('Select Users', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ...users.map((user) {
                       return CheckboxListTile(
-                        title: Text(user['name']),
-                        value: selectedUsers.contains(user['id']),
+                        title: Text(user['username']),
+                        value: selectedUsers.contains(user['user_id']),
                         onChanged: (isSelected) {
                           setState(() {
+                          
                             if (isSelected!) {
-                              selectedUsers.add(user['id']);
+                                 _loadPermissionsFromDatabase(); // Reload permissions for the selected outlet
+                              selectedUsers.add(user['user_id']);
                             } else {
-                              selectedUsers.remove(user['id']);
+                              selectedUsers.remove(user['user_id']);
                             }
                           });
                         },
@@ -97,34 +258,51 @@ class _UserPermissionFormState extends State<UserPermissionForm> {
                     SizedBox(height: 16),
                     // Individual Permissions for each user
                     Text('Select Permissions for each User', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    ...selectedUsers.map((userId) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Permissions for ${users.firstWhere((user) => user['id'] == userId)['name']}'),
-                          ...permissions.map((permission) {
-                            return CheckboxListTile(
-                              title: Text(permission['name']),
-                              subtitle: Text(permission['description']),
-                              value: userPermissions[userId]?.contains(permission['name']) ?? false,
-                              onChanged: (isSelected) {
-                                setState(() {
-                                  if (isSelected!) {
-                                    if (userPermissions[userId] == null) {
-                                      userPermissions[userId] = [];
-                                    }
-                                    userPermissions[userId]?.add(permission['name']);
-                                  } else {
-                                    userPermissions[userId]?.remove(permission['name']);
-                                  }
-                                });
-                              },
-                            );
-                          }).toList(),
-                          SizedBox(height: 16),
-                        ],
-                      );
-                    }).toList(),
+             ...selectedUsers.map((userId) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Permissions for ${users.firstWhere((user) => user['user_id'] == userId)['username']}',
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      Row(
+        children: [
+          ElevatedButton(
+            onPressed: () {
+            setState(() {
+  // Assign all permissions for the user with explicit type casting
+  userPermissions[userId] = permissions.map((perm) => perm['name'].toString()).toList();
+});
+
+            },
+            child: Text('Assign All Permissions'),
+          ),
+        ],
+      ),
+      SizedBox(height: 8),
+      ...permissions.map((permission) {
+        return CheckboxListTile(
+          title: Text(permission['name']),
+          subtitle: Text(permission['description']),
+          value: userPermissions[userId]?.contains(permission['name']) ?? false,
+          onChanged: (isSelected) {
+            setState(() {
+              if (isSelected!) {
+                userPermissions[userId] ??= [];
+                userPermissions[userId]?.add(permission['name']);
+              } else {
+                userPermissions[userId]?.remove(permission['name']);
+              }
+            });
+          },
+        );
+      }).toList(),
+      SizedBox(height: 16),
+    ],
+  );
+}).toList(),
+
                     SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _savePermissions,
@@ -140,7 +318,7 @@ if (savedUserPermissions.isNotEmpty)
     crossAxisAlignment: CrossAxisAlignment.start,
     children: savedUserPermissions.entries.map((entry) {
       String userId = entry.key;
-      String userName = users.firstWhere((user) => user['id'] == userId)['name'];
+      String userName = users.firstWhere((user) => user['user_id'] == userId)['username'];
       List<String> permissions = entry.value;
 
       return Card(

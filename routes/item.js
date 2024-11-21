@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
       `INSERT INTO items 
        (item_code, item_name, category, brand, subcategory_id, outlet, description, price, tax_rate, discount_percentage, 
         stock_quantity, reorder_level, is_active, on_sale, happy_hour, discountable, property_id) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) 
        RETURNING *`,
       [
         item_code,

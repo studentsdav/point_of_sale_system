@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:point_of_sale_system/backend/user_api_service.dart';
 
 class UserProfilePage extends StatefulWidget {
@@ -40,8 +41,23 @@ class _UserProfilePageState extends State<UserProfilePage> {
   @override
 void initState() {
   super.initState();
+  _initializeHive();
   _loadDataFromHive();
   fetchUsers();
+}
+
+
+   // Method to save fetched data into SharedPreferences
+Future<void> _initializeHive() async {
+  final appDocumentDir = await getApplicationDocumentsDirectory();
+  Hive.init(appDocumentDir.path);
+}
+
+Future<void> _saveDataToHive(
+    List<Map<String, dynamic>> userdata) async {
+  var box = await Hive.openBox('appDatauser');
+  // Store the data in a Hive box
+  await box.put('users', userdata);
 }
 
 
@@ -104,6 +120,7 @@ Future<void> fetchUsers() async {
     setState(() {
       users = fetchedUsers;
     });
+   await _saveDataToHive(users);
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Error fetching users: $e')),

@@ -11,15 +11,15 @@ router.post('/', async (req, res) => {
       outlet_id,
       outlet_name,
       permission_name,
-      property_id
+      property_id,username
     } = req.body;
 
     const result = await pool.query(
       `INSERT INTO user_permissions 
-       (user_id, outlet_id, outlet_name, permission_name, property_id) 
-       VALUES ($1, $2, $3, $4, $5) 
+       (user_id, outlet_id, outlet_name, permission_name, property_id,username) 
+       VALUES ($1, $2, $3, $4, $5, $6) 
        RETURNING *`,
-      [user_id, outlet_id, outlet_name, permission_name, property_id]
+      [user_id, outlet_id, outlet_name, permission_name, property_id,username]
     );
 
     res.status(201).json(result.rows[0]);
@@ -65,15 +65,15 @@ router.put('/:id', async (req, res) => {
       outlet_id,
       outlet_name,
       permission_name,
-      property_id
+      property_id,username
     } = req.body;
 
     const result = await pool.query(
       `UPDATE user_permissions 
-       SET user_id = $1, outlet_id = $2, outlet_name = $3, permission_name = $4, property_id = $5, updated_at = NOW() 
-       WHERE id = $6 
+       SET user_id = $1, outlet_id = $2, outlet_name = $3, permission_name = $4, property_id = $5, username = $6, updated_at = NOW() 
+       WHERE id = $7
        RETURNING *`,
-      [user_id, outlet_id, outlet_name, permission_name, property_id, id]
+      [user_id, outlet_id, outlet_name, permission_name, property_id, username, id]
     );
 
     if (result.rows.length === 0) {

@@ -1,6 +1,8 @@
 // //node server.js
 // //nodemon server.js
 
+//create database databasename
+
 // CREATE TABLE properties (
 //     sno SERIAL PRIMARY KEY,                     -- Auto-incremented serial number
 //     property_id VARCHAR(50) UNIQUE NOT NULL,    -- Property ID (WIPLdatemonthyearhoursec format)
@@ -150,7 +152,7 @@
 //     item_name VARCHAR(255) NOT NULL,            -- Item name
 //     category VARCHAR(100),                      -- Category of the item
 //     brand VARCHAR(100),                         -- Brand of the item
-//     subcategory_id INT,                         -- Subcategory associated with the item (Foreign Key)
+//     subcategory_id VARCHAR(50),                 -- Subcategory associated with the item
 //     outlet VARCHAR(100),                        -- Outlet associated with the item
 //     description TEXT,                           -- Description of the item
 //     price DECIMAL(10, 2),                       -- Price of the item
@@ -336,6 +338,7 @@
 // CREATE TABLE user_permissions (
 //     id SERIAL PRIMARY KEY,  -- Unique ID for the user permission entry
 //     user_id INT NOT NULL,  -- User ID (referring to the user_id in the user_login table)
+//     username varchar(50) NOT NULL -- User name (referring to the username in the user_login table)
 //     outlet_id INT NOT NULL,  -- The ID of the outlet (referencing outlet_configurations.outlet_id)
 //     outlet_name VARCHAR(255) NOT NULL,  -- The Name of the outlet (referencing outlet_configurations.outlet_name)
 //     permission_name VARCHAR(255) NOT NULL,  -- The name of the permission (e.g., 'View Sales', 'Generate KOT')

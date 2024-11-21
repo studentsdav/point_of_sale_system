@@ -15,6 +15,13 @@ module.exports = pool;
 //start server//
 //node server.js
 //nodemon server.js
+// # Create a tag for the release (replace "v1.0.0" with your release version)
+// git tag -a v1.0.0 -m "First stable release"
+
+// # Push the tag to GitHub
+// git push origin v1.0.0
+
+
 
 
 // for new project repo///

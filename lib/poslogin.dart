@@ -32,7 +32,7 @@ class POSLoginScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Logo
-                  Image.asset('assets/images/Res_Logo.jpg', width: 100), // Add your logo in the assets folder
+                  Image.asset('assets/images/Logo.jpg', width: 100), // Add your logo in the assets folder
                   const SizedBox(height: 20),
 
                   // Financial Year Dropdown

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class WaiterConfigurationForm extends StatefulWidget {
   @override
@@ -14,14 +15,47 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
   String status = 'active';
   bool isSaved = false;
 
-  final List<String> outlets = [
-    'Outlet 1',
-    'Outlet 2',
-    'Outlet 3',
-  ]; // List of outlets to select from
 
   // List to store saved waiter configurations
   final List<Map<String, dynamic>> waiters = [];
+  
+ List<String> outlets = []; // List of outlets to select from
+  List<dynamic> properties = [];
+  List<dynamic> outletConfigurations = [];
+@override
+void initState(){
+  super.initState();
+  _loadDataFromHive();
+}
+
+
+ // Load data from Hive
+Future<void> _loadDataFromHive() async {
+  var box = await Hive.openBox('appData');
+  
+  // Retrieve the data
+  var properties = box.get('properties');
+  var outletConfigurations = box.get('outletConfigurations');
+  
+  // Check if outletConfigurations is not null
+  if (outletConfigurations != null) {
+    // Extract the outlet names into the outlets list
+    List<String> outletslist = [];
+    for (var outlet in outletConfigurations) {
+      if (outlet['outlet_name'] != null) {
+        outletslist.add(outlet['outlet_name'].toString());
+      }
+    }
+
+    setState(() {
+      this.properties = properties ?? [];
+      this.outletConfigurations = outletConfigurations ?? [];
+      this.outlets = outletslist; // Set the outlets list
+    });
+  }
+}
+
+
 
   void _saveWaiterConfiguration() {
     if (_formKey.currentState!.validate() && selectedOutlet != null && hireDate != null) {
