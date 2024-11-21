@@ -22,7 +22,7 @@ Before you begin, ensure you have the following installed:
 
 This is a **Point of Sale (POS)** system designed specifically for restaurants. It allows businesses to efficiently manage customer orders, generate bills, track inventory, and maintain customer records. This software simplifies the process of managing orders and billing in a restaurant, making the work of staff and managers easier and more organized.
 
-## Features
+## Features:
 
 - **Order Management**: Quickly take and manage customer orders.
 - **Billing System**: Automatically generate detailed bills for customers.
