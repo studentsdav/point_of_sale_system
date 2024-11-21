@@ -38,7 +38,7 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
     bool _happyHour = false;
   bool _discountable = true;
   int _qtyDebitFromSale = 1;
- bool _isLoading = true;
+ bool _isLoading = true;  //
  List<String> outlets = []; // List of outlets to select from
   List<dynamic> properties = [];
   List<dynamic> outletConfigurations = [];
