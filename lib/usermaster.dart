@@ -12,7 +12,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController _dobController = TextEditingController();
   TextEditingController _joinDateController = TextEditingController();
- UserApiService userApiService = UserApiService(baseUrl:'http://localhost:3000/api');
+  UserApiService userApiService =
+      UserApiService(baseUrl: 'http://localhost:3000/api');
   String? _username;
   String? _fullName;
   DateTime _dob = DateTime(1990, 1, 1);
@@ -39,54 +40,50 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   @override
-void initState() {
-  super.initState();
-  _initializeHive();
-  _loadDataFromHive();
-  fetchUsers();
-}
-
-
-   // Method to save fetched data into SharedPreferences
-Future<void> _initializeHive() async {
-  final appDocumentDir = await getApplicationDocumentsDirectory();
-  Hive.init(appDocumentDir.path);
-}
-
-Future<void> _saveDataToHive(
-    List<Map<String, dynamic>> userdata) async {
-  var box = await Hive.openBox('appDatauser');
-  // Store the data in a Hive box
-  await box.put('users', userdata);
-}
-
-
- // Load data from Hive
-Future<void> _loadDataFromHive() async {
-  var box = await Hive.openBox('appData');
-  
-  // Retrieve the data
-  var properties = box.get('properties');
-  var outletConfigurations = box.get('outletConfigurations');
-  
-  // Check if outletConfigurations is not null
-  if (outletConfigurations != null) {
-    // Extract the outlet names into the outlets list
-    List<String> outletslist = [];
-    for (var outlet in outletConfigurations) {
-      if (outlet['outlet_name'] != null) {
-        outletslist.add(outlet['outlet_name'].toString());
-      }
-    }
-
-    setState(() {
-      this.properties = properties ?? [];
-      this.outletConfigurations = outletConfigurations ?? [];
-      this.outlets = outletslist; // Set the outlets list
-    });
+  void initState() {
+    super.initState();
+    _initializeHive();
+    _loadDataFromHive();
+    fetchUsers();
   }
-}
 
+  // Method to save fetched data into SharedPreferences
+  Future<void> _initializeHive() async {
+    final appDocumentDir = await getApplicationDocumentsDirectory();
+    Hive.init(appDocumentDir.path);
+  }
+
+  Future<void> _saveDataToHive(List<Map<String, dynamic>> userdata) async {
+    var box = await Hive.openBox('appDatauser');
+    // Store the data in a Hive box
+    await box.put('users', userdata);
+  }
+
+  // Load data from Hive
+  Future<void> _loadDataFromHive() async {
+    var box = await Hive.openBox('appData');
+
+    // Retrieve the data
+    var properties = box.get('properties');
+    var outletConfigurations = box.get('outletConfigurations');
+
+    // Check if outletConfigurations is not null
+    if (outletConfigurations != null) {
+      // Extract the outlet names into the outlets list
+      List<String> outletslist = [];
+      for (var outlet in outletConfigurations) {
+        if (outlet['outlet_name'] != null) {
+          outletslist.add(outlet['outlet_name'].toString());
+        }
+      }
+
+      setState(() {
+        this.properties = properties ?? [];
+        this.outletConfigurations = outletConfigurations ?? [];
+        this.outlets = outletslist; // Set the outlets list
+      });
+    }
+  }
 
   List<Map<String, dynamic>> _parseJson(String jsonString) {
     // You can use a JSON decoder if you save the data in a valid JSON format
@@ -114,103 +111,104 @@ Future<void> _loadDataFromHive() async {
     }
   }
 
-Future<void> fetchUsers() async {
-  try {
-    final fetchedUsers = await userApiService.getUsers();
-    setState(() {
-      users = fetchedUsers;
-    });
-   await _saveDataToHive(users);
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error fetching users: $e')),
-    );
-  }
-}
-
-Future<void> saveUserProfile() async {
-  if (_formKey.currentState?.validate() ?? false) {
-    final newUser = {
-      "username": _username,
-      "password_hash": _password, // Hash the password in production
-      "dob": _dob.toIso8601String(),
-      "mobile": _mobileNo,
-      "email": _email,
-      "outlet": _selectedOutlet,
-      "property_id": properties[0]['property_id'], // Add property ID logic if applicable
-      "role": _role,
-      "status": _status,
-      "full_name":_fullName,
-      "join_date":_joinDate.toIso8601String()
-    };
-
+  Future<void> fetchUsers() async {
     try {
-      if (users.any((user) => user['username'] == _username)) {
-        final userId = users.firstWhere((user) => user['username'] == _username)['user_id'];
-        final updatedUser = await userApiService.updateUser(userId.toString(), newUser);
-        setState(() {
-          final index = users.indexWhere((user) => user['user_id'] == userId);
-          users[index] = updatedUser;
-        });
-      } else {
-        final createdUser = await userApiService.addUser(newUser);
-        setState(() {
-          users.add(createdUser);
-        });
-      }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("User Profile Saved")));
+      final fetchedUsers = await userApiService.getUsers();
+      setState(() {
+        users = fetchedUsers;
+      });
+      await _saveDataToHive(users);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching users: $e')),
+      );
     }
   }
-}
 
-void deleteProfile(int index) async {
-  final userId = users[index]['user_id'];
-  try {
-    await userApiService.deleteUser(userId.toString());
-    setState(() {
-      users.removeAt(index);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("User Profile Deleted")));
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error deleting user: $e")));
+  Future<void> saveUserProfile() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      final newUser = {
+        "username": _username,
+        "password_hash": _password, // Hash the password in production
+        "dob": _dob.toIso8601String(),
+        "mobile": _mobileNo,
+        "email": _email,
+        "outlet": _selectedOutlet,
+        "property_id": properties[0]
+            ['property_id'], // Add property ID logic if applicable
+        "role": _role,
+        "status": _status,
+        "full_name": _fullName,
+        "join_date": _joinDate.toIso8601String()
+      };
+
+      try {
+        if (users.any((user) => user['username'] == _username)) {
+          final userId = users
+              .firstWhere((user) => user['username'] == _username)['user_id'];
+          final updatedUser =
+              await userApiService.updateUser(userId.toString(), newUser);
+          setState(() {
+            final index = users.indexWhere((user) => user['user_id'] == userId);
+            users[index] = updatedUser;
+          });
+        } else {
+          final createdUser = await userApiService.addUser(newUser);
+          setState(() {
+            users.add(createdUser);
+          });
+        }
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("User Profile Saved")));
+      } catch (e) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Error: $e")));
+      }
+    }
   }
-}
 
+  void deleteProfile(int index) async {
+    final userId = users[index]['user_id'];
+    try {
+      await userApiService.deleteUser(userId.toString());
+      setState(() {
+        users.removeAt(index);
+      });
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("User Profile Deleted")));
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error deleting user: $e")));
+    }
+  }
 
+  void editProfile(int index) {
+    setState(() {
+      _username = users[index]['username'];
+      _fullName = users[index]['full_name'];
 
+      // Parse 'dob' if it's not already a DateTime object
+      _dob = users[index]['dob'] is String
+          ? DateTime.parse(users[index]['dob'])
+          : users[index]['dob'];
 
-void editProfile(int index) {
-  setState(() {
-    _username = users[index]['username'];
-    _fullName = users[index]['full_name'];
-    
-    // Parse 'dob' if it's not already a DateTime object
-    _dob = users[index]['dob'] is String 
-        ? DateTime.parse(users[index]['dob']) 
-        : users[index]['dob'];
-    
-    _mobileNo = users[index]['mobile'];
-    _email = users[index]['email'];
-    
-    // Parse 'join_date' if it's not already a DateTime object
-    _joinDate = users[index]['join_date'] is String 
-        ? DateTime.parse(users[index]['join_date']) 
-        : users[index]['join_date'];
-    
-    _status = users[index]['status'];
-    _selectedOutlet = users[index]['outlet'];
-    _role = users[index]['role'];
+      _mobileNo = users[index]['mobile'];
+      _email = users[index]['email'];
 
-    // Update text controllers
-    _dobController.text = "${_dob.toLocal()}".split(' ')[0];
-    _joinDateController.text = "${_joinDate.toLocal()}".split(' ')[0];
-  });
-}
+      // Parse 'join_date' if it's not already a DateTime object
+      _joinDate = users[index]['join_date'] is String
+          ? DateTime.parse(users[index]['join_date'])
+          : users[index]['join_date'];
 
+      _status = users[index]['status'];
+      _selectedOutlet = users[index]['outlet'];
+      _role = users[index]['role'];
 
- 
+      // Update text controllers
+      _dobController.text = "${_dob.toLocal()}".split(' ')[0];
+      _joinDateController.text = "${_joinDate.toLocal()}".split(' ')[0];
+    });
+  }
 
   String? _usernameValidator(String? value) {
     if (value == null || value.isEmpty) {
@@ -246,7 +244,7 @@ void editProfile(int index) {
                       });
                     },
                     items: outlets.map((outlet) {
-                      return DropdownMenuItem<String>( 
+                      return DropdownMenuItem<String>(
                         value: outlet,
                         child: Text(outlet),
                       );
@@ -262,7 +260,7 @@ void editProfile(int index) {
                       return null;
                     },
                   ),
-                                SizedBox(height: 8),
+                  SizedBox(height: 8),
                   TextFormField(
                     decoration: InputDecoration(
                       labelText: 'Username',
@@ -271,7 +269,8 @@ void editProfile(int index) {
                     onChanged: (value) {
                       _username = value;
                     },
-                    validator: _usernameValidator,  // Use the username validator here
+                    validator:
+                        _usernameValidator, // Use the username validator here
                   ),
                   SizedBox(height: 8),
                   TextFormField(
@@ -334,7 +333,6 @@ void editProfile(int index) {
                       return null;
                     },
                   ),
-          
                   SizedBox(height: 8),
                   TextFormField(
                     decoration: InputDecoration(
@@ -373,8 +371,8 @@ void editProfile(int index) {
                         _role = newValue;
                       });
                     },
-                    items: ['admin', 'user', 'manager', 'super admin']
-                        .map((role) {
+                    items:
+                        ['admin', 'user', 'manager', 'super admin'].map((role) {
                       return DropdownMenuItem<String>(
                         value: role,
                         child: Text(role),
@@ -429,15 +427,18 @@ void editProfile(int index) {
                         builder: (context) {
                           return AlertDialog(
                             title: Text('User Details'),
-                            content: Column(mainAxisSize: MainAxisSize.min,
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('Username: ${user['username']}'),
                                 Text('Full Name: ${user['full_name']}'),
-                                Text('Date of Birth: ${_formatDate(user['dob'])}'),
+                                Text(
+                                    'Date of Birth: ${_formatDate(user['dob'])}'),
                                 Text('Mobile No: ${user['mobile']}'),
                                 Text('Email: ${user['email']}'),
-                                Text('Join Date: ${ _formatDate(user['join_date'])}'),
+                                Text(
+                                    'Join Date: ${_formatDate(user['join_date'])}'),
                                 Text('Status: ${user['status']}'),
                                 Text('Role: ${user['role']}'),
                                 Text('Outlet: ${user['outlet']}'),
@@ -468,7 +469,8 @@ void editProfile(int index) {
 String _formatDate(dynamic date) {
   try {
     if (date is String) {
-      final parsedDate = DateTime.parse(date).toLocal(); // Convert to local timezone
+      final parsedDate =
+          DateTime.parse(date).toLocal(); // Convert to local timezone
       return "${parsedDate.day}-${parsedDate.month}-${parsedDate.year}";
     } else if (date is DateTime) {
       return "${date.toLocal().day}-${date.toLocal().month}-${date.toLocal().year}";

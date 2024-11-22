@@ -13,11 +13,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _contactController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
   bool _otpSent = false;
   bool _otpVerified = false;
-  
+
   // Function to simulate sending OTP to the email or mobile number
   void _sendOtp() {
     if (_formKey.currentState!.validate()) {
@@ -49,7 +50,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   // Function to handle password reset submission
   void _resetPassword() {
-    if (_formKey.currentState!.validate() && _passwordController.text == _confirmPasswordController.text) {
+    if (_formKey.currentState!.validate() &&
+        _passwordController.text == _confirmPasswordController.text) {
       // Handle password reset logic here (e.g., API call)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Password reset successfully')),
@@ -127,7 +129,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         onPressed: _sendOtp,
                         icon: const Icon(Icons.send),
                         label: const Text('Send OTP'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple),
                       ),
                     ),
                   ),
@@ -153,8 +156,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       child: ElevatedButton.icon(
                         onPressed: _verifyOtp,
                         icon: const Icon(Icons.check),
-                        label: const Text('Verify OTP',style: TextStyle(color: Colors.white),),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+                        label: const Text(
+                          'Verify OTP',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple),
                       ),
                     ),
                   ),
@@ -197,8 +204,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           child: ElevatedButton.icon(
                             onPressed: _resetPassword,
                             icon: const Icon(Icons.save),
-                            label: const Text('Submit', style: TextStyle(color: Colors.white),),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+                            label: const Text(
+                              'Submit',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.purple),
                           ),
                         ),
                       ),

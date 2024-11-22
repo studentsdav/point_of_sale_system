@@ -7,7 +7,8 @@ class WaiterApiService {
   WaiterApiService({required this.baseUrl});
 
   // 1. Create a new waiter
-  Future<Map<String, dynamic>> createWaiter(Map<String, dynamic> waiterData) async {
+  Future<Map<String, dynamic>> createWaiter(
+      Map<String, dynamic> waiterData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/waiters'),
       headers: {'Content-Type': 'application/json'},

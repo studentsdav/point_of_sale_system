@@ -25,7 +25,7 @@
 // CREATE TABLE user_login (
 //     user_id SERIAL PRIMARY KEY,              -- Auto-incrementing unique ID
 //     username VARCHAR(50) UNIQUE NOT NULL,    -- Unique username (mandatory)
-//     full_name VARCHAR(255) NOT NULL,         -- Full Name 
+//     full_name VARCHAR(255) NOT NULL,         -- Full Name
 //     password_hash TEXT NOT NULL,             -- Password hash (mandatory)
 //     dob DATE,                                -- Date of birth
 //     mobile VARCHAR(15),                      -- Mobile number (optional)
@@ -349,13 +349,13 @@
 // );
 
 
-// ALTER TABLE outlet_configurations 
+// ALTER TABLE outlet_configurations
 // ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
 
-// ALTER TABLE outlet_configurations 
+// ALTER TABLE outlet_configurations
 // ALTER COLUMN property_id SET NOT NULL;
 
-// ALTER TABLE outlet_configurations 
+// ALTER TABLE outlet_configurations
 // ADD CONSTRAINT unique_property_id UNIQUE (property_id);
 
 // ALTER TABLE user_login

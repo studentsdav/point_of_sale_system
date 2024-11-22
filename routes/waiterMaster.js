@@ -4,7 +4,7 @@ const pool = require('../db'); // Database connection module
 const router = express.Router();
 
 
-  // Create a new waiter
+// Create a new waiter
 
 router.post('/', async (req, res) => {
   try {
@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
 });
 
 
- //Update an existing waiter
+//Update an existing waiter
 
 router.put('/:waiter_id', async (req, res) => {
   try {
@@ -63,7 +63,7 @@ router.put('/:waiter_id', async (req, res) => {
 });
 
 
-  //Delete a waiter
+//Delete a waiter
 
 router.delete('/:waiter_id', async (req, res) => {
   try {
@@ -82,7 +82,7 @@ router.delete('/:waiter_id', async (req, res) => {
 });
 
 
-  // Fetch all waiters
+// Fetch all waiters
 
 router.get('/', async (req, res) => {
   try {
@@ -95,7 +95,7 @@ router.get('/', async (req, res) => {
 });
 
 
-  // Fetch a waiter by ID
+// Fetch a waiter by ID
 
 router.get('/:waiter_id', async (req, res) => {
   try {

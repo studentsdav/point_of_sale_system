@@ -7,7 +7,8 @@ class CategoryApiService {
   CategoryApiService({required this.baseUrl});
 
   // 1. Create a new category
-  Future<Map<String, dynamic>> createCategory(Map<String, dynamic> categoryData) async {
+  Future<Map<String, dynamic>> createCategory(
+      Map<String, dynamic> categoryData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/categories'),
       headers: {'Content-Type': 'application/json'},
@@ -30,7 +31,8 @@ class CategoryApiService {
 
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
-      return List<Map<String, dynamic>>.from(data); // Returning all categories as a list
+      return List<Map<String, dynamic>>.from(
+          data); // Returning all categories as a list
     } else {
       throw Exception('Failed to fetch categories: ${response.body}');
     }
@@ -53,7 +55,8 @@ class CategoryApiService {
   }
 
   // 4. Update category by ID
-  Future<Map<String, dynamic>> updateCategory(String categoryId, Map<String, dynamic> categoryData) async {
+  Future<Map<String, dynamic>> updateCategory(
+      String categoryId, Map<String, dynamic> categoryData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/categories/$categoryId'),
       headers: {'Content-Type': 'application/json'},

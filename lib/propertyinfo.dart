@@ -10,8 +10,7 @@ class PropertyConfigurationForm extends StatefulWidget {
       _PropertyConfigurationFormState();
 }
 
-class _PropertyConfigurationFormState
-    extends State<PropertyConfigurationForm> {
+class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
   final _formKey = GlobalKey<FormState>();
   String propertyName = '';
   String address = '';
@@ -33,56 +32,56 @@ class _PropertyConfigurationFormState
     _fetchProperties();
   }
 
-  final OutletApiService apiService = OutletApiService(baseUrl: 'http://localhost:3000/api');
+  final OutletApiService apiService =
+      OutletApiService(baseUrl: 'http://localhost:3000/api');
   List<dynamic> properties = [];
   List<dynamic> outletConfigurations = [];
 
+  Future<void> _loadData() async {
+    try {
+      final fetchedProperties = await apiService.getAllProperties();
+      final fetchedOutletConfigurations =
+          await apiService.fetchOutletConfigurations();
 
-Future<void> _loadData() async {
-  try {
-    final fetchedProperties = await apiService.getAllProperties();
-    final fetchedOutletConfigurations = await apiService.fetchOutletConfigurations();
+      // If your data is in JSON format, you should decode it first:
+      // List<dynamic> jsonData = json.decode(fetchedProperties);
+      List<Map<String, dynamic>> propertiesList =
+          List<Map<String, dynamic>>.from(fetchedProperties);
+      List<Map<String, dynamic>> outletConfigurationsList =
+          List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
 
-    // If your data is in JSON format, you should decode it first:
-    // List<dynamic> jsonData = json.decode(fetchedProperties);
-    List<Map<String, dynamic>> propertiesList = List<Map<String, dynamic>>.from(fetchedProperties);
-    List<Map<String, dynamic>> outletConfigurationsList = List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
+      // Save data to SharedPreferences
+      await _saveDataToHive(propertiesList, outletConfigurationsList);
 
-    // Save data to SharedPreferences
-    await _saveDataToHive(propertiesList, outletConfigurationsList);
-
-    setState(() {
-      properties = propertiesList;
-      outletConfigurations = outletConfigurationsList;
-      isLoading = false;
-    });
-  } catch (error) {
-    setState(() {
-      isLoading = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load data: $error')),
-    );
+      setState(() {
+        properties = propertiesList;
+        outletConfigurations = outletConfigurationsList;
+        isLoading = false;
+      });
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load data: $error')),
+      );
+    }
   }
-}
 
-   // Method to save fetched data into SharedPreferences
-Future<void> _initializeHive() async {
-  final appDocumentDir = await getApplicationDocumentsDirectory();
-  Hive.init(appDocumentDir.path);
-}
+  // Method to save fetched data into SharedPreferences
+  Future<void> _initializeHive() async {
+    final appDocumentDir = await getApplicationDocumentsDirectory();
+    Hive.init(appDocumentDir.path);
+  }
 
-Future<void> _saveDataToHive(
-    List<Map<String, dynamic>> properties,
-    List<Map<String, dynamic>> outletConfigurations) async {
-  var box = await Hive.openBox('appData');
-  
-  // Store the data in a Hive box
-  await box.put('properties', properties);
-  await box.put('outletConfigurations', outletConfigurations);
-}
+  Future<void> _saveDataToHive(List<Map<String, dynamic>> properties,
+      List<Map<String, dynamic>> outletConfigurations) async {
+    var box = await Hive.openBox('appData');
 
-
+    // Store the data in a Hive box
+    await box.put('properties', properties);
+    await box.put('outletConfigurations', outletConfigurations);
+  }
 
   // Fetch properties from the service
   Future<void> _fetchProperties() async {
@@ -90,7 +89,8 @@ Future<void> _saveDataToHive(
       isLoading = true;
     });
     try {
-      final properties = await _propertyService.getAllProperties(); // Fetch the list of properties
+      final properties = await _propertyService
+          .getAllProperties(); // Fetch the list of properties
       setState(() {
         propertyList = properties; // Store the fetched properties in the list
         isLoading = false;
@@ -104,8 +104,8 @@ Future<void> _saveDataToHive(
       });
     }
   }
-  
-    void _savePropertyConfiguration() {
+
+  void _savePropertyConfiguration() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       setState(() {
@@ -135,7 +135,8 @@ Future<void> _saveDataToHive(
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Property created: ${response['property_name']}')),
+        SnackBar(
+            content: Text('Property created: ${response['property_name']}')),
       );
       _fetchProperties();
       _loadData();
@@ -154,7 +155,6 @@ Future<void> _saveDataToHive(
 
   void _editPropertyConfiguration(Map<String, dynamic> property) {
     setState(() {
-           
       propertyId = property['property_id'].toString();
       propertyName = property['property_name'];
       address = property['address'];
@@ -205,7 +205,6 @@ Future<void> _saveDataToHive(
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -289,25 +288,23 @@ Future<void> _saveDataToHive(
                     children: [
                       ElevatedButton(
                         onPressed: () {
-              if(isSaved){
-                _updateProperty();
-              }else{
-          _savePropertyConfiguration();
-              }
-             
-                        
+                          if (isSaved) {
+                            _updateProperty();
+                          } else {
+                            _savePropertyConfiguration();
+                          }
                         },
-                        child: Text(isSaved ? 'Update Property' : 'Save Property'),
+                        child:
+                            Text(isSaved ? 'Update Property' : 'Save Property'),
                       ),
                       const SizedBox(width: 10),
-              
-                        ElevatedButton(
-                          onPressed: () => setState(() {
-                            isSaved = false;
-                            _formKey.currentState!.reset();
-                          }),
-                          child: Text('Clear'),
-                        ),
+                      ElevatedButton(
+                        onPressed: () => setState(() {
+                          isSaved = false;
+                          _formKey.currentState!.reset();
+                        }),
+                        child: Text('Clear'),
+                      ),
                     ],
                   ),
                 ],
@@ -328,18 +325,18 @@ Future<void> _saveDataToHive(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () {
-                            setState(() {
-                               isSaved = false;
-                                 _formKey.currentState!.reset();
-                            });
-                            _editPropertyConfiguration(property);
-                 } ),
+                            icon: Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () {
+                              setState(() {
+                                isSaved = false;
+                                _formKey.currentState!.reset();
+                              });
+                              _editPropertyConfiguration(property);
+                            }),
                         IconButton(
                           icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () =>
-                              _deleteProperty( int.parse(  property['property_id'])),
+                          onPressed: () => _deleteProperty(
+                              int.parse(property['property_id'])),
                         ),
                       ],
                     ),

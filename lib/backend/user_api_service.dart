@@ -30,7 +30,8 @@ class UserApiService {
     }
   }
 
-  Future<Map<String, dynamic>> updateUser(String userId, Map<String, dynamic> user) async {
+  Future<Map<String, dynamic>> updateUser(
+      String userId, Map<String, dynamic> user) async {
     final response = await http.put(
       Uri.parse('$baseUrl/users/$userId'),
       headers: {'Content-Type': 'application/json'},

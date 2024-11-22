@@ -38,7 +38,8 @@ class SubcategoryApiService {
   }
 
   // 3. Create a new subcategory
-  Future<Map<String, dynamic>> createSubcategory(Map<String, dynamic> subcategoryData) async {
+  Future<Map<String, dynamic>> createSubcategory(
+      Map<String, dynamic> subcategoryData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/subcategories'),
       headers: {'Content-Type': 'application/json'},
@@ -46,14 +47,16 @@ class SubcategoryApiService {
     );
 
     if (response.statusCode == 201) {
-      return json.decode(response.body); // Returning the created subcategory data
+      return json
+          .decode(response.body); // Returning the created subcategory data
     } else {
       throw Exception('Failed to create subcategory: ${response.body}');
     }
   }
 
   // 4. Update a subcategory by ID
-  Future<Map<String, dynamic>> updateSubcategory(String subCategoryId, Map<String, dynamic> subcategoryData) async {
+  Future<Map<String, dynamic>> updateSubcategory(
+      String subCategoryId, Map<String, dynamic> subcategoryData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/subcategories/$subCategoryId'),
       headers: {'Content-Type': 'application/json'},
@@ -61,7 +64,8 @@ class SubcategoryApiService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body); // Returning the updated subcategory data
+      return json
+          .decode(response.body); // Returning the updated subcategory data
     } else if (response.statusCode == 404) {
       throw Exception('Subcategory not found');
     } else {

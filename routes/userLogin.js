@@ -15,7 +15,7 @@ router.post('/', async (req, res) => {
       outlet,
       property_id,
       role,
-      status,full_name,join_date
+      status, full_name, join_date
     } = req.body;
 
     const result = await pool.query(
@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
        (username, password_hash, dob, mobile, email, outlet, property_id, role, status,full_name,join_date) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
        RETURNING *`,
-      [username, password_hash, dob, mobile, email, outlet, property_id, role, status, full_name,join_date]
+      [username, password_hash, dob, mobile, email, outlet, property_id, role, status, full_name, join_date]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -72,7 +72,7 @@ router.put('/:id', async (req, res) => {
       outlet,
       property_id,
       role,
-      status,full_name, join_date
+      status, full_name, join_date
     } = req.body;
 
     const result = await pool.query(
@@ -81,7 +81,7 @@ router.put('/:id', async (req, res) => {
            property_id = $7, role = $8, status = $9, full_name = $10, join_date = $11, updated_at = NOW() 
        WHERE user_id = $12
        RETURNING *`,
-      [username, password_hash, dob, mobile, email, outlet, property_id, role, status, full_name,join_date, id]
+      [username, password_hash, dob, mobile, email, outlet, property_id, role, status, full_name, join_date, id]
     );
 
     if (result.rows.length === 0) {

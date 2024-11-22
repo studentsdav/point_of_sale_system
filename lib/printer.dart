@@ -66,7 +66,8 @@ class _PrinterConfigFormState extends State<PrinterConfigForm> {
         status = 'active';
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Printer configuration saved')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Printer configuration saved')));
     }
   }
 
@@ -75,7 +76,8 @@ class _PrinterConfigFormState extends State<PrinterConfigForm> {
     setState(() {
       printers.removeAt(index);
     });
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Printer deleted')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('Printer deleted')));
   }
 
   @override
@@ -182,7 +184,8 @@ class _PrinterConfigFormState extends State<PrinterConfigForm> {
                     ),
                     child: ListTile(
                       leading: Icon(Icons.print, color: Colors.blue),
-                      title: Text('Printer ${printers[index]['printerNumber']} - ${printers[index]['printerName']}'),
+                      title: Text(
+                          'Printer ${printers[index]['printerNumber']} - ${printers[index]['printerName']}'),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

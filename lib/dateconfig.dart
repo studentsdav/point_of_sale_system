@@ -35,7 +35,8 @@ class _SoftwareDateConfigFormState extends State<SoftwareDateConfigForm> {
 
       // Show confirmation message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Software Date configuration saved successfully')),
+        SnackBar(
+            content: Text('Software Date configuration saved successfully')),
       );
 
       // Reset form after saving
@@ -177,7 +178,8 @@ class _SoftwareDateConfigFormState extends State<SoftwareDateConfigForm> {
                             children: [
                               _buildLogInfoRow('Outlet:', config['outlet']!),
                               _buildLogInfoRow('Date:', config['date']!),
-                              _buildLogInfoRow('Description:', config['description']!),
+                              _buildLogInfoRow(
+                                  'Description:', config['description']!),
                             ],
                           ),
                         ),

@@ -24,6 +24,7 @@ import 'package:point_of_sale_system/taxconfig.dart';
 import 'package:point_of_sale_system/usermaster.dart';
 import 'package:point_of_sale_system/userpermission.dart';
 import 'package:point_of_sale_system/waiters.dart';
+
 enum ChartType { line, bar, pie }
 
 class AdminDashboard extends StatefulWidget {
@@ -34,72 +35,77 @@ class AdminDashboard extends StatefulWidget {
 class _AdminDashboard extends State {
   String selectedOutlet = 'Restaurant';
   final List<String> outlets = ['BISTRO', 'SUNSET'];
- ChartType chartType = ChartType.line;
-   final OutletApiService apiService = OutletApiService(baseUrl: 'http://localhost:3000/api');
+  ChartType chartType = ChartType.line;
+  final OutletApiService apiService =
+      OutletApiService(baseUrl: 'http://localhost:3000/api');
   List<dynamic> properties = [];
   List<dynamic> outletConfigurations = [];
   bool isLoading = true;
 
-Future<void> _loadData() async {
-  try {
-    final fetchedProperties = await apiService.getAllProperties();
-    final fetchedOutletConfigurations = await apiService.fetchOutletConfigurations();
+  Future<void> _loadData() async {
+    try {
+      final fetchedProperties = await apiService.getAllProperties();
+      final fetchedOutletConfigurations =
+          await apiService.fetchOutletConfigurations();
 
-    // If your data is in JSON format, you should decode it first:
-    // List<dynamic> jsonData = json.decode(fetchedProperties);
-    List<Map<String, dynamic>> propertiesList = List<Map<String, dynamic>>.from(fetchedProperties);
-    List<Map<String, dynamic>> outletConfigurationsList = List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
+      // If your data is in JSON format, you should decode it first:
+      // List<dynamic> jsonData = json.decode(fetchedProperties);
+      List<Map<String, dynamic>> propertiesList =
+          List<Map<String, dynamic>>.from(fetchedProperties);
+      List<Map<String, dynamic>> outletConfigurationsList =
+          List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
 
-    // Save data to SharedPreferences
-    await _saveDataToHive(propertiesList, outletConfigurationsList);
+      // Save data to SharedPreferences
+      await _saveDataToHive(propertiesList, outletConfigurationsList);
 
-    setState(() {
-      properties = propertiesList;
-      outletConfigurations = outletConfigurationsList;
-      isLoading = false;
-    });
-  } catch (error) {
-    setState(() {
-      isLoading = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load data: $error')),
-    );
+      setState(() {
+        properties = propertiesList;
+        outletConfigurations = outletConfigurationsList;
+        isLoading = false;
+      });
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load data: $error')),
+      );
+    }
   }
-}
 
-   // Method to save fetched data into SharedPreferences
-Future<void> _initializeHive() async {
-  final appDocumentDir = await getApplicationDocumentsDirectory();
-  Hive.init(appDocumentDir.path);
-}
+  // Method to save fetched data into SharedPreferences
+  Future<void> _initializeHive() async {
+    final appDocumentDir = await getApplicationDocumentsDirectory();
+    Hive.init(appDocumentDir.path);
+  }
 
-Future<void> _saveDataToHive(
-    List<Map<String, dynamic>> properties,
-    List<Map<String, dynamic>> outletConfigurations) async {
-  var box = await Hive.openBox('appData');
-  
-  // Store the data in a Hive box
-  await box.put('properties', properties);
-  await box.put('outletConfigurations', outletConfigurations);
-}
+  Future<void> _saveDataToHive(List<Map<String, dynamic>> properties,
+      List<Map<String, dynamic>> outletConfigurations) async {
+    var box = await Hive.openBox('appData');
 
+    // Store the data in a Hive box
+    await box.put('properties', properties);
+    await box.put('outletConfigurations', outletConfigurations);
+  }
 
-@override
- void initState(){
-  _initializeHive();
-_loadData();
- super.initState();
- }
+  @override
+  void initState() {
+    _initializeHive();
+    _loadData();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Admin Dashboard'),
         actions: [
-          IconButton(onPressed: (){
-          Navigator.pop(context);
-          }, icon: Icon(Icons.arrow_forward_ios))
+          IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: Icon(Icons.arrow_forward_ios))
         ],
       ),
       drawer: buildDrawer(context),
@@ -144,7 +150,6 @@ _loadData();
                     }).toList(),
                   ),
                 ),
-             
 
                 buildUserProfileSection(),
                 SizedBox(height: 16),
@@ -154,21 +159,22 @@ _loadData();
                 SizedBox(height: 16),
                 buildTopCategorySales(),
                 SizedBox(height: 16),
-                     Padding(
-                       padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
-                       child: buildChartTypeSelection(),
-                     ),
-                buildGrowthSection(
-                    'Daily Sales Growth', generateDailySalesData(7), 'Day'), // Added Daily Graph
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
+                  child: buildChartTypeSelection(),
+                ),
+                buildGrowthSection('Daily Sales Growth',
+                    generateDailySalesData(7), 'Day'), // Added Daily Graph
                 SizedBox(height: 16),
-                buildGrowthSection(
-                    'Weekly Sales Growth', generateWeeklySalesData(4),'Week'), // Added Weekly Graph
+                buildGrowthSection('Weekly Sales Growth',
+                    generateWeeklySalesData(4), 'Week'), // Added Weekly Graph
                 SizedBox(height: 16),
-                                   // Chart type selection
-           
+                // Chart type selection
+
                 buildGrowthSection(
-                    'Monthly Sales Growth', generateMonthlySalesData(6),'Month'), // Added Monthly Graph
-                    
+                    'Monthly Sales Growth',
+                    generateMonthlySalesData(6),
+                    'Month'), // Added Monthly Graph
               ],
             ),
           ),
@@ -186,7 +192,7 @@ _loadData();
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
+          padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
           child: Row(
             children: [
               Radio<ChartType>(
@@ -226,7 +232,6 @@ _loadData();
     );
   }
 
-
   Widget buildDrawer(BuildContext context) {
     return Drawer(
       child: ListView(
@@ -264,55 +269,84 @@ _loadData();
     );
   }
 
- Widget buildDrawerItem(IconData icon, String title) {
+  Widget buildDrawerItem(IconData icon, String title) {
     return ListTile(
       leading: Icon(icon),
       title: Text(title),
       onTap: () {
         if (title == 'Table Master') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => TableManagementPage()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => TableManagementPage()));
         } else if (title == 'Bill Config') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => BillConfigurationForm()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => BillConfigurationForm()));
         } else if (title == 'Category') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => CategoryForm()));
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => CategoryForm()));
         } else if (title == 'Date Config') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => SoftwareDateConfigForm()));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => SoftwareDateConfigForm()));
         } else if (title == 'Password Reset') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => ForgotPasswordScreen()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => ForgotPasswordScreen()));
         } else if (title == 'Happy Hour Config') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => HappyHourConfigForm()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => HappyHourConfigForm()));
         } else if (title == 'Inventory') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => StockEntryForm()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => StockEntryForm()));
         } else if (title == 'Item Master') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => ItemMasterScreen()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => ItemMasterScreen()));
         } else if (title == 'KOT Config') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => KOTConfigForm()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => KOTConfigForm()));
         } else if (title == 'Add Module') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => OutletConfigurationForm()));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => OutletConfigurationForm()));
         } else if (title == 'Printer Config') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => PrinterConfigForm()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => PrinterConfigForm()));
         } else if (title == 'Property Config') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => PropertyConfigurationForm()));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => PropertyConfigurationForm()));
         } else if (title == 'Reservation') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => ReservationFormScreen()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => ReservationFormScreen()));
         } else if (title == 'Service Charge Config') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => ServiceChargeConfigForm()));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => ServiceChargeConfigForm()));
         } else if (title == 'Tax Config') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => TaxConfigForm()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => TaxConfigForm()));
         } else if (title == 'User Master') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => UserProfilePage()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => UserProfilePage()));
         } else if (title == 'User Permission') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => UserPermissionForm()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => UserPermissionForm()));
         } else if (title == 'Waiter Master') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => WaiterConfigurationForm()));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => WaiterConfigurationForm()));
         } else if (title == 'Guest Info Add') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => GuestRegistrationScreen()));
-        } 
-
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => GuestRegistrationScreen()));
+        }
       },
     );
   }
-
 
   Widget buildUserProfileSection() {
     return Card(
@@ -331,7 +365,9 @@ _loadData();
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Admin Profile', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('Admin Profile',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 SizedBox(height: 4),
                 Text('Active: 2 hours ago', style: TextStyle(fontSize: 14)),
               ],
@@ -352,7 +388,8 @@ _loadData();
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Active Time Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text('Active Time Details',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           SizedBox(height: 8),
           Table(
             columnWidths: {
@@ -364,7 +401,8 @@ _loadData();
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text('User', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text('User',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -397,29 +435,42 @@ _loadData();
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(child: buildSalesCard('Today\'s Sale', Icons.today, '₹ 12,000', Colors.green, '15%')),
+            Expanded(
+                child: buildSalesCard('Today\'s Sale', Icons.today, '₹ 12,000',
+                    Colors.green, '15%')),
             SizedBox(width: 16),
-            Expanded(child: buildSalesCard('Weekly Sale', Icons.date_range, '₹ 50,000', Colors.blue, '10%')),
+            Expanded(
+                child: buildSalesCard('Weekly Sale', Icons.date_range,
+                    '₹ 50,000', Colors.blue, '10%')),
             SizedBox(width: 16),
-            Expanded(child: buildSalesCard('Monthly Sale', Icons.calendar_today, '₹ 1,20,000', Colors.orange, '8%')),
+            Expanded(
+                child: buildSalesCard('Monthly Sale', Icons.calendar_today,
+                    '₹ 1,20,000', Colors.orange, '8%')),
           ],
         ),
         SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(child: buildSalesCard('Yearly Sale', Icons.assessment, '₹ 5,00,000', Colors.purple, '20%')),
+            Expanded(
+                child: buildSalesCard('Yearly Sale', Icons.assessment,
+                    '₹ 5,00,000', Colors.purple, '20%')),
             SizedBox(width: 16),
-            Expanded(child: buildSalesCard('YoY Growth', Icons.trending_up, '15%', Colors.red, '10%')),
+            Expanded(
+                child: buildSalesCard(
+                    'YoY Growth', Icons.trending_up, '15%', Colors.red, '10%')),
             SizedBox(width: 16),
-            Expanded(child: buildSalesCard('Top 5 Categories', Icons.category, 'Electronics, Groceries, etc.', Colors.teal, '')),
+            Expanded(
+                child: buildSalesCard('Top 5 Categories', Icons.category,
+                    'Electronics, Groceries, etc.', Colors.teal, '')),
           ],
         ),
       ],
     );
   }
 
-  Widget buildSalesCard(String title, IconData icon, String value, Color color, String growthPercentage) {
+  Widget buildSalesCard(String title, IconData icon, String value, Color color,
+      String growthPercentage) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -434,12 +485,13 @@ _loadData();
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(title,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               SizedBox(height: 4),
               Text(value, style: TextStyle(fontSize: 14)),
-              if (growthPercentage.isNotEmpty)
-                SizedBox(height: 4),
-                Text('Growth: $growthPercentage', style: TextStyle(fontSize: 12, color: Colors.black45)),
+              if (growthPercentage.isNotEmpty) SizedBox(height: 4),
+              Text('Growth: $growthPercentage',
+                  style: TextStyle(fontSize: 12, color: Colors.black45)),
             ],
           ),
         ],
@@ -451,7 +503,8 @@ _loadData();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Top Category Sales for This Month', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text('Top Category Sales for This Month',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         SizedBox(height: 8),
         SizedBox(
           height: 200,
@@ -469,126 +522,129 @@ _loadData();
       ],
     );
   }
-Widget buildGrowthSection(String title, List<FlSpot> data, String period) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-      SizedBox(height: 8),
-      Container(
-        height: 250,
-        child: AnimatedSwitcher(
-          duration: Duration(seconds: 1),
-          child: _buildChart(data, period), // Pass data to the respective chart renderer
-        ),
-      ),
-    ],
-  );
-}
 
-Widget _buildChart(List<FlSpot> data, String period) {
-  switch (chartType) {
-    case ChartType.line:
-      return LineChart(
-        LineChartData(
-          gridData: FlGridData(show: true),
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
+  Widget buildGrowthSection(String title, List<FlSpot> data, String period) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
+        Container(
+          height: 250,
+          child: AnimatedSwitcher(
+            duration: Duration(seconds: 1),
+            child: _buildChart(
+                data, period), // Pass data to the respective chart renderer
           ),
-          borderData: FlBorderData(show: true),
-          lineBarsData: [
-            LineChartBarData(
-              spots: data,
-              isCurved: true,
-              color: Colors.blue,
-              belowBarData: BarAreaData(show: false),
-            ),
-          ],
         ),
-      );
-    case ChartType.bar:
-      return BarChart(
-        BarChartData(
-          gridData: FlGridData(show: true),
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: true),
-           
+      ],
+    );
+  }
+
+  Widget _buildChart(List<FlSpot> data, String period) {
+    switch (chartType) {
+      case ChartType.line:
+        return LineChart(
+          LineChartData(
+            gridData: FlGridData(show: true),
+            titlesData: FlTitlesData(
+              leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              bottomTitles:
+                  AxisTitles(sideTitles: SideTitles(showTitles: true)),
             ),
+            borderData: FlBorderData(show: true),
+            lineBarsData: [
+              LineChartBarData(
+                spots: data,
+                isCurved: true,
+                color: Colors.blue,
+                belowBarData: BarAreaData(show: false),
+              ),
+            ],
           ),
-          borderData: FlBorderData(show: true),
-          barGroups: data.map((spot) {
-            return BarChartGroupData(
-              x: spot.x.toInt(),
-              barRods: [
-                BarChartRodData(
-                  toY: spot.y,
-                  color: Colors.blue,
-                  width: 16,
-                ),
-              ],
-            );
-          }).toList(),
-        ),
-      );
-    case ChartType.pie:
-      return PieChart(
-        PieChartData(
-          sections: data.map((spot) {
-            return PieChartSectionData(
-              value: spot.y,
-              color: Colors.blue,
-              title: '${spot.y.toStringAsFixed(0)}',
-            );
-          }).toList(),
-        ),
-      );
-    default:
-      return Container();
+        );
+      case ChartType.bar:
+        return BarChart(
+          BarChartData(
+            gridData: FlGridData(show: true),
+            titlesData: FlTitlesData(
+              leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: true),
+              ),
+            ),
+            borderData: FlBorderData(show: true),
+            barGroups: data.map((spot) {
+              return BarChartGroupData(
+                x: spot.x.toInt(),
+                barRods: [
+                  BarChartRodData(
+                    toY: spot.y,
+                    color: Colors.blue,
+                    width: 16,
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        );
+      case ChartType.pie:
+        return PieChart(
+          PieChartData(
+            sections: data.map((spot) {
+              return PieChartSectionData(
+                value: spot.y,
+                color: Colors.blue,
+                title: '${spot.y.toStringAsFixed(0)}',
+              );
+            }).toList(),
+          ),
+        );
+      default:
+        return Container();
+    }
   }
-}
 
-
-
-
-
-List<FlSpot> generateDailySalesData(int count) {
-  List<FlSpot> data = [];
-  double value = 1000; // Starting value
-  for (int i = 0; i < count; i++) {
-    value += Random().nextBool() ? Random().nextInt(500).toDouble() : -Random().nextInt(500).toDouble();
-    value = value < 0 ? 0 : value;
-    data.add(FlSpot(i.toDouble(), value)); // Each point corresponds to a day
+  List<FlSpot> generateDailySalesData(int count) {
+    List<FlSpot> data = [];
+    double value = 1000; // Starting value
+    for (int i = 0; i < count; i++) {
+      value += Random().nextBool()
+          ? Random().nextInt(500).toDouble()
+          : -Random().nextInt(500).toDouble();
+      value = value < 0 ? 0 : value;
+      data.add(FlSpot(i.toDouble(), value)); // Each point corresponds to a day
+    }
+    return data;
   }
-  return data;
-}
 
-List<FlSpot> generateWeeklySalesData(int count) {
-  List<FlSpot> data = [];
-  double value = 5000; // Starting value
-  for (int i = 0; i < count; i++) {
-    value += Random().nextBool() ? Random().nextInt(1000).toDouble() : -Random().nextInt(1000).toDouble();
-    value = value < 0 ? 0 : value;
-    data.add(FlSpot(i.toDouble(), value)); // Each point corresponds to a week
+  List<FlSpot> generateWeeklySalesData(int count) {
+    List<FlSpot> data = [];
+    double value = 5000; // Starting value
+    for (int i = 0; i < count; i++) {
+      value += Random().nextBool()
+          ? Random().nextInt(1000).toDouble()
+          : -Random().nextInt(1000).toDouble();
+      value = value < 0 ? 0 : value;
+      data.add(FlSpot(i.toDouble(), value)); // Each point corresponds to a week
+    }
+    return data;
   }
-  return data;
-}
 
-List<FlSpot> generateMonthlySalesData(int count) {
-  List<FlSpot> data = [];
-  double value = 20000; // Starting value
-  for (int i = 0; i < count; i++) {
-    value += Random().nextBool() ? Random().nextInt(5000).toDouble() : -Random().nextInt(5000).toDouble();
-    value = value < 0 ? 0 : value;
-    data.add(FlSpot(i.toDouble(), value)); // Each point corresponds to a month
+  List<FlSpot> generateMonthlySalesData(int count) {
+    List<FlSpot> data = [];
+    double value = 20000; // Starting value
+    for (int i = 0; i < count; i++) {
+      value += Random().nextBool()
+          ? Random().nextInt(5000).toDouble()
+          : -Random().nextInt(5000).toDouble();
+      value = value < 0 ? 0 : value;
+      data.add(
+          FlSpot(i.toDouble(), value)); // Each point corresponds to a month
+    }
+    return data;
   }
-  return data;
-}
-
-
-
 }

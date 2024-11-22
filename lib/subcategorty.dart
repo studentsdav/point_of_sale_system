@@ -10,7 +10,7 @@ class _SubcategoryFormState extends State<SubcategoryForm> {
   String subcategoryName = '';
   String subcategoryDescription = '';
   String? selectedCategory;
-  
+
   // Example categories (These would be fetched from the database)
   List<Map<String, dynamic>> categories = [
     {'category_id': '1', 'category_name': 'Electronics'},
@@ -31,11 +31,13 @@ class _SubcategoryFormState extends State<SubcategoryForm> {
         savedSubcategories.add({
           'subcategory_name': subcategoryName,
           'subcategory_description': subcategoryDescription,
-          'category_name': categories.firstWhere((category) => category['category_id'] == selectedCategory)['category_name'],
+          'category_name': categories.firstWhere((category) =>
+              category['category_id'] == selectedCategory)['category_name'],
         });
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Subcategory saved successfully')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Subcategory saved successfully')));
     }
   }
 
@@ -63,12 +65,15 @@ class _SubcategoryFormState extends State<SubcategoryForm> {
                           child: Text(category['category_name']),
                         );
                       }).toList(),
-                      onChanged: (value) => setState(() => selectedCategory = value),
-                      validator: (value) => value == null ? 'Please select a category' : null,
+                      onChanged: (value) =>
+                          setState(() => selectedCategory = value),
+                      validator: (value) =>
+                          value == null ? 'Please select a category' : null,
                     ),
                     SizedBox(height: 16),
                     TextFormField(
-                      decoration: InputDecoration(labelText: 'Subcategory Name'),
+                      decoration:
+                          InputDecoration(labelText: 'Subcategory Name'),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter a subcategory name';
@@ -81,7 +86,8 @@ class _SubcategoryFormState extends State<SubcategoryForm> {
                     ),
                     SizedBox(height: 16),
                     TextFormField(
-                      decoration: InputDecoration(labelText: 'Subcategory Description'),
+                      decoration:
+                          InputDecoration(labelText: 'Subcategory Description'),
                       maxLines: 3,
                       onSaved: (value) {
                         subcategoryDescription = value!;

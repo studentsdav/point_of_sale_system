@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
     const result = await pool.query(
       `INSERT INTO table_configurations (table_no, seats, status, outlet_name, property_id, category, location)
       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [table_no, seats, status, outlet_name,property_id, category, location]
+      [table_no, seats, status, outlet_name, property_id, category, location]
     );
     res.status(201).json({ message: 'Table configuration created successfully', tableConfigId: result.rows[0].id });
   } catch (error) {
@@ -53,7 +53,7 @@ router.put('/:id', async (req, res) => {
       `UPDATE table_configurations
       SET table_no = $1, seats = $2, status = $3, outlet_name = $4, category = $5, location= $6, updated_at = CURRENT_TIMESTAMP
       WHERE id = $7 RETURNING id`,
-      [table_no, seats, status, outlet_name, tableId,category, location]
+      [table_no, seats, status, outlet_name, tableId, category, location]
     );
 
     if (result.rowCount === 0) {

@@ -17,7 +17,8 @@ class PrinterApiService {
       List<dynamic> responseData = json.decode(response.body);
       return List<Map<String, dynamic>>.from(responseData);
     } else {
-      throw Exception('Failed to retrieve printer configurations: ${response.body}');
+      throw Exception(
+          'Failed to retrieve printer configurations: ${response.body}');
     }
   }
 
@@ -29,16 +30,19 @@ class PrinterApiService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body); // Returning the printer configuration details
+      return json
+          .decode(response.body); // Returning the printer configuration details
     } else if (response.statusCode == 404) {
       throw Exception('Printer configuration not found');
     } else {
-      throw Exception('Failed to retrieve printer configuration: ${response.body}');
+      throw Exception(
+          'Failed to retrieve printer configuration: ${response.body}');
     }
   }
 
   // 3. Create a new printer configuration
-  Future<Map<String, dynamic>> createPrinter(Map<String, dynamic> printerData) async {
+  Future<Map<String, dynamic>> createPrinter(
+      Map<String, dynamic> printerData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/printer'),
       headers: {'Content-Type': 'application/json'},
@@ -46,14 +50,17 @@ class PrinterApiService {
     );
 
     if (response.statusCode == 201) {
-      return json.decode(response.body); // Returning the response with printer ID
+      return json
+          .decode(response.body); // Returning the response with printer ID
     } else {
-      throw Exception('Failed to create printer configuration: ${response.body}');
+      throw Exception(
+          'Failed to create printer configuration: ${response.body}');
     }
   }
 
   // 4. Update printer configuration by ID
-  Future<Map<String, dynamic>> updatePrinter(String printerId, Map<String, dynamic> printerData) async {
+  Future<Map<String, dynamic>> updatePrinter(
+      String printerId, Map<String, dynamic> printerData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/printer/$printerId'),
       headers: {'Content-Type': 'application/json'},
@@ -65,7 +72,8 @@ class PrinterApiService {
     } else if (response.statusCode == 404) {
       throw Exception('Printer configuration not found');
     } else {
-      throw Exception('Failed to update printer configuration: ${response.body}');
+      throw Exception(
+          'Failed to update printer configuration: ${response.body}');
     }
   }
 
@@ -82,7 +90,8 @@ class PrinterApiService {
     } else if (response.statusCode == 404) {
       throw Exception('Printer configuration not found');
     } else {
-      throw Exception('Failed to delete printer configuration: ${response.body}');
+      throw Exception(
+          'Failed to delete printer configuration: ${response.body}');
     }
   }
 }

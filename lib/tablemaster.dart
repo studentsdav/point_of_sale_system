@@ -14,11 +14,13 @@ class _TableManagementPageState extends State<TableManagementPage> {
   String? _selectedOutlet; // Outlet selection
   List<Map<String, dynamic>> _tables = [];
   List<String> outlets = []; // Example outlets
-  final String apiUrl = 'http://localhost:3000/api';  // Replace with your backend API URL
+  final String apiUrl =
+      'http://localhost:3000/api'; // Replace with your backend API URL
   List<dynamic> properties = [];
   List<dynamic> outletConfigurations = [];
-  
-  final TableApiService _tableApiService = TableApiService(apiUrl: 'http://localhost:3000/api'); // Create the service instance
+
+  final TableApiService _tableApiService = TableApiService(
+      apiUrl: 'http://localhost:3000/api'); // Create the service instance
 
   // Fetch table configurations
   Future<void> _fetchTableConfigs() async {
@@ -28,54 +30,60 @@ class _TableManagementPageState extends State<TableManagementPage> {
         _tables = tables;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load tables')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to load tables')));
     }
   }
 
- // Load data from Hive
-Future<void> _loadDataFromHive() async {
-  var box = await Hive.openBox('appData');
-  
-  // Retrieve the data
-  var properties = box.get('properties');
-  var outletConfigurations = box.get('outletConfigurations');
-  
-  // Check if outletConfigurations is not null
-  if (outletConfigurations != null) {
-    // Extract the outlet names into the outlets list
-    List<String> outletslist = [];
-    for (var outlet in outletConfigurations) {
-      if (outlet['outlet_name'] != null) {
-        outletslist.add(outlet['outlet_name'].toString());
+  // Load data from Hive
+  Future<void> _loadDataFromHive() async {
+    var box = await Hive.openBox('appData');
+
+    // Retrieve the data
+    var properties = box.get('properties');
+    var outletConfigurations = box.get('outletConfigurations');
+
+    // Check if outletConfigurations is not null
+    if (outletConfigurations != null) {
+      // Extract the outlet names into the outlets list
+      List<String> outletslist = [];
+      for (var outlet in outletConfigurations) {
+        if (outlet['outlet_name'] != null) {
+          outletslist.add(outlet['outlet_name'].toString());
+        }
       }
+
+      setState(() {
+        this.properties = properties ?? [];
+        this.outletConfigurations = outletConfigurations ?? [];
+        this.outlets = outletslist; // Set the outlets list
+      });
     }
-
-    setState(() {
-      this.properties = properties ?? [];
-      this.outletConfigurations = outletConfigurations ?? [];
-      this.outlets = outletslist; // Set the outlets list
-    });
   }
-}
-
 
   List<Map<String, dynamic>> _parseJson(String jsonString) {
     // You can use a JSON decoder if you save the data in a valid JSON format
     return jsonString.isNotEmpty ? List<Map<String, dynamic>>.from([]) : [];
   }
+
   // Save a new table entry
   Future<void> _saveTableEntry() async {
     if (_selectedOutlet == null || _tableNo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select an outlet and enter a valid table number')),
+        SnackBar(
+            content:
+                Text('Please select an outlet and enter a valid table number')),
       );
       return;
     }
 
     // Check for duplicate table number for the selected outlet
-    if (_tables.any((table) => table['outlet'] == _selectedOutlet && table['table_no'] == _tableNo)) {
+    if (_tables.any((table) =>
+        table['outlet'] == _selectedOutlet && table['table_no'] == _tableNo)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Table number $_tableNo already exists for this outlet.')),
+        SnackBar(
+            content:
+                Text('Table number $_tableNo already exists for this outlet.')),
       );
       return;
     }
@@ -87,17 +95,19 @@ Future<void> _loadDataFromHive() async {
       'outlet_name': _selectedOutlet, // Assuming outlet ID is the index + 1
       'property_id': properties[0]['property_id'], // Or get this from input
       'category': 'Regular', // Or get this from input
-      'location':'Main Hall'// Or get this from input
+      'location': 'Main Hall' // Or get this from input
     };
 
     try {
       final success = await _tableApiService.createTableConfig(tableData);
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Table created successfully!')));
-        _fetchTableConfigs();  // Fetch updated table configurations
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Table created successfully!')));
+        _fetchTableConfigs(); // Fetch updated table configurations
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to create table')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to create table')));
     }
   }
 
@@ -118,11 +128,13 @@ Future<void> _loadDataFromHive() async {
     try {
       final success = await _tableApiService.deleteTableConfig(id);
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Table deleted successfully!')));
-        _fetchTableConfigs();  // Fetch updated table configurations
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Table deleted successfully!')));
+        _fetchTableConfigs(); // Fetch updated table configurations
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete table')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to delete table')));
     }
   }
 
@@ -130,7 +142,7 @@ Future<void> _loadDataFromHive() async {
   void initState() {
     super.initState();
     _loadDataFromHive();
-    _fetchTableConfigs();  // Fetch table configurations when the page is loaded
+    _fetchTableConfigs(); // Fetch table configurations when the page is loaded
   }
 
   @override
@@ -249,7 +261,8 @@ Future<void> _loadDataFromHive() async {
                   final table = _tables[index];
                   return ListTile(
                     title: Text('Table ${table['table_no']}'),
-                    subtitle: Text('Seats: ${table['seats']} | Status: ${table['status']}'),
+                    subtitle: Text(
+                        'Seats: ${table['seats']} | Status: ${table['status']}'),
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
                       onPressed: () => _deleteTableEntry(table['id']),

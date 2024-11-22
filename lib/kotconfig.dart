@@ -35,7 +35,8 @@ class _KOTConfigFormState extends State<KOTConfigForm> {
       startDate = null;
       selectedOutlet = null;
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('KOT Config saved successfully')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('KOT Config saved successfully')));
     }
   }
 
@@ -56,7 +57,8 @@ class _KOTConfigFormState extends State<KOTConfigForm> {
                   children: [
                     // KOT Starting Number
                     TextFormField(
-                      decoration: InputDecoration(labelText: 'Starting KOT Number'),
+                      decoration:
+                          InputDecoration(labelText: 'Starting KOT Number'),
                       keyboardType: TextInputType.number,
                       initialValue: kotStartingNumber.toString(),
                       validator: (value) {
@@ -72,7 +74,8 @@ class _KOTConfigFormState extends State<KOTConfigForm> {
                     SizedBox(height: 16),
                     // Start Date
                     TextFormField(
-                      decoration: InputDecoration(labelText: 'Start Date (yyyy-MM-dd)'),
+                      decoration:
+                          InputDecoration(labelText: 'Start Date (yyyy-MM-dd)'),
                       keyboardType: TextInputType.datetime,
                       onTap: () async {
                         FocusScope.of(context).requestFocus(FocusNode());
@@ -89,7 +92,9 @@ class _KOTConfigFormState extends State<KOTConfigForm> {
                         }
                       },
                       controller: TextEditingController(
-                          text: startDate != null ? "${startDate!.toLocal()}".split(' ')[0] : ''),
+                          text: startDate != null
+                              ? "${startDate!.toLocal()}".split(' ')[0]
+                              : ''),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please select a start date';
@@ -148,8 +153,6 @@ class _KOTConfigFormState extends State<KOTConfigForm> {
                               'Your KOT number starts from ${config['kotStartingNumber']} from ${config['startDate'].toLocal()} and was updated on ${config['updateDate'].toLocal()}. Outlet: ${config['outlet']}',
                               style: TextStyle(
                                 fontSize: 16,
-                      
-                   
                               ),
                             ),
                           ],

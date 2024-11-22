@@ -70,12 +70,14 @@ class POSLoginForm extends StatelessWidget {
               // Login Button
               ElevatedButton(
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>POSMainScreen()));
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => POSMainScreen()));
                   // Handle login action
                 },
                 child: const Text('Login'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                 ),
               ),
             ],

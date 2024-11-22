@@ -31,7 +31,8 @@ class _StockEntryFormState extends State<StockEntryForm> {
     ],
   };
 
-  List<Map<String, dynamic>> availableItems = []; // To store items filtered by selected outlet
+  List<Map<String, dynamic>> availableItems =
+      []; // To store items filtered by selected outlet
 
   // Function to save stock entry (add or remove stock)
   void _saveStockEntry() {
@@ -42,12 +43,18 @@ class _StockEntryFormState extends State<StockEntryForm> {
       );
 
       if (selectedItem.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Item not found in inventory')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Item not found in inventory')));
         return;
       }
 
-      if (_selectedOutlet == null || _selectedItem == null || _transactionType == null || _selectedDate == null || _quantity <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please fill all fields correctly')));
+      if (_selectedOutlet == null ||
+          _selectedItem == null ||
+          _transactionType == null ||
+          _selectedDate == null ||
+          _quantity <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Please fill all fields correctly')));
         return;
       }
 
@@ -200,7 +207,9 @@ class _StockEntryFormState extends State<StockEntryForm> {
                           });
                         },
                         validator: (value) {
-                          if (value == null || value.isEmpty || _quantity <= 0) {
+                          if (value == null ||
+                              value.isEmpty ||
+                              _quantity <= 0) {
                             return 'Please enter a valid quantity';
                           }
                           return null;
@@ -211,7 +220,9 @@ class _StockEntryFormState extends State<StockEntryForm> {
                       // Date Picker
                       TextFormField(
                         controller: TextEditingController(
-                          text: _selectedDate != null ? "${_selectedDate!.toLocal()}".split(' ')[0] : '',
+                          text: _selectedDate != null
+                              ? "${_selectedDate!.toLocal()}".split(' ')[0]
+                              : '',
                         ),
                         decoration: InputDecoration(
                           labelText: 'Select Date',
@@ -290,10 +301,12 @@ class _StockEntryFormState extends State<StockEntryForm> {
                               margin: EdgeInsets.symmetric(vertical: 8),
                               elevation: 4,
                               child: ListTile(
-                                leading: Icon(Icons.shopping_cart, color: Colors.blue),
+                                leading: Icon(Icons.shopping_cart,
+                                    color: Colors.blue),
                                 title: Text(item['item_name']),
                                 subtitle: Text('Stock: ${item['quantity']}'),
-                                trailing: Icon(Icons.arrow_forward_ios, color: Colors.blue),
+                                trailing: Icon(Icons.arrow_forward_ios,
+                                    color: Colors.blue),
                               ),
                             );
                           }).toList(),

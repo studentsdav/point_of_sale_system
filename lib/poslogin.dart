@@ -32,7 +32,8 @@ class POSLoginScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Logo
-                  Image.asset('assets/images/Logo.jpg', width: 100), // Add your logo in the assets folder
+                  Image.asset('assets/images/Logo.jpg',
+                      width: 100), // Add your logo in the assets folder
                   const SizedBox(height: 20),
 
                   // Financial Year Dropdown
@@ -97,7 +98,8 @@ class POSLoginScreen extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => POSMainScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => POSMainScreen()),
                         );
                       },
                       child: const Text(
@@ -115,7 +117,8 @@ class POSLoginScreen extends StatelessWidget {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
+                            MaterialPageRoute(
+                                builder: (context) => ForgotPasswordScreen()),
                           );
                         },
                         child: const Text(
@@ -127,7 +130,8 @@ class POSLoginScreen extends StatelessWidget {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => RegistrationScreen()),
+                            MaterialPageRoute(
+                                builder: (context) => RegistrationScreen()),
                           );
                         },
                         child: const Text(

@@ -34,7 +34,8 @@ class _CategoryFormState extends State<CategoryForm> {
       // Clear form fields for the next category
       _categoryFormKey.currentState!.reset();
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Category saved successfully')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Category saved successfully')));
     }
   }
 
@@ -54,7 +55,8 @@ class _CategoryFormState extends State<CategoryForm> {
       // Clear form fields for the next subcategory
       _subcategoryFormKey.currentState!.reset();
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Subcategory saved successfully')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Subcategory saved successfully')));
     }
   }
 
@@ -62,9 +64,9 @@ class _CategoryFormState extends State<CategoryForm> {
   void _editCategory(int index) {
     categoryName = savedCategories[index]['name']!;
     categoryDescription = savedCategories[index]['description']!;
-    
+
     _categoryFormKey.currentState!.reset();
-    
+
     setState(() {
       savedCategories.removeAt(index);
     });
@@ -81,9 +83,9 @@ class _CategoryFormState extends State<CategoryForm> {
   void _editSubCategory(int index) {
     subCategoryName = savedSubCategories[index]['name']!;
     subCategoryDescription = savedSubCategories[index]['description']!;
-    
+
     _subcategoryFormKey.currentState!.reset();
-    
+
     setState(() {
       savedSubCategories.removeAt(index);
     });
@@ -130,7 +132,8 @@ class _CategoryFormState extends State<CategoryForm> {
                       TextFormField(
                         decoration: InputDecoration(
                           labelText: 'Category Name',
-                          contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                          contentPadding:
+                              EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -147,7 +150,8 @@ class _CategoryFormState extends State<CategoryForm> {
                       TextFormField(
                         decoration: InputDecoration(
                           labelText: 'Category Description',
-                          contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                          contentPadding:
+                              EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                         ),
                         maxLines: 2,
                         onSaved: (value) {
@@ -174,7 +178,8 @@ class _CategoryFormState extends State<CategoryForm> {
                       TextFormField(
                         decoration: InputDecoration(
                           labelText: 'Subcategory Name',
-                          contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                          contentPadding:
+                              EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -191,7 +196,8 @@ class _CategoryFormState extends State<CategoryForm> {
                       TextFormField(
                         decoration: InputDecoration(
                           labelText: 'Subcategory Description',
-                          contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                          contentPadding:
+                              EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                         ),
                         maxLines: 2,
                         onSaved: (value) {

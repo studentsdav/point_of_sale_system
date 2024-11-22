@@ -11,7 +11,7 @@ router.post('/', async (req, res) => {
       outlet_id,
       outlet_name,
       permission_name,
-      property_id,username
+      property_id, username
     } = req.body;
 
     const result = await pool.query(
@@ -19,7 +19,7 @@ router.post('/', async (req, res) => {
        (user_id, outlet_id, outlet_name, permission_name, property_id,username) 
        VALUES ($1, $2, $3, $4, $5, $6) 
        RETURNING *`,
-      [user_id, outlet_id, outlet_name, permission_name, property_id,username]
+      [user_id, outlet_id, outlet_name, permission_name, property_id, username]
     );
 
     res.status(201).json(result.rows[0]);
@@ -65,7 +65,7 @@ router.put('/:id', async (req, res) => {
       outlet_id,
       outlet_name,
       permission_name,
-      property_id,username
+      property_id, username
     } = req.body;
 
     const result = await pool.query(

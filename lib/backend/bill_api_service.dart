@@ -15,7 +15,8 @@ class BillApiService {
     }
   }
 
-  Future<Map<String, dynamic>> createConfiguration(Map<String, dynamic> config) async {
+  Future<Map<String, dynamic>> createConfiguration(
+      Map<String, dynamic> config) async {
     final response = await http.post(
       Uri.parse(baseUrl),
       headers: {'Content-Type': 'application/json'},
@@ -28,7 +29,8 @@ class BillApiService {
     }
   }
 
-  Future<Map<String, dynamic>> updateConfiguration(int id, Map<String, dynamic> config) async {
+  Future<Map<String, dynamic>> updateConfiguration(
+      int id, Map<String, dynamic> config) async {
     final response = await http.put(
       Uri.parse('$baseUrl/$id'),
       headers: {'Content-Type': 'application/json'},

@@ -50,8 +50,8 @@ class _TaxConfigFormState extends State<TaxConfigForm> {
     setState(() {
       taxConfigurations.removeAt(index);
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Tax configuration deleted')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('Tax configuration deleted')));
   }
 
   @override

@@ -17,7 +17,15 @@ class POSMainScreen extends StatefulWidget {
 
 class _POSMainScreenState extends State<POSMainScreen> {
   String selectedOutlet = 'Restaurant';
-  final List<String> outlets = ['Restaurant', 'Bar', 'Packing', 'N.C. Order', 'Swiggy', 'Zomato', 'Room Service'];
+  final List<String> outlets = [
+    'Restaurant',
+    'Bar',
+    'Packing',
+    'N.C. Order',
+    'Swiggy',
+    'Zomato',
+    'Room Service'
+  ];
   final Map<String, List<String>> areas = {
     'OPEN AREA': ['01', '02', '03', '04', '05', '06', '07', '08'],
     'HALL': ['01', '02', '03', '04'],
@@ -58,8 +66,10 @@ class _POSMainScreenState extends State<POSMainScreen> {
           children: [
             UserAccountsDrawerHeader(
               decoration: const BoxDecoration(color: Colors.teal),
-              accountName: const Text('User A', style: TextStyle(color: Colors.white)),
-              accountEmail: const Text('Session Started: 4h ago', style: TextStyle(color: Colors.white70)),
+              accountName:
+                  const Text('User A', style: TextStyle(color: Colors.white)),
+              accountEmail: const Text('Session Started: 4h ago',
+                  style: TextStyle(color: Colors.white70)),
               currentAccountPicture: const CircleAvatar(
                 backgroundColor: Colors.white,
                 child: Icon(Icons.person, color: Colors.teal),
@@ -70,32 +80,57 @@ class _POSMainScreenState extends State<POSMainScreen> {
                 children: [
                   _buildDrawerItem(Icons.home, 'Home', () {}),
                   _buildDrawerItem(Icons.book, 'Reservation', () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => ReservationFormScreen()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ReservationFormScreen()));
                   }),
                   _buildDrawerItem(Icons.swap_horiz, 'Table Shift', () {}),
                   _buildDrawerItem(Icons.receipt, 'Orders', () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => KOTFormScreen()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => KOTFormScreen()));
                   }),
                   _buildDrawerItem(Icons.payment, 'Billing', () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => BillingFormScreen()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => BillingFormScreen()));
                   }),
                   _buildDrawerItem(Icons.payment, 'Payment', () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentFormScreen()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => PaymentFormScreen()));
                   }),
                   _buildDrawerItem(Icons.report, 'Reports', () {}),
                   _buildDrawerItem(Icons.add_box, 'Item Add', () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => ItemMasterScreen()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ItemMasterScreen()));
                   }),
                   _buildDrawerItem(Icons.person_add, 'Add Guest', () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => GuestRegistrationScreen()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => GuestRegistrationScreen()));
                   }),
                   _buildDrawerItem(Icons.settings, 'Setting', () {}),
-                  _buildDrawerItem(Icons.nightlight_round, 'Night Audit', () {}),
+                  _buildDrawerItem(
+                      Icons.nightlight_round, 'Night Audit', () {}),
                   _buildDrawerItem(Icons.logout, 'Logout', () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => POSLoginScreen()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => POSLoginScreen()));
                   }),
                   _buildDrawerItem(Icons.admin_panel_settings, 'Admin', () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => AdminDashboard()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => AdminDashboard()));
                   }),
                 ],
               ),
@@ -117,8 +152,12 @@ class _POSMainScreenState extends State<POSMainScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      foregroundColor: selectedOutlet == outlet ? Colors.white : Colors.teal.shade700,
-                      backgroundColor: selectedOutlet == outlet ? Colors.teal.shade900 : Colors.white,
+                      foregroundColor: selectedOutlet == outlet
+                          ? Colors.white
+                          : Colors.teal.shade700,
+                      backgroundColor: selectedOutlet == outlet
+                          ? Colors.teal.shade900
+                          : Colors.white,
                     ),
                     onPressed: () {
                       setState(() {
@@ -145,13 +184,17 @@ class _POSMainScreenState extends State<POSMainScreen> {
                       children: [
                         Text(
                           entry.key,
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal),
+                          style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.teal),
                         ),
                         const SizedBox(height: 8),
                         GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 6,
                             crossAxisSpacing: 8,
                             mainAxisSpacing: 8,
@@ -161,18 +204,25 @@ class _POSMainScreenState extends State<POSMainScreen> {
                           itemBuilder: (context, index) {
                             return GestureDetector(
                               onTap: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => KOTFormScreen()));
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => KOTFormScreen()));
                               },
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: Colors.teal.shade100,
-                                  border: Border.all(color: Colors.teal.shade700, width: 2),
+                                  border: Border.all(
+                                      color: Colors.teal.shade700, width: 2),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Center(
                                   child: Text(
                                     entry.value[index],
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal),
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.teal),
                                   ),
                                 ),
                               ),

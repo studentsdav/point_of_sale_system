@@ -51,7 +51,8 @@ class ItemsApiService {
   }
 
   // Update an item by ID
-  Future<Map<String, dynamic>> updateItem(String id, Map<String, dynamic> itemData) async {
+  Future<Map<String, dynamic>> updateItem(
+      String id, Map<String, dynamic> itemData) async {
     try {
       final response = await http.put(
         Uri.parse("$baseUrl/items/$id"),

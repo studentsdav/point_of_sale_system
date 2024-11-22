@@ -7,7 +7,8 @@ class KOTConfigApiService {
   KOTConfigApiService({required this.baseUrl});
 
   // 1. Create a new KOT configuration
-  Future<Map<String, dynamic>> createKOTConfig(Map<String, dynamic> kotConfigData) async {
+  Future<Map<String, dynamic>> createKOTConfig(
+      Map<String, dynamic> kotConfigData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/kotconfigs'),
       headers: {'Content-Type': 'application/json'},
@@ -15,7 +16,8 @@ class KOTConfigApiService {
     );
 
     if (response.statusCode == 201) {
-      return json.decode(response.body); // Returning the newly created KOT configuration
+      return json.decode(
+          response.body); // Returning the newly created KOT configuration
     } else {
       throw Exception('Failed to create KOT configuration: ${response.body}');
     }
@@ -30,7 +32,8 @@ class KOTConfigApiService {
 
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
-      return List<Map<String, dynamic>>.from(data); // Returning all KOT configurations as a list
+      return List<Map<String, dynamic>>.from(
+          data); // Returning all KOT configurations as a list
     } else {
       throw Exception('Failed to fetch KOT configurations: ${response.body}');
     }
@@ -44,7 +47,8 @@ class KOTConfigApiService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body); // Returning the KOT configuration by ID
+      return json
+          .decode(response.body); // Returning the KOT configuration by ID
     } else if (response.statusCode == 404) {
       throw Exception('KOT configuration not found');
     } else {
@@ -53,7 +57,8 @@ class KOTConfigApiService {
   }
 
   // 4. Update KOT configuration by ID
-  Future<Map<String, dynamic>> updateKOTConfig(String kotConfigId, Map<String, dynamic> kotConfigData) async {
+  Future<Map<String, dynamic>> updateKOTConfig(
+      String kotConfigId, Map<String, dynamic> kotConfigData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/kotconfigs/$kotConfigId'),
       headers: {'Content-Type': 'application/json'},
@@ -61,7 +66,8 @@ class KOTConfigApiService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body); // Returning the updated KOT configuration data
+      return json.decode(
+          response.body); // Returning the updated KOT configuration data
     } else if (response.statusCode == 404) {
       throw Exception('KOT configuration not found');
     } else {

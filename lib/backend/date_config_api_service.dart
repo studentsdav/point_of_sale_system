@@ -7,7 +7,8 @@ class DateConfigApiService {
   DateConfigApiService({required this.baseUrl});
 
   // 1. Create a new date configuration
-  Future<Map<String, dynamic>> createDateConfig(Map<String, dynamic> dateConfigData) async {
+  Future<Map<String, dynamic>> createDateConfig(
+      Map<String, dynamic> dateConfigData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/date_config'),
       headers: {'Content-Type': 'application/json'},
@@ -15,7 +16,8 @@ class DateConfigApiService {
     );
 
     if (response.statusCode == 201) {
-      return json.decode(response.body); // Returning the newly created date config
+      return json
+          .decode(response.body); // Returning the newly created date config
     } else {
       throw Exception('Failed to create date configuration: ${response.body}');
     }
@@ -30,7 +32,8 @@ class DateConfigApiService {
 
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
-      return List<Map<String, dynamic>>.from(data); // Returning all date configurations as a list
+      return List<Map<String, dynamic>>.from(
+          data); // Returning all date configurations as a list
     } else {
       throw Exception('Failed to fetch date configurations: ${response.body}');
     }
@@ -44,7 +47,8 @@ class DateConfigApiService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body); // Returning the date configuration data by ID
+      return json
+          .decode(response.body); // Returning the date configuration data by ID
     } else if (response.statusCode == 404) {
       throw Exception('Date configuration not found');
     } else {
@@ -53,7 +57,8 @@ class DateConfigApiService {
   }
 
   // 4. Update date configuration by ID
-  Future<Map<String, dynamic>> updateDateConfig(String dateConfigId, Map<String, dynamic> dateConfigData) async {
+  Future<Map<String, dynamic>> updateDateConfig(
+      String dateConfigId, Map<String, dynamic> dateConfigData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/date_config/$dateConfigId'),
       headers: {'Content-Type': 'application/json'},
@@ -61,7 +66,8 @@ class DateConfigApiService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body); // Returning the updated date configuration data
+      return json.decode(
+          response.body); // Returning the updated date configuration data
     } else if (response.statusCode == 404) {
       throw Exception('Date configuration not found');
     } else {

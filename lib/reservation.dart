@@ -129,12 +129,11 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                         child: TextFormField(
                           initialValue: _bookingNo,
                           decoration: InputDecoration(
-                            
                             labelText: 'Booking Number',
                             border: OutlineInputBorder(),
                             prefixIcon: Icon(Icons.bookmark), // Icon added here
                           ),
-                          enabled: false,  // Non-editable
+                          enabled: false, // Non-editable
                         ),
                       ),
                       // Guest Name
@@ -166,7 +165,8 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                           decoration: InputDecoration(
                             labelText: 'Address',
                             border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.location_on), // Icon added here
+                            prefixIcon:
+                                Icon(Icons.location_on), // Icon added here
                           ),
                           onChanged: (value) {
                             setState(() {
@@ -232,7 +232,8 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Reservation Date: ${_reservationDate.toLocal()}'.split(' ')[0],
+                              'Reservation Date: ${_reservationDate.toLocal()}'
+                                  .split(' ')[0],
                               style: TextStyle(fontSize: 16),
                             ),
                             ElevatedButton(
@@ -273,7 +274,8 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                           decoration: InputDecoration(
                             labelText: 'Table No',
                             border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.table_chart), // Icon added here
+                            prefixIcon:
+                                Icon(Icons.table_chart), // Icon added here
                           ),
                           items: _tableNumbers.map((tableNo) {
                             return DropdownMenuItem<int>(

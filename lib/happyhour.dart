@@ -9,7 +9,8 @@ class _HappyHourConfigFormState extends State<HappyHourConfigForm> {
   final _formKey = GlobalKey<FormState>();
   String? _selectedOutlet; // To store the selected outlet
   String? _selectedHappyHour; // To store the selected happy hour
-  Map<int, bool> _selectedItems = {}; // To store the selected items for happy hour
+  Map<int, bool> _selectedItems =
+      {}; // To store the selected items for happy hour
   final _discountController = TextEditingController();
 
   // Start and End time variables
@@ -61,9 +62,8 @@ class _HappyHourConfigFormState extends State<HappyHourConfigForm> {
         _endTime = null;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Happy Hour configuration saved successfully'))
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Happy Hour configuration saved successfully')));
     }
   }
 
@@ -120,7 +120,7 @@ class _HappyHourConfigFormState extends State<HappyHourConfigForm> {
                 },
               ),
               SizedBox(height: 16),
-              
+
               // Only show Happy Hour Selection if an outlet is selected
               if (_selectedOutlet != null)
                 Column(
@@ -140,7 +140,8 @@ class _HappyHourConfigFormState extends State<HappyHourConfigForm> {
                           child: Text(happyHour),
                         );
                       }).toList(),
-                      decoration: InputDecoration(labelText: 'Select Happy Hour'),
+                      decoration:
+                          InputDecoration(labelText: 'Select Happy Hour'),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please select a happy hour configuration';
@@ -149,7 +150,7 @@ class _HappyHourConfigFormState extends State<HappyHourConfigForm> {
                       },
                     ),
                     SizedBox(height: 16),
-                    
+
                     // Item List with Discount Selection
                     Text('Select Items for Happy Hour:'),
                     ...items.asMap().entries.map((entry) {
@@ -166,7 +167,7 @@ class _HappyHourConfigFormState extends State<HappyHourConfigForm> {
                       );
                     }).toList(),
                     SizedBox(height: 16),
-                    
+
                     // Discount Percentage Input
                     TextFormField(
                       controller: _discountController,
@@ -179,7 +180,8 @@ class _HappyHourConfigFormState extends State<HappyHourConfigForm> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter a discount percentage';
                         }
-                        if (double.tryParse(value) == null || double.parse(value) <= 0) {
+                        if (double.tryParse(value) == null ||
+                            double.parse(value) <= 0) {
                           return 'Please enter a valid discount percentage';
                         }
                         return null;
@@ -191,7 +193,9 @@ class _HappyHourConfigFormState extends State<HappyHourConfigForm> {
                     Text('Select Start Time:'),
                     ElevatedButton(
                       onPressed: () => _selectTime(context, true),
-                      child: Text(_startTime == null ? 'Select Time' : _startTime!.format(context)),
+                      child: Text(_startTime == null
+                          ? 'Select Time'
+                          : _startTime!.format(context)),
                     ),
                     SizedBox(height: 16),
 
@@ -199,12 +203,14 @@ class _HappyHourConfigFormState extends State<HappyHourConfigForm> {
                     Text('Select End Time:'),
                     ElevatedButton(
                       onPressed: () => _selectTime(context, false),
-                      child: Text(_endTime == null ? 'Select Time' : _endTime!.format(context)),
+                      child: Text(_endTime == null
+                          ? 'Select Time'
+                          : _endTime!.format(context)),
                     ),
                     SizedBox(height: 32),
                   ],
                 ),
-              
+
               // Save Button
               ElevatedButton(
                 onPressed: _saveHappyHourConfig,

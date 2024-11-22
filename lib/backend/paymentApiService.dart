@@ -38,7 +38,8 @@ class PaymentApiService {
   }
 
   // 3. Create new payment
-  Future<Map<String, dynamic>> createPayment(Map<String, dynamic> paymentData) async {
+  Future<Map<String, dynamic>> createPayment(
+      Map<String, dynamic> paymentData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/payment'),
       headers: {'Content-Type': 'application/json'},
@@ -46,14 +47,16 @@ class PaymentApiService {
     );
 
     if (response.statusCode == 201) {
-      return json.decode(response.body); // Returning the response with payment ID
+      return json
+          .decode(response.body); // Returning the response with payment ID
     } else {
       throw Exception('Failed to create payment: ${response.body}');
     }
   }
 
   // 4. Update payment by ID
-  Future<Map<String, dynamic>> updatePayment(String paymentId, Map<String, dynamic> paymentData) async {
+  Future<Map<String, dynamic>> updatePayment(
+      String paymentId, Map<String, dynamic> paymentData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/payment/$paymentId'),
       headers: {'Content-Type': 'application/json'},

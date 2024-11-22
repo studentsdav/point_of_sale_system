@@ -13,11 +13,12 @@ class ItemMasterScreen extends StatefulWidget {
 }
 
 class _ItemMasterScreenState extends State<ItemMasterScreen> {
-   final ItemsApiService _apiService = ItemsApiService(baseUrl: 'http://localhost:3000/api'); // Replace with actual base URL
+  final ItemsApiService _apiService = ItemsApiService(
+      baseUrl: 'http://localhost:3000/api'); // Replace with actual base URL
   final List<String> _categories = ['Starters', 'Main Course', 'Desserts'];
   final List<String> _brands = ['Brand A', 'Brand B', 'Brand C'];
   final List<String> _subcategories = ['Vegetarian', 'Non-Vegetarian', 'Vegan'];
- final _itemNameController = TextEditingController();
+  final _itemNameController = TextEditingController();
   final _searchController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
@@ -25,7 +26,8 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
   final _discountController = TextEditingController();
   final _stockQuantityController = TextEditingController();
   final _reorderLevelController = TextEditingController();
-  final _itemCodeController = TextEditingController(); // For item code, default non-editable
+  final _itemCodeController =
+      TextEditingController(); // For item code, default non-editable
   String? _selectedCategory = 'Starters';
   String? _selectedBrand = 'Brand A';
   String? _selectedSubcategory = 'Vegetarian';
@@ -35,107 +37,113 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
   bool _isHappyHour = false;
   bool _isDiscountable = true;
   List<Map<String, dynamic>> _items = [];
-    bool _happyHour = false;
+  bool _happyHour = false;
   bool _discountable = true;
   int _qtyDebitFromSale = 1;
- bool _isLoading = true;  //
- List<String> outlets = []; // List of outlets to select from
+  bool _isLoading = true; //
+  List<String> outlets = []; // List of outlets to select from
   List<dynamic> properties = [];
   List<dynamic> outletConfigurations = [];
-@override
-void initState(){
-
+  @override
+  void initState() {
     _loadDataFromHive();
 
-  super.initState();
+    super.initState();
 
- _itemCodeController.text = _generateItemCode();
-
-}
-
- // Load data from Hive
-Future<void> _loadDataFromHive() async {
-  var box = await Hive.openBox('appData');
-  
-  // Retrieve the data
-  var properties = box.get('properties');
-  var outletConfigurations = box.get('outletConfigurations');
-  
-  // Check if outletConfigurations is not null
-  if (outletConfigurations != null) {
-    // Extract the outlet names into the outlets list
-    List<String> outletslist = [];
-    for (var outlet in outletConfigurations) {
-      if (outlet['outlet_name'] != null) {
-        outletslist.add(outlet['outlet_name'].toString());
-      }
-    }
-
-    setState(() {
-      this.properties = properties ?? [];
-      this.outletConfigurations = outletConfigurations ?? [];
-      this.outlets = outletslist; // Set the outlets list
-      _selectedOutlet = outletslist.first;
-    });
+    _itemCodeController.text = _generateItemCode();
   }
- _loadItems();
-}
 
+  // Load data from Hive
+  Future<void> _loadDataFromHive() async {
+    var box = await Hive.openBox('appData');
 
+    // Retrieve the data
+    var properties = box.get('properties');
+    var outletConfigurations = box.get('outletConfigurations');
+
+    // Check if outletConfigurations is not null
+    if (outletConfigurations != null) {
+      // Extract the outlet names into the outlets list
+      List<String> outletslist = [];
+      for (var outlet in outletConfigurations) {
+        if (outlet['outlet_name'] != null) {
+          outletslist.add(outlet['outlet_name'].toString());
+        }
+      }
+
+      setState(() {
+        this.properties = properties ?? [];
+        this.outletConfigurations = outletConfigurations ?? [];
+        this.outlets = outletslist; // Set the outlets list
+        _selectedOutlet = outletslist.first;
+      });
+    }
+    _loadItems();
+  }
 
   Future<void> _loadItems() async {
     try {
       List<dynamic> fetchedItems = await _apiService.fetchAllItems();
       setState(() {
-        _items = fetchedItems.cast<Map<String, dynamic>>();  // Cast the dynamic list to a map
+        _items = fetchedItems
+            .cast<Map<String, dynamic>>(); // Cast the dynamic list to a map
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error fetching items: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error fetching items: $e')));
     }
   }
 
   // Function to delete an item from the API and local list
   Future<void> _deleteItem(String itemId, int index) async {
     try {
-      await _apiService.deleteItem(itemId);  // Delete from API
+      await _apiService.deleteItem(itemId); // Delete from API
       setState(() {
-        _items.removeAt(index);  // Remove from local list
+        _items.removeAt(index); // Remove from local list
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item deleted successfully')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Item deleted successfully')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error deleting item: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error deleting item: $e')));
     }
   }
 
   // Function to update an item via the API
-  Future<void> _updateItem(String id, Map<String, dynamic> updatedItemData) async {
+  Future<void> _updateItem(
+      String id, Map<String, dynamic> updatedItemData) async {
     try {
-      await _apiService.updateItem(id, updatedItemData);  // Update via API
+      await _apiService.updateItem(id, updatedItemData); // Update via API
       setState(() {
         int index = _items.indexWhere((item) => item['item_code'] == id);
         if (index != -1) {
-          _items[index] = updatedItemData;  // Update local list
+          _items[index] = updatedItemData; // Update local list
         }
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item updated successfully')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Item updated successfully')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error updating item: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error updating item: $e')));
     }
   }
 
   // Function to add a new item and send it to the API
   Future<void> _addItem() async {
-    if (_itemNameController.text.isNotEmpty && _priceController.text.isNotEmpty && _selectedOutlet!="") {
+    if (_itemNameController.text.isNotEmpty &&
+        _priceController.text.isNotEmpty &&
+        _selectedOutlet != "") {
       final itemData = {
         'item_code': _generateItemCode(),
         'item_name': _itemNameController.text,
         'category': _selectedCategory,
         'brand': _selectedBrand,
-        'subcategory_id': _selectedSubcategory,  // Assuming this is an ID or name for subcategory
+        'subcategory_id':
+            _selectedSubcategory, // Assuming this is an ID or name for subcategory
         'outlet': _selectedOutlet,
         'description': _descriptionController.text,
         'price': double.parse(_priceController.text),
@@ -147,7 +155,8 @@ Future<void> _loadDataFromHive() async {
         'on_sale': _isOnSale,
         'happy_hour': _isHappyHour,
         'discountable': _isDiscountable,
-        'property_id': properties[0]['property_id']  // Assuming this is the property ID (you may get it dynamically or set a default)
+        'property_id': properties[0][
+            'property_id'] // Assuming this is the property ID (you may get it dynamically or set a default)
       };
 
       try {
@@ -189,17 +198,18 @@ Future<void> _loadDataFromHive() async {
   }
 
   // Search Items function
-List<Map<String, dynamic>> _filteredItems = []; // A new list for filtered items
+  List<Map<String, dynamic>> _filteredItems =
+      []; // A new list for filtered items
 
 // Function to search items based on the query
-void _searchItems(String query) {
-  setState(() {
-    _filteredItems = _items.where((item) {
-      return item['item_name'].toLowerCase().contains(query.toLowerCase()) ||
-             item['category'].toLowerCase().contains(query.toLowerCase());
-    }).toList();
-  });
-}
+  void _searchItems(String query) {
+    setState(() {
+      _filteredItems = _items.where((item) {
+        return item['item_name'].toLowerCase().contains(query.toLowerCase()) ||
+            item['category'].toLowerCase().contains(query.toLowerCase());
+      }).toList();
+    });
+  }
 //   // Function to generate a random item code
 //   String _generateItemCode() {
 //     Random random = Random();
@@ -302,8 +312,6 @@ void _searchItems(String query) {
     }).toList();
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -315,223 +323,247 @@ void _searchItems(String query) {
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            
             // Left Panel - Item Form
-            
+
             Expanded(
               flex: 1,
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                          // Item Code (Auto Generated)
-              TextFormField(
-                controller: _itemCodeController,
-                decoration: const InputDecoration(labelText: 'Item Code',  prefixIcon: Icon(Icons.numbers),
-                enabled: false, // Disable editing of item code
-                
-              )),
-              const SizedBox(height: 10),
-                      // Item Name
-         TextFormField(
-  controller: _itemNameController,
-  decoration: const InputDecoration(
-    labelText: 'Item Name',
-    prefixIcon: Icon(Icons.food_bank), // Example icon for item name
-  ),
-),
+                    // Item Code (Auto Generated)
+                    TextFormField(
+                        controller: _itemCodeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Item Code',
+                          prefixIcon: Icon(Icons.numbers),
+                          enabled: false, // Disable editing of item code
+                        )),
+                    const SizedBox(height: 10),
+                    // Item Name
+                    TextFormField(
+                      controller: _itemNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Item Name',
+                        prefixIcon:
+                            Icon(Icons.food_bank), // Example icon for item name
+                      ),
+                    ),
 
-              const SizedBox(height: 10),
+                    const SizedBox(height: 10),
 
-              // Category Dropdown
-              DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCategory = value;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Category'),
-                items: _categories
-                    .map((category) => DropdownMenuItem(value: category, child: Text(category)))
-                    .toList(),
-              ),
-              const SizedBox(height: 10),
+                    // Category Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedCategory,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCategory = value;
+                        });
+                      },
+                      decoration: const InputDecoration(labelText: 'Category'),
+                      items: _categories
+                          .map((category) => DropdownMenuItem(
+                              value: category, child: Text(category)))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 10),
 
-              // Subcategory Dropdown
-              DropdownButtonFormField<String>(
-                value: _selectedSubcategory,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedSubcategory = value;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Subcategory'),
-                items: _subcategories
-                    .map((subcategory) => DropdownMenuItem(value: subcategory, child: Text(subcategory)))
-                    .toList(),
-              ),
-              const SizedBox(height: 10),
+                    // Subcategory Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedSubcategory,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedSubcategory = value;
+                        });
+                      },
+                      decoration:
+                          const InputDecoration(labelText: 'Subcategory'),
+                      items: _subcategories
+                          .map((subcategory) => DropdownMenuItem(
+                              value: subcategory, child: Text(subcategory)))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 10),
 
-              // Brand Dropdown
-              DropdownButtonFormField<String>(
-                value: _selectedBrand,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedBrand = value;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Brand'),
-                items: _brands
-                    .map((brand) => DropdownMenuItem(value: brand, child: Text(brand)))
-                    .toList(),
-              ),
-              const SizedBox(height: 10),
+                    // Brand Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedBrand,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedBrand = value;
+                        });
+                      },
+                      decoration: const InputDecoration(labelText: 'Brand'),
+                      items: _brands
+                          .map((brand) => DropdownMenuItem(
+                              value: brand, child: Text(brand)))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 10),
 
-              // Outlet Dropdown
-              DropdownButtonFormField<String>(
-                value: _selectedOutlet,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedOutlet = value;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Outlet'),
-                items: outlets
-                    .map((outlet) => DropdownMenuItem(value: outlet, child: Text(outlet)))
-                    .toList(),
-              ),
-              const SizedBox(height: 10),
+                    // Outlet Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedOutlet,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedOutlet = value;
+                        });
+                      },
+                      decoration: const InputDecoration(labelText: 'Outlet'),
+                      items: outlets
+                          .map((outlet) => DropdownMenuItem(
+                              value: outlet, child: Text(outlet)))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 10),
 
-        
+                    // Description
+                    TextFormField(
+                      controller: _descriptionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Description',
+                        prefixIcon: Icon(
+                            Icons.description), // Example icon for description
+                      ),
+                    ),
 
-              // Description
-             TextFormField(
-  controller: _descriptionController,
-  decoration: const InputDecoration(
-    labelText: 'Description',
-    prefixIcon: Icon(Icons.description), // Example icon for description
-  ),
-),
+                    const SizedBox(height: 10),
 
-              const SizedBox(height: 10),
+                    // Price
+                    TextFormField(
+                      controller: _priceController,
+                      decoration: const InputDecoration(
+                        labelText: 'Price',
+                        prefixIcon:
+                            Icon(Icons.attach_money), // Example icon for price
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter
+                            .digitsOnly, // Restricts input to digits only
+                      ],
+                    ),
+                    const SizedBox(height: 10),
 
-              // Price
-          TextFormField(
-  controller: _priceController,
-  decoration: const InputDecoration(
-    labelText: 'Price',
-    prefixIcon: Icon(Icons.attach_money), // Example icon for price
-  ),
-  keyboardType: TextInputType.number,                  inputFormatters: [
-    FilteringTextInputFormatter.digitsOnly,  // Restricts input to digits only
-  ],
-),
-              const SizedBox(height: 10),
+                    // Tax Rate
+                    TextFormField(
+                      controller: _taxRateController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tax Rate',
+                        prefixIcon:
+                            Icon(Icons.percent), // Example icon for tax rate
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter
+                            .digitsOnly, // Restricts input to digits only
+                      ],
+                    ),
+                    const SizedBox(height: 10),
 
-              // Tax Rate
-            TextFormField(
-  controller: _taxRateController,
-  decoration: const InputDecoration(
-    labelText: 'Tax Rate',
-    prefixIcon: Icon(Icons.percent), // Example icon for tax rate
-  ),
-  keyboardType: TextInputType.number,                  inputFormatters: [
-    FilteringTextInputFormatter.digitsOnly,  // Restricts input to digits only
-  ],
-),
-              const SizedBox(height: 10),
+                    // Discount Percentage
+                    TextFormField(
+                      controller: _discountController,
+                      decoration: const InputDecoration(
+                        labelText: 'Discount Percentage',
+                        prefixIcon:
+                            Icon(Icons.discount), // Example icon for discount
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter
+                            .digitsOnly, // Restricts input to digits only
+                      ],
+                    ),
+                    const SizedBox(height: 10),
 
-              // Discount Percentage
-            TextFormField(
-  controller: _discountController,
-  decoration: const InputDecoration(
-    labelText: 'Discount Percentage',
-    prefixIcon: Icon(Icons.discount), // Example icon for discount
-  ),
-  keyboardType: TextInputType.number,                  inputFormatters: [
-    FilteringTextInputFormatter.digitsOnly,  // Restricts input to digits only
-  ],
-),
-              const SizedBox(height: 10),
+                    // Stock Quantity
+                    TextFormField(
+                      controller: _stockQuantityController,
+                      decoration: const InputDecoration(
+                        labelText: 'Stock Quantity',
+                        prefixIcon: Icon(Icons
+                            .shopping_cart), // Example icon for stock quantity
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter
+                            .digitsOnly, // Restricts input to digits only
+                      ],
+                    ),
+                    const SizedBox(height: 10),
 
-              // Stock Quantity
-            TextFormField(
-  controller: _stockQuantityController,
-  decoration: const InputDecoration(
-    labelText: 'Stock Quantity',
-    prefixIcon: Icon(Icons.shopping_cart), // Example icon for stock quantity
-  ),
-  keyboardType: TextInputType.number,                  inputFormatters: [
-    FilteringTextInputFormatter.digitsOnly,  // Restricts input to digits only
-  ],
-),
-              const SizedBox(height: 10),
+                    // Reorder Level
+                    TextFormField(
+                      controller: _reorderLevelController,
+                      decoration: const InputDecoration(
+                        labelText: 'Reorder Level',
+                        prefixIcon: Icon(
+                            Icons.refresh), // Example icon for reorder level
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter
+                            .digitsOnly, // Restricts input to digits only
+                      ],
+                    ),
+                    const SizedBox(height: 10),
 
-              // Reorder Level
-         TextFormField(
-  controller: _reorderLevelController,
-  decoration: const InputDecoration(
-    labelText: 'Reorder Level',
-    prefixIcon: Icon(Icons.refresh), // Example icon for reorder level
-  ),
-  keyboardType: TextInputType.number,                  inputFormatters: [
-    FilteringTextInputFormatter.digitsOnly,  // Restricts input to digits only
-  ],
-),
-              const SizedBox(height: 10),
+                    // Is Active Checkbox
+                    CheckboxListTile(
+                      title: const Text('Is Active'),
+                      value: _isActive,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _isActive = value!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 10),
 
-              // Is Active Checkbox
-              CheckboxListTile(
-                title: const Text('Is Active'),
-                value: _isActive,
-                onChanged: (bool? value) {
-                  setState(() {
-                    _isActive = value!;
-                  });
-                },
-              ),
-              const SizedBox(height: 10),
+                    // Happy Hour Checkbox
+                    CheckboxListTile(
+                      title: const Text('Happy Hour'),
+                      value: _happyHour,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _happyHour = value!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 10),
 
-              // Happy Hour Checkbox
-              CheckboxListTile(
-                title: const Text('Happy Hour'),
-                value: _happyHour,
-                onChanged: (bool? value) {
-                  setState(() {
-                    _happyHour = value!;
-                  });
-                },
-              ),
-              const SizedBox(height: 10),
+                    // Discountable Checkbox
+                    CheckboxListTile(
+                      title: const Text('Discountable'),
+                      value: _discountable,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _discountable = value!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 10),
 
-              // Discountable Checkbox
-              CheckboxListTile(
-                title: const Text('Discountable'),
-                value: _discountable,
-                onChanged: (bool? value) {
-                  setState(() {
-                    _discountable = value!;
-                  });
-                },
-              ),
-              const SizedBox(height: 10),
-
-              // Quantity Debit From Sale
-              TextFormField(
-                controller: TextEditingController(text: _qtyDebitFromSale.toString()),
-                decoration: const InputDecoration(labelText: 'How Much Qty Debit From 1 Sale'),
-                keyboardType: TextInputType.number,
-                  inputFormatters: [
-    FilteringTextInputFormatter.digitsOnly,  // Restricts input to digits only
-  ],
-                onChanged: (value) {
-                  setState(() {
-                    _qtyDebitFromSale = int.tryParse(value) ?? 1; // Default 1 if invalid input
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
+                    // Quantity Debit From Sale
+                    TextFormField(
+                      controller: TextEditingController(
+                          text: _qtyDebitFromSale.toString()),
+                      decoration: const InputDecoration(
+                          labelText: 'How Much Qty Debit From 1 Sale'),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter
+                            .digitsOnly, // Restricts input to digits only
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _qtyDebitFromSale = int.tryParse(value) ??
+                              1; // Default 1 if invalid input
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
                     // Add Item Button
                     ElevatedButton(
                       onPressed: _addItem,
@@ -567,45 +599,56 @@ void _searchItems(String query) {
                         _selectedOutlet = value;
                       });
                     },
-                    decoration: const InputDecoration(labelText: 'Filter by Outlet'),
+                    decoration:
+                        const InputDecoration(labelText: 'Filter by Outlet'),
                     items: outlets
-                        .map((outlet) => DropdownMenuItem(value: outlet, child: Text(outlet)))
+                        .map((outlet) => DropdownMenuItem(
+                            value: outlet, child: Text(outlet)))
                         .toList(),
                   ),
                   const SizedBox(height: 20),
                   // Item List
-              _filteredItems.length>0?  Expanded(
-  child: ListView.builder(
-    itemCount: _filteredItems.length, // This can be the source of error
-    itemBuilder: (context, index) {
-      var item = _filteredItems[index];  // Ensure this list's length is properly handled
-      return ListTile(
-        title: Text(item['item_name']),
-        subtitle: Text('Category: ${item['category']} | Price: ₹${item['price']}'),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete),
-          onPressed: () => _deleteItem(item['item_id'].toString(), index),
-        ),
-      );
-    },
-  ),
-): Expanded(
-  child: ListView.builder(
-    itemCount: _items.length, // This can be the source of error
-    itemBuilder: (context, index) {
-      var item = _items[index];  // Ensure this list's length is properly handled
-      return ListTile(
-        title: Text(item['item_name']),
-        subtitle: Text('Category: ${item['category']} | Price: ₹${item['price']}'),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete),
-          onPressed: () => _deleteItem(item['item_id'].toString(), index),
-        ),
-      );
-    },
-  ),
-)
-
+                  _filteredItems.length > 0
+                      ? Expanded(
+                          child: ListView.builder(
+                            itemCount: _filteredItems
+                                .length, // This can be the source of error
+                            itemBuilder: (context, index) {
+                              var item = _filteredItems[
+                                  index]; // Ensure this list's length is properly handled
+                              return ListTile(
+                                title: Text(item['item_name']),
+                                subtitle: Text(
+                                    'Category: ${item['category']} | Price: ₹${item['price']}'),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete),
+                                  onPressed: () => _deleteItem(
+                                      item['item_id'].toString(), index),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      : Expanded(
+                          child: ListView.builder(
+                            itemCount: _items
+                                .length, // This can be the source of error
+                            itemBuilder: (context, index) {
+                              var item = _items[
+                                  index]; // Ensure this list's length is properly handled
+                              return ListTile(
+                                title: Text(item['item_name']),
+                                subtitle: Text(
+                                    'Category: ${item['category']} | Price: ₹${item['price']}'),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete),
+                                  onPressed: () => _deleteItem(
+                                      item['item_id'].toString(), index),
+                                ),
+                              );
+                            },
+                          ),
+                        )
                 ],
               ),
             ),

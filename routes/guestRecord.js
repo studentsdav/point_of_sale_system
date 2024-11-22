@@ -7,7 +7,7 @@ const router = express.Router();
 router.post('/', async (req, res) => {
     try {
         const { guest_name, guest_address, phone_number, email, anniversary, dob, gst_no, company_name, discount, g_suggestion, property_id } = req.body;
-        
+
         if (!property_id) {
             return res.status(400).json({ message: 'Property ID is required' });
         }

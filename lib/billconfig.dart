@@ -9,7 +9,8 @@ class BillConfigurationForm extends StatefulWidget {
 
 class _BillConfigurationFormState extends State<BillConfigurationForm> {
   final _formKey = GlobalKey<FormState>();
-   final BillApiService apiService = BillApiService('http://localhost:3000/api/bill-config'); // Update with your backend URL
+  final BillApiService apiService = BillApiService(
+      'http://localhost:3000/api/bill-config'); // Update with your backend URL
   String? selectedOutlet;
   String billPrefix = '';
   String? billSuffix;
@@ -22,71 +23,70 @@ class _BillConfigurationFormState extends State<BillConfigurationForm> {
   List<dynamic> properties = [];
   List<dynamic> outletConfigurations = [];
 
+  // Load data from Hive
+  Future<void> _loadDataFromHive() async {
+    var box = await Hive.openBox('appData');
 
-   // Load data from Hive
-Future<void> _loadDataFromHive() async {
-  var box = await Hive.openBox('appData');
-  
-  // Retrieve the data
-  var properties = box.get('properties');
-  var outletConfigurations = box.get('outletConfigurations');
-  
-  // Check if outletConfigurations is not null
-  if (outletConfigurations != null) {
-    // Extract the outlet names into the outlets list
-    List<String> outletslist = [];
-    for (var outlet in outletConfigurations) {
-      if (outlet['outlet_name'] != null) {
-        outletslist.add(outlet['outlet_name'].toString());
+    // Retrieve the data
+    var properties = box.get('properties');
+    var outletConfigurations = box.get('outletConfigurations');
+
+    // Check if outletConfigurations is not null
+    if (outletConfigurations != null) {
+      // Extract the outlet names into the outlets list
+      List<String> outletslist = [];
+      for (var outlet in outletConfigurations) {
+        if (outlet['outlet_name'] != null) {
+          outletslist.add(outlet['outlet_name'].toString());
+        }
       }
+
+      setState(() {
+        this.properties = properties ?? [];
+        this.outletConfigurations = outletConfigurations ?? [];
+        this.outlets = outletslist; // Set the outlets list
+      });
     }
-
-    setState(() {
-      this.properties = properties ?? [];
-      this.outletConfigurations = outletConfigurations ?? [];
-      this.outlets = outletslist; // Set the outlets list
-    });
   }
-}
-
 
   List<Map<String, dynamic>> _parseJson(String jsonString) {
     // You can use a JSON decoder if you save the data in a valid JSON format
     return jsonString.isNotEmpty ? List<Map<String, dynamic>>.from([]) : [];
   }
 
-
-    @override
+  @override
   void initState() {
     super.initState();
     _loadDataFromHive();
     _loadConfigurations();
   }
 
-void _loadConfigurations() async {
-  try {
-    final configurations = await apiService.fetchConfigurations();
+  void _loadConfigurations() async {
+    try {
+      final configurations = await apiService.fetchConfigurations();
 
-    setState(() {
-      _configurations.clear();
-      _configurations.addAll(
-        configurations.cast<Map<String, dynamic>>(), // Explicitly cast the list
+      setState(() {
+        _configurations.clear();
+        _configurations.addAll(
+          configurations
+              .cast<Map<String, dynamic>>(), // Explicitly cast the list
+        );
+      });
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load configurations')),
       );
-    });
-  } catch (error) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load configurations')),
-    );
+    }
   }
-}
-
 
   void _saveConfiguration() async {
-    if (_formKey.currentState!.validate() && seriesStartDate != null && selectedOutlet != null) {
+    if (_formKey.currentState!.validate() &&
+        seriesStartDate != null &&
+        selectedOutlet != null) {
       _formKey.currentState!.save();
 
       final newConfig = {
-        'property_id':properties[0]['property_id'], // Example property ID
+        'property_id': properties[0]['property_id'], // Example property ID
         'selected_outlet': selectedOutlet,
         'bill_prefix': billPrefix,
         'bill_suffix': billSuffix,
@@ -98,7 +98,7 @@ void _loadConfigurations() async {
 
       try {
         await apiService.createConfiguration(newConfig);
-       _loadConfigurations();
+        _loadConfigurations();
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to save configuration')),
@@ -111,22 +111,22 @@ void _loadConfigurations() async {
     }
   }
 
-Future<void> _deleteConfiguration(id) async {
-  // Add the delete logic here, e.g., making an API call
-  // For example:
-  await apiService.deleteConfiguration(id);
-  setState(() {
-    _configurations.removeWhere((config) => config['config_id'] == id);
-  });
-}
+  Future<void> _deleteConfiguration(id) async {
+    // Add the delete logic here, e.g., making an API call
+    // For example:
+    await apiService.deleteConfiguration(id);
+    setState(() {
+      _configurations.removeWhere((config) => config['config_id'] == id);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Bill Configuration')),
       body: Container(
-              color: Colors.white,
-              padding: EdgeInsets.all(30),
+        color: Colors.white,
+        padding: EdgeInsets.all(30),
         child: Card(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -141,17 +141,21 @@ Future<void> _deleteConfiguration(id) async {
                       icon: Icon(Icons.store),
                     ),
                     items: outlets.map((outlet) {
-                      return DropdownMenuItem(value: outlet, child: Text(outlet));
+                      return DropdownMenuItem(
+                          value: outlet, child: Text(outlet));
                     }).toList(),
-                    onChanged: (value) => setState(() => selectedOutlet = value),
-                    validator: (value) => value == null ? 'Please select an outlet' : null,
+                    onChanged: (value) =>
+                        setState(() => selectedOutlet = value),
+                    validator: (value) =>
+                        value == null ? 'Please select an outlet' : null,
                   ),
                   TextFormField(
                     decoration: InputDecoration(
                       labelText: 'Bill Prefix',
                       icon: Icon(Icons.label),
                     ),
-                    validator: (value) => value!.isEmpty ? 'Please enter a bill prefix' : null,
+                    validator: (value) =>
+                        value!.isEmpty ? 'Please enter a bill prefix' : null,
                     onSaved: (value) => billPrefix = value!,
                   ),
                   TextFormField(
@@ -167,9 +171,10 @@ Future<void> _deleteConfiguration(id) async {
                       icon: Icon(Icons.format_list_numbered),
                     ),
                     keyboardType: TextInputType.number,
-                    validator: (value) => (value == null || int.tryParse(value) == null)
-                        ? 'Please enter a valid number'
-                        : null,
+                    validator: (value) =>
+                        (value == null || int.tryParse(value) == null)
+                            ? 'Please enter a valid number'
+                            : null,
                     onSaved: (value) => startingBillNumber = int.parse(value!),
                   ),
                   TextFormField(
@@ -185,9 +190,11 @@ Future<void> _deleteConfiguration(id) async {
                         firstDate: DateTime(2000),
                         lastDate: DateTime(2100),
                       );
-                      if (pickedDate != null) setState(() => seriesStartDate = pickedDate);
+                      if (pickedDate != null)
+                        setState(() => seriesStartDate = pickedDate);
                     },
-                    validator: (_) => seriesStartDate == null ? 'Please select a date' : null,
+                    validator: (_) =>
+                        seriesStartDate == null ? 'Please select a date' : null,
                     controller: TextEditingController(
                       text: seriesStartDate == null
                           ? ''
@@ -200,17 +207,21 @@ Future<void> _deleteConfiguration(id) async {
                       icon: Icon(Icons.attach_money),
                     ),
                     items: ['₹', '\$', '€'].map((symbol) {
-                      return DropdownMenuItem(value: symbol, child: Text(symbol));
+                      return DropdownMenuItem(
+                          value: symbol, child: Text(symbol));
                     }).toList(),
-                    onChanged: (value) => setState(() => currencySymbol = value!),
+                    onChanged: (value) =>
+                        setState(() => currencySymbol = value!),
                   ),
                   DropdownButtonFormField<String>(
                     decoration: InputDecoration(
                       labelText: 'Date Format',
                       icon: Icon(Icons.date_range),
                     ),
-                    items: ['dd-MM-yyyy', 'MM-dd-yyyy', 'yyyy-MM-dd'].map((format) {
-                      return DropdownMenuItem(value: format, child: Text(format));
+                    items: ['dd-MM-yyyy', 'MM-dd-yyyy', 'yyyy-MM-dd']
+                        .map((format) {
+                      return DropdownMenuItem(
+                          value: format, child: Text(format));
                     }).toList(),
                     onChanged: (value) => setState(() => dateFormat = value!),
                   ),
@@ -220,38 +231,41 @@ Future<void> _deleteConfiguration(id) async {
                     child: Text('Save Configuration'),
                   ),
                   const SizedBox(height: 20),
-                  Text('Saved Configurations:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  
-      Expanded(
-  child: ListView.builder(
-    itemCount: _configurations.length,
-    itemBuilder: (context, index) {
-      final config = _configurations[index];
-      final billNumberFormat = '${config['bill_prefix']}${config['starting_bill_number']}${config['bill_suffix']}';
-      final seriesStartDate = config['series_start_date'];
-      final savedOn = config['updated_at'];
+                  Text('Saved Configurations:',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _configurations.length,
+                      itemBuilder: (context, index) {
+                        final config = _configurations[index];
+                        final billNumberFormat =
+                            '${config['bill_prefix']}${config['starting_bill_number']}${config['bill_suffix']}';
+                        final seriesStartDate = config['series_start_date'];
+                        final savedOn = config['updated_at'];
 
-      return ListTile(
-        leading: Icon(Icons.receipt),
-        title: Text(
-          'Your bill no starts from $billNumberFormat from '
-          '${seriesStartDate != null ? _formatDate(seriesStartDate) : "N/A"} '
-          'updated on '
-          '${savedOn != null ? _formatDate(savedOn) : "N/A"} '
-          'for ${config['selected_outlet'] ?? "Unknown Outlet"}',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        trailing: IconButton(
-          icon: Icon(Icons.delete),
-          onPressed: () {
-            // Trigger the delete functionality here
-            _deleteConfiguration(config['config_id']); // Assuming there's an ID in the configuration
-          },
-        ),
-      );
-    },
-  ),
-),
+                        return ListTile(
+                          leading: Icon(Icons.receipt),
+                          title: Text(
+                            'Your bill no starts from $billNumberFormat from '
+                            '${seriesStartDate != null ? _formatDate(seriesStartDate) : "N/A"} '
+                            'updated on '
+                            '${savedOn != null ? _formatDate(savedOn) : "N/A"} '
+                            'for ${config['selected_outlet'] ?? "Unknown Outlet"}',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          trailing: IconButton(
+                            icon: Icon(Icons.delete),
+                            onPressed: () {
+                              // Trigger the delete functionality here
+                              _deleteConfiguration(config[
+                                  'config_id']); // Assuming there's an ID in the configuration
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -261,23 +275,21 @@ Future<void> _deleteConfiguration(id) async {
     );
   }
 
-String _formatDate(dynamic date) {
-  try {
-    if (date is String) {
-      final parsedDate = DateTime.parse(date).toLocal(); // Convert to local timezone
-      return "${parsedDate.day}-${parsedDate.month}-${parsedDate.year}";
-    } else if (date is DateTime) {
-      return "${date.toLocal().day}-${date.toLocal().month}-${date.toLocal().year}";
+  String _formatDate(dynamic date) {
+    try {
+      if (date is String) {
+        final parsedDate =
+            DateTime.parse(date).toLocal(); // Convert to local timezone
+        return "${parsedDate.day}-${parsedDate.month}-${parsedDate.year}";
+      } else if (date is DateTime) {
+        return "${date.toLocal().day}-${date.toLocal().month}-${date.toLocal().year}";
+      }
+    } catch (e) {
+      print("Error formatting date: $e");
     }
-  } catch (e) {
-    print("Error formatting date: $e");
+    return "Invalid Date";
   }
-  return "Invalid Date";
 }
-
-}
-
-
 
 void main() {
   runApp(MaterialApp(home: BillConfigurationForm()));
