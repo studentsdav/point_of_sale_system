@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:point_of_sale_system/poslogin.dart';
 
 void main() {
+  _initializeHive();
   runApp(const MyApp());
+}
+
+Future<void> _initializeHive() async {
+  final appDocumentDir = await getApplicationDocumentsDirectory();
+  Hive.init(appDocumentDir.path);
 }
 
 class MyApp extends StatelessWidget {

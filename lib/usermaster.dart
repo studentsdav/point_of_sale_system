@@ -54,7 +54,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   Future<void> _saveDataToHive(List<Map<String, dynamic>> userdata) async {
-    var box = await Hive.openBox('appDatauser');
+    var box = await Hive.openBox('appData');
     // Store the data in a Hive box
     await box.put('users', userdata);
   }

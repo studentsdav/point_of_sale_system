@@ -61,10 +61,9 @@ class _UserPermissionFormState extends State<UserPermissionForm> {
   // Load data from Hive
   Future<void> _loadDataFromHive() async {
     var box = await Hive.openBox('appData');
-    var boxnew = await Hive.openBox('appDatauser');
 
     // Retrieve the data
-    var userlist = boxnew.get('users');
+    var userlist = box.get('users');
     var properties = box.get('properties');
     var outletConfigurations = box.get('outletConfigurations');
     List<Map<String, dynamic>> userslist = [];

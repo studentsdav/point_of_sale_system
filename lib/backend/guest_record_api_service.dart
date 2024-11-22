@@ -7,7 +7,8 @@ class GuestRecordApiService {
   GuestRecordApiService({required this.baseUrl});
 
   // 1. Create a new guest record
-  Future<Map<String, dynamic>> createGuestRecord(Map<String, dynamic> guestData) async {
+  Future<Map<String, dynamic>> createGuestRecord(
+      Map<String, dynamic> guestData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/guest_record'),
       headers: {'Content-Type': 'application/json'},
@@ -15,7 +16,8 @@ class GuestRecordApiService {
     );
 
     if (response.statusCode == 201) {
-      return json.decode(response.body); // Returning the newly created guest record
+      return json
+          .decode(response.body); // Returning the newly created guest record
     } else {
       throw Exception('Failed to create guest record: ${response.body}');
     }
@@ -30,7 +32,8 @@ class GuestRecordApiService {
 
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
-      return List<Map<String, dynamic>>.from(data); // Returning all guest records as a list
+      return List<Map<String, dynamic>>.from(
+          data); // Returning all guest records as a list
     } else {
       throw Exception('Failed to fetch guest records: ${response.body}');
     }
@@ -53,7 +56,8 @@ class GuestRecordApiService {
   }
 
   // 4. Update guest record by ID
-  Future<Map<String, dynamic>> updateGuestRecord(String guestId, Map<String, dynamic> guestData) async {
+  Future<Map<String, dynamic>> updateGuestRecord(
+      String guestId, Map<String, dynamic> guestData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/guest_record/$guestId'),
       headers: {'Content-Type': 'application/json'},

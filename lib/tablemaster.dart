@@ -29,10 +29,17 @@ class _TableManagementPageState extends State<TableManagementPage> {
       setState(() {
         _tables = tables;
       });
+      _saveDataToHive(_tables);
     } catch (e) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Failed to load tables')));
     }
+  }
+
+  Future<void> _saveDataToHive(List<Map<String, dynamic>> data) async {
+    var box = await Hive.openBox('appData');
+    // Store the data in a Hive box
+    await box.put('tables', data);
   }
 
   // Load data from Hive

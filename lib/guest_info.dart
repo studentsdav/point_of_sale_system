@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/intl.dart';
+import 'package:point_of_sale_system/backend/guest_record_api_service.dart'; // To format the date
 
 class GuestRegistrationScreen extends StatefulWidget {
   @override
@@ -8,86 +12,155 @@ class GuestRegistrationScreen extends StatefulWidget {
 
 class _GuestRegistrationScreenState extends State<GuestRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? _guestId = 'G100';  // Set default Guest ID
+  final GuestRecordApiService apiService =
+      GuestRecordApiService(baseUrl: 'http://localhost:3000/api');
+  String? _guestId = 'G100'; // Set default Guest ID
   String? _guestName;
   String? _phoneNumber;
   String? _address;
   String? _email;
-  String? _anniversary;
-  String? _dob;
+  DateTime? _anniversary;
+  DateTime? _dob;
   String? _gstNo;
   String? _companyName;
   String? _discount;
   String? _gSuggestion;
 
+  List<String> outlets = []; // List of outlets to select from
+  List<dynamic> properties = [];
+  List<dynamic> outletConfigurations = [];
   // Table data for displaying the guest records
-  List<Map<String, String>> _guestRecords = [];
+  List<Map<String, dynamic>> _guestRecords = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDataFromHive();
+    _fetchGuestRecords();
+  }
+
+  // Load data from Hive
+  Future<void> _loadDataFromHive() async {
+    var box = await Hive.openBox('appData');
+
+    // Retrieve the data
+    var properties = box.get('properties');
+    var outletConfigurations = box.get('outletConfigurations');
+
+    // Check if outletConfigurations is not null
+    if (outletConfigurations != null) {
+      // Extract the outlet names into the outlets list
+      List<String> outletslist = [];
+      for (var outlet in outletConfigurations) {
+        if (outlet['outlet_name'] != null) {
+          outletslist.add(outlet['outlet_name'].toString());
+        }
+      }
+
+      setState(() {
+        this.properties = properties ?? [];
+        this.outletConfigurations = outletConfigurations ?? [];
+        this.outlets = outletslist; // Set the outlets list
+      });
+    }
+  }
 
   // Function to handle form submission
-  void _addGuest() {
+  void _addGuest() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _guestRecords.add({
-          'guest_id': _guestId!,
-          'date_joined': DateTime.now().toString().split(' ')[0],
-          'guest_name': _guestName!,
-          'guest_address': _address!,
-          'phone_number': _phoneNumber!,
-          'email': _email!,
-          'anniversary': _anniversary!,
-          'dob': _dob!,
-          'gst_no': _gstNo!,
-          'company_name': _companyName!,
-          'discount': _discount!,
-          'g_suggestion': _gSuggestion!,
+      Map<String, dynamic> newGuest = {
+        'date_joined':
+            DateTime.now().toIso8601String(), // ISO format for current date
+        'guest_name': _guestName!,
+        'guest_address': _address!,
+        'phone_number': _phoneNumber!,
+        'email': _email!,
+        'anniversary': _anniversary!.toIso8601String(),
+        'dob': _dob!.toIso8601String(),
+        'gst_no': _gstNo!,
+        'company_name': _companyName!,
+        'discount': _discount!,
+        'g_suggestion': _gSuggestion!,
+        'property_id': properties[0]
+            ['property_id'], // Replace with actual property ID
+      };
+
+      try {
+        Map<String, dynamic> response =
+            await apiService.createGuestRecord(newGuest);
+
+        setState(() {
+          _guestRecords.add(response);
         });
-      });
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Guest added successfully!')),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Guest added successfully!')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
-  // Function to handle guest record modification
-  void _modifyGuest(int index) {
-    if (_formKey.currentState!.validate()) {
+  void _fetchGuestRecords() async {
+    try {
+      List<Map<String, dynamic>> guests = await apiService.getGuestRecords();
+
       setState(() {
-        _guestRecords[index] = {
-          'guest_id': _guestId!,
-          'date_joined': DateTime.now().toString().split(' ')[0],
-          'guest_name': _guestName!,
-          'guest_address': _address!,
-          'phone_number': _phoneNumber!,
-          'email': _email!,
-          'anniversary': _anniversary!,
-          'dob': _dob!,
-          'gst_no': _gstNo!,
-          'company_name': _companyName!,
-          'discount': _discount!,
-          'g_suggestion': _gSuggestion!,
-        };
+        _guestRecords = guests;
       });
-
-      // Show success message
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Guest modified successfully!')),
+        SnackBar(content: Text('Error fetching guest records: $e')),
       );
     }
   }
 
-  // Function to delete a guest
-  void _deleteGuest(int index) {
-    setState(() {
-      _guestRecords.removeAt(index);
-    });
+  void _deleteGuest(String guestId, int index) async {
+    try {
+      await apiService.deleteGuestRecord(guestId);
 
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Guest deleted successfully!')),
-    );
+      setState(() {
+        _guestRecords.removeAt(index);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Guest deleted successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting guest: $e')),
+      );
+    }
   }
+
+  void _editGuest(String guestId, Map<String, dynamic> updatedData) async {
+    try {
+      Map<String, dynamic> updatedGuest =
+          await apiService.updateGuestRecord(guestId, updatedData);
+
+      // Update local state
+      int index =
+          _guestRecords.indexWhere((guest) => guest['guest_id'] == guestId);
+      if (index != -1) {
+        setState(() {
+          _guestRecords[index] = updatedGuest;
+        });
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Guest updated successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating guest: $e')),
+      );
+    }
+  }
+
+  // Function to open date picker and return formatted date
 
   @override
   Widget build(BuildContext context) {
@@ -112,19 +185,19 @@ class _GuestRegistrationScreenState extends State<GuestRegistrationScreen> {
                   key: _formKey,
                   child: ListView(
                     children: [
-                      // Guest ID (non-editable)
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: TextFormField(
-                          initialValue: _guestId,
-                          decoration: InputDecoration(
-                            labelText: 'Guest ID',
-                            prefixIcon: Icon(Icons.card_travel),
-                            border: OutlineInputBorder(),
-                          ),
-                          enabled: false, // Make Guest ID non-editable
-                        ),
-                      ),
+                      // // Guest ID (non-editable)
+                      // Padding(
+                      //   padding: const EdgeInsets.all(8.0),
+                      //   child: TextFormField(
+                      //     initialValue: _guestId,
+                      //     decoration: InputDecoration(
+                      //       labelText: 'Guest ID',
+                      //       prefixIcon: Icon(Icons.card_travel),
+                      //       border: OutlineInputBorder(),
+                      //     ),
+                      //     enabled: false, // Make Guest ID non-editable
+                      //   ),
+                      // ),
                       // Guest Name
                       Padding(
                         padding: const EdgeInsets.all(8.0),
@@ -151,6 +224,11 @@ class _GuestRegistrationScreenState extends State<GuestRegistrationScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter
+                                .digitsOnly, // Restricts input to digits only
+                          ],
                           decoration: InputDecoration(
                             labelText: 'Phone Number',
                             prefixIcon: Icon(Icons.phone),
@@ -207,7 +285,7 @@ class _GuestRegistrationScreenState extends State<GuestRegistrationScreen> {
                           },
                         ),
                       ),
-                      // Anniversary
+                      // Anniversary (Date Picker)
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(
@@ -216,14 +294,28 @@ class _GuestRegistrationScreenState extends State<GuestRegistrationScreen> {
                             prefixIcon: Icon(Icons.cake),
                             border: OutlineInputBorder(),
                           ),
-                          onChanged: (value) {
-                            setState(() {
-                              _anniversary = value;
-                            });
+                          onTap: () async {
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                            );
+                            if (pickedDate != null)
+                              setState(() => _anniversary = pickedDate);
                           },
+                          validator: (_) => _anniversary == null
+                              ? 'Please select a Anniversary date'
+                              : null,
+                          controller: TextEditingController(
+                            text: _anniversary == null
+                                ? ''
+                                : "${_anniversary!.day}-${_anniversary!.month}-${_anniversary!.year}",
+                          ),
+                          readOnly: true, // Prevent text input
                         ),
                       ),
-                      // Date of Birth
+                      // Date of Birth (Date Picker)
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(
@@ -232,11 +324,24 @@ class _GuestRegistrationScreenState extends State<GuestRegistrationScreen> {
                             prefixIcon: Icon(Icons.cake),
                             border: OutlineInputBorder(),
                           ),
-                          onChanged: (value) {
-                            setState(() {
-                              _dob = value;
-                            });
+                          onTap: () async {
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                            );
+                            if (pickedDate != null)
+                              setState(() => _dob = pickedDate);
                           },
+                          validator: (_) =>
+                              _dob == null ? 'Please select a DOB date' : null,
+                          controller: TextEditingController(
+                            text: _dob == null
+                                ? ''
+                                : "${_dob!.day}-${_dob!.month}-${_dob!.year}",
+                          ),
+                          readOnly: true, // Prevent text input
                         ),
                       ),
                       // GST No
@@ -275,6 +380,11 @@ class _GuestRegistrationScreenState extends State<GuestRegistrationScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter
+                                .digitsOnly, // Restricts input to digits only
+                          ],
                           decoration: InputDecoration(
                             labelText: 'Discount',
                             prefixIcon: Icon(Icons.percent),
@@ -307,34 +417,12 @@ class _GuestRegistrationScreenState extends State<GuestRegistrationScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            ElevatedButton(
+                            ElevatedButton.icon(
+                              icon: Icon(Icons.save),
                               onPressed: _addGuest,
-                              child: Text('Add'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                // Modify the guest based on a selected index
-                                // For now, we modify the first guest as an example
-                                _modifyGuest(0);
-                              },
-                              child: Text('Modify'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                // Delete the guest based on a selected index
-                                // For now, we delete the first guest as an example
-                                _deleteGuest(0);
-                              },
-                              child: Text('Delete'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                // Exit action
-                                Navigator.pop(context);
-                              },
-                              child: Text('Exit'),
+                              label: Text('Add'),
                             ),
                           ],
                         ),
@@ -344,64 +432,183 @@ class _GuestRegistrationScreenState extends State<GuestRegistrationScreen> {
                 ),
               ),
             ),
-            SizedBox(width: 16), // Space between the panels
-            // Right panel - Guest Records List
-          Expanded(
-  flex: 2,
-  child: Container(
-    color: Colors.white,
-    child: ListView.builder(
-      itemCount: _guestRecords.length,
-      itemBuilder: (context, index) {
-        final guest = _guestRecords[index];
-        return Card(
-          margin: EdgeInsets.symmetric(vertical: 8.0),
-          child: ListTile(
-            title: Text(
-              guest['guest_name']!,
-              style: TextStyle(fontWeight: FontWeight.bold),
+            // Right panel - Guest Table
+            Expanded(
+              flex: 2,
+              child: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 10)],
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Guest Records',
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: _guestRecords.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            title: Text(
+                              'Guest ID: ${_guestRecords[index]['guest_id']}',
+                            ),
+                            subtitle: Text(
+                              'Guest Name: ${_guestRecords[index]['guest_name']}',
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize
+                                  .min, // Ensure the Row does not take up extra space
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.edit),
+                                  onPressed: () {
+                                    // Open edit form with guest data
+                                    // _editGuest(
+                                    //   _guestRecords[index]['guest_id']
+                                    //       .toString(),
+                                    //   {
+                                    //     'date_joined': DateTime.now()
+                                    //         .toIso8601String(), // ISO format for current date
+                                    //     'guest_name': _guestName!,
+                                    //     'guest_address': _address!,
+                                    //     'phone_number': _phoneNumber!,
+                                    //     'email': _email!,
+                                    //     'anniversary':
+                                    //         _anniversary!.toIso8601String(),
+                                    //     'dob': _dob!.toIso8601String(),
+                                    //     'gst_no': _gstNo!,
+                                    //     'company_name': _companyName!,
+                                    //     'discount': _discount!,
+                                    //     'g_suggestion': _gSuggestion!,
+                                    //     'property_id': properties[0][
+                                    //         'property_id'], // Replace with actual property ID
+                                    //   },
+                                    // );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete),
+                                  onPressed: () {
+                                    _deleteGuest(
+                                        _guestRecords[index]['guest_id']
+                                            .toString(),
+                                        index);
+                                  },
+                                ),
+                              ],
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => GuestProfileScreen(
+                                    guestData: _guestRecords[index],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Delete Guest details
+}
+
+class GuestProfileScreen extends StatelessWidget {
+  final Map<String, dynamic> guestData;
+
+  // Constructor to receive guest data
+  const GuestProfileScreen({Key? key, required this.guestData})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Guest Profile'),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(100),
+          child: Card(
+            elevation: 5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ListView(
                 children: [
-                  // Guest Address
-                  Text('Address: ${guest['guest_address']}'),
-                  // Phone Number
-                  Text('Phone: ${guest['phone_number']}'),
-                  // Email ID
-                  Text('Email: ${guest['email']}'),
-                  // Anniversary
-                  Text('Anniversary: ${guest['anniversary']}'),
-                  // Date of Birth
-                  Text('DOB: ${guest['dob']}'),
-                  // GST Number
-                  Text('GST No.: ${guest['gst_no']}'),
-                  // Company Name
-                  Text('Company: ${guest['company_name']}'),
-                  // Discount
-                  Text('Discount: ${guest['discount']}'),
-                  // Suggestion
-                  Text('Suggestion: ${guest['g_suggestion']}'),
+                  _buildDetailRow(
+                      'Guest ID', guestData['guest_id']!.toString()),
+                  _buildDetailRow(
+                      'Date Joined', _formatDate(guestData['date_joined']!)),
+                  _buildDetailRow('Guest Name', guestData['guest_name']!),
+                  _buildDetailRow('Phone Number', guestData['phone_number']!),
+                  _buildDetailRow('Email', guestData['email']!),
+                  _buildDetailRow('Address', guestData['guest_address']!),
+                  _buildDetailRow(
+                      'Anniversary', _formatDate(guestData['anniversary']!)),
+                  _buildDetailRow('DOB', _formatDate(guestData['dob']!)),
+                  _buildDetailRow('GST No.', guestData['gst_no']!),
+                  _buildDetailRow('Company Name', guestData['company_name']!),
+                  _buildDetailRow('Discount', guestData['discount']!),
+                  _buildDetailRow(
+                      'Guest Suggestion', guestData['g_suggestion']!),
                 ],
               ),
             ),
-            trailing: IconButton(
-              icon: Icon(Icons.edit),
-              onPressed: () {
-                // Implement editing functionality here
-              },
-            ),
           ),
-        );
-      },
-    ),
-  ),
-),
-
-          ],
         ),
+      ),
+    );
+  }
+
+  String _formatDate(dynamic date) {
+    try {
+      if (date is String) {
+        final parsedDate =
+            DateTime.parse(date).toLocal(); // Convert to local timezone
+        return "${parsedDate.day}-${parsedDate.month}-${parsedDate.year}";
+      } else if (date is DateTime) {
+        return "${date.toLocal().day}-${date.toLocal().month}-${date.toLocal().year}";
+      }
+    } catch (e) {
+      print("Error formatting date: $e");
+    }
+    return "Invalid Date";
+  }
+
+  // Helper function to build the detail rows
+  Widget _buildDetailRow(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Text(
+            '$title:  ',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Text(value),
+        ],
       ),
     );
   }

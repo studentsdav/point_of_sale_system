@@ -1,8 +1,6 @@
 // //node server.js
 // //nodemon server.js
 
-//create database databasename
-
 // CREATE TABLE properties (
 //     sno SERIAL PRIMARY KEY,                     -- Auto-incremented serial number
 //     property_id VARCHAR(50) UNIQUE NOT NULL,    -- Property ID (WIPLdatemonthyearhoursec format)
@@ -285,7 +283,7 @@
 //     email VARCHAR(255),  -- Email address of the guest
 //     reservation_date DATE NOT NULL,  -- Date of the reservation
 //     reservation_time TIME NOT NULL,  -- Time of the reservation
-//     table_no INT NOT NULL,  -- Table number for the reservation
+//     table_no VARCHAR(50),  -- Table number for the reservation
 //     status VARCHAR(50) NOT NULL,  -- Reservation status (e.g., confirmed, canceled)
 //     remark TEXT,  -- Additional remarks for the reservation
 //     property_id VARCHAR(100) NOT NULL,  -- Property ID where the reservation was made
@@ -349,6 +347,22 @@
 // );
 
 
+// ALTER TABLE user_permissions
+// add COLUMN username varchar(50) NOT NULL;
+
+// ALTER TABLE reservation
+// ALTER COLUMN table_no SET DATA TYPE VARCHAR(50);
+
+// ALTER TABLE items
+// ALTER COLUMN subcategory_id SET DATA TYPE VARCHAR(50);
+
+
+// ALTER TABLE user_permissions
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
+
+// ALTER TABLE reservation
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
+
 // ALTER TABLE outlet_configurations
 // ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
 
@@ -360,18 +374,3 @@
 
 // ALTER TABLE user_login
 // ADD COLUMN full_name VARCHAR(255);
-
-
-// git remote add origin https://github.com/FlutterX88/point_of_sale_system.git
-
-
-
-
-
-
-
-
-
-
-
-
