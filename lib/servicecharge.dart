@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:point_of_sale_system/backend/serviceChargeApiService.dart';
 
 class ServiceChargeConfigForm extends StatefulWidget {
   @override
@@ -9,6 +10,8 @@ class ServiceChargeConfigForm extends StatefulWidget {
 }
 
 class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
+  ServiceChargeApiService serviceChargeApiService =
+      ServiceChargeApiService(baseUrl: 'http://localhost:3000/api');
   final _formKey = GlobalKey<FormState>();
   final _chargePercentageController = TextEditingController();
   final _minAmountController = TextEditingController();
@@ -25,6 +28,8 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
 
   List<dynamic> properties = [];
   List<dynamic> outletConfigurations = [];
+  DateTime? startDate;
+
   @override
   void initState() {
     super.initState();
@@ -55,48 +60,135 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
         this.outlets = outletslist; // Set the outlets list
       });
     }
+    _fetchServiceCharges();
   }
 
-  // Save service charge configuration
-  void _saveServiceChargeConfig() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
+  Future<void> _fetchServiceCharges() async {
+    try {
+      List<Map<String, dynamic>> serviceCharges =
+          await serviceChargeApiService.getServiceChargeConfigurations();
 
-      // Create a new service charge config
-      Map<String, dynamic> newServiceCharge = {
-        'chargePercentage': _chargePercentageController.text,
-        'minAmount': _minAmountController.text,
-        'maxAmount': _maxAmountController.text,
-        'applyOn': _applyOn,
-        'status': _status,
-      };
-
-      // Add service charge to the selected outlet's list
-      if (outletServiceCharges.containsKey(_selectedOutlet)) {
-        outletServiceCharges[_selectedOutlet]!.add(newServiceCharge);
-      } else {}
+      // Organize service charges by outlet
+      Map<String, List<Map<String, dynamic>>> organizedCharges = {};
+      for (var charge in serviceCharges) {
+        String outletName = charge['outlet_name'] ?? 'Unknown Outlet';
+        if (!organizedCharges.containsKey(outletName)) {
+          organizedCharges[outletName] = [];
+        }
+        organizedCharges[outletName]!.add(charge);
+      }
 
       setState(() {
-        // Clear the form fields after saving
-        _chargePercentageController.clear();
-        _minAmountController.clear();
-        _maxAmountController.clear();
-        _applyOn = 'all bills';
-        _status = 'active';
+        outletServiceCharges = organizedCharges;
       });
-
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Service charge configuration saved')));
+          SnackBar(content: Text('Error fetching service charges: $e')));
     }
   }
 
-  // Delete a service charge configuration
-  void _deleteServiceCharge(String outlet, int index) {
+  // Save service charge configuration
+  void _saveServiceChargeConfig() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      Map<String, dynamic> newServiceCharge = {
+        'property_id': properties.first['property_id'],
+        'service_charge': double.parse(_chargePercentageController.text),
+        'min_amount': double.parse(_minAmountController.text),
+        'max_amount': double.parse(_maxAmountController.text),
+        'apply_on': _applyOn,
+        'status': _status,
+        'start_date': startDate?.toIso8601String(),
+        'outlet_name': _selectedOutlet.toString(),
+      };
+
+      // Check if the combination of property_id and outlet_name already exists
+      String propertyId = newServiceCharge['property_id'].toString();
+      String outletName = newServiceCharge['outlet_name'];
+
+      bool exists = outletServiceCharges.containsKey(outletName) &&
+          outletServiceCharges[outletName]!.any(
+            (charge) =>
+                charge['property_id'].toString() == propertyId.toString(),
+          );
+
+      try {
+        if (exists) {
+          // Update the existing service charge configuration
+          String configId = outletServiceCharges[outletName]!
+              .firstWhere((charge) =>
+                  charge['property_id'].toString() ==
+                  propertyId.toString())['id']
+              .toString();
+
+          await serviceChargeApiService.updateServiceChargeConfiguration(
+            configId,
+            newServiceCharge,
+          );
+
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Service charge updated successfully')));
+        } else {
+          // Create a new service charge configuration
+          await serviceChargeApiService
+              .createServiceChargeConfiguration(newServiceCharge);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Service charge created successfully')));
+        }
+
+        _fetchServiceCharges(); // Refresh the UI
+        _clearFormFields();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error saving service charge: $e')));
+      }
+    }
+  }
+
+  void _editServiceCharge(
+      String configId, Map<String, dynamic> updatedData) async {
+    try {
+      await serviceChargeApiService.updateServiceChargeConfiguration(
+          configId, updatedData);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Service charge updated successfully')));
+      _fetchServiceCharges(); // Refresh the UI
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating service charge: $e')));
+    }
+  }
+
+  void _deleteServiceCharge(String configId, String outlet, int index) async {
+    try {
+      await serviceChargeApiService.deleteServiceChargeConfiguration(configId);
+
+      setState(() {
+        outletServiceCharges[outlet]!.removeWhere(
+            (charge) => charge['id'].toString() == configId.toString());
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Service charge deleted successfully')));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting service charge: $e')));
+    }
+  }
+
+  void _clearFormFields() {
     setState(() {
-      outletServiceCharges[outlet]!.removeAt(index);
+      _chargePercentageController.clear();
+      _minAmountController.clear();
+      _maxAmountController.clear();
+      _applyOn = 'all bills';
+      _status = 'active';
+      _selectedOutlet = null;
+      startDate = null;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Service charge configuration deleted')));
   }
 
   @override
@@ -133,6 +225,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                   SizedBox(height: 16),
                   // Charge Percentage Input
                   TextFormField(
+                    maxLength: 3,
                     controller: _chargePercentageController,
                     decoration: InputDecoration(
                       labelText: 'Charge Percentage',
@@ -153,6 +246,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                   SizedBox(height: 16),
                   // Min Amount Input
                   TextFormField(
+                    maxLength: 8,
                     controller: _minAmountController,
                     decoration: InputDecoration(
                       labelText: 'Min Amount',
@@ -173,6 +267,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                   SizedBox(height: 16),
                   // Max Amount Input
                   TextFormField(
+                    maxLength: 8,
                     controller: _maxAmountController,
                     decoration: InputDecoration(
                       labelText: 'Max Amount',
@@ -186,6 +281,37 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a maximum amount';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
+                  // Start Date
+                  TextFormField(
+                    decoration:
+                        InputDecoration(labelText: 'Start Date (yyyy-MM-dd)'),
+                    keyboardType: TextInputType.datetime,
+                    onTap: () async {
+                      FocusScope.of(context).requestFocus(FocusNode());
+                      DateTime? selectedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2101),
+                      );
+                      if (selectedDate != null && selectedDate != startDate) {
+                        setState(() {
+                          startDate = selectedDate;
+                        });
+                      }
+                    },
+                    controller: TextEditingController(
+                        text: startDate != null
+                            ? "${startDate!.toLocal()}".split(' ')[0]
+                            : ''),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a start date';
                       }
                       return null;
                     },
@@ -256,20 +382,26 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                           leading:
                               Icon(Icons.attach_money, color: Colors.green),
                           title: Text(
-                              'Charge: ${serviceCharge['chargePercentage']}%'),
+                              'Charge: ${serviceCharge['service_charge']}%'),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Min: ₹${serviceCharge['minAmount']}'),
-                              Text('Max: ₹${serviceCharge['maxAmount']}'),
-                              Text('Apply On: ${serviceCharge['applyOn']}'),
+                              Text('Min: ₹${serviceCharge['min_amount']}'),
+                              Text('Max: ₹${serviceCharge['max_amount']}'),
+                              Text('Apply On: ${serviceCharge['apply_on']}'),
                               Text('Status: ${serviceCharge['status']}'),
+                              Text(
+                                  'Start Date: ${Getdateormat.formatDate(serviceCharge['start_date'])}'),
+                              Text(
+                                  'Outlet Name: ${serviceCharge['outlet_name']}'),
                             ],
                           ),
                           trailing: IconButton(
                             icon: Icon(Icons.delete, color: Colors.red),
                             onPressed: () => _deleteServiceCharge(
-                                outlet, serviceCharges.indexOf(serviceCharge)),
+                                serviceCharge['id'].toString(),
+                                serviceCharge['outlet_name'],
+                                index),
                           ),
                         ),
                       );
@@ -282,5 +414,22 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
         ),
       ),
     );
+  }
+}
+
+class Getdateormat {
+  static String formatDate(dynamic date) {
+    try {
+      if (date is String) {
+        final parsedDate =
+            DateTime.parse(date).toLocal(); // Convert to local timezone
+        return "${parsedDate.day}-${parsedDate.month}-${parsedDate.year}";
+      } else if (date is DateTime) {
+        return "${date.toLocal().day}-${date.toLocal().month}-${date.toLocal().year}";
+      }
+    } catch (e) {
+      print("Error formatting date: $e");
+    }
+    return "Invalid Date";
   }
 }

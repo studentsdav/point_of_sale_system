@@ -29,13 +29,13 @@ router.get('/:id', async (req, res) => {
 
 // POST (Create) new service charge configuration
 router.post('/', async (req, res) => {
-  const { property_id, service_charge, min_amount, max_amount, apply_on, status, start_date } = req.body;
+  const { property_id, service_charge, min_amount, max_amount, apply_on, status, start_date, outlet_name } = req.body;
 
   try {
     const result = await pool.query(
-      `INSERT INTO servicecharge_config (property_id, service_charge, min_amount, max_amount, apply_on, status, start_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [property_id, service_charge, min_amount, max_amount, apply_on, status, start_date]
+      `INSERT INTO servicecharge_config (property_id, service_charge, min_amount, max_amount, apply_on, status, start_date, outlet_name)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      [property_id, service_charge, min_amount, max_amount, apply_on, status, start_date, outlet_name]
     );
     res.status(201).json({ message: 'Service charge configuration created successfully', serviceChargeConfigId: result.rows[0].id });
   } catch (error) {
@@ -46,14 +46,14 @@ router.post('/', async (req, res) => {
 // PUT (Update) service charge configuration by ID
 router.put('/:id', async (req, res) => {
   const configId = req.params.id;
-  const { property_id, service_charge, min_amount, max_amount, apply_on, status, start_date } = req.body;
+  const { service_charge, min_amount, max_amount, apply_on, status, start_date } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE servicecharge_config
-      SET property_id = $1, service_charge = $2, min_amount = $3, max_amount = $4, apply_on = $5, status = $6, start_date = $7, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $8 RETURNING id`,
-      [property_id, service_charge, min_amount, max_amount, apply_on, status, start_date, configId]
+      SET service_charge = $1, min_amount = $2, max_amount = $3, apply_on = $4, status = $5, start_date = $6, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $7 RETURNING id`,
+      [service_charge, min_amount, max_amount, apply_on, status, start_date, configId]
     );
 
     if (result.rowCount === 0) {

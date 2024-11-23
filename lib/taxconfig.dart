@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:point_of_sale_system/backend/taxConfigApiService.dart';
 
 class TaxConfigForm extends StatefulWidget {
   @override
@@ -11,6 +12,10 @@ class _TaxConfigFormState extends State<TaxConfigForm> {
   final _formKey = GlobalKey<FormState>();
   final _taxNameController = TextEditingController();
   final _taxPercentageController = TextEditingController();
+  final _greaterthanController = TextEditingController();
+  final _lessthanController = TextEditingController();
+  final TaxConfigApiService taxApiService =
+      TaxConfigApiService(baseUrl: 'http://localhost:3000/api');
   String _taxType = 'exclusive'; // Default tax type
   String? _selectedOutlet; // To store the selected outlet
 
@@ -52,42 +57,79 @@ class _TaxConfigFormState extends State<TaxConfigForm> {
         this.outlets = outletslist; // Set the outlets list
       });
     }
+    _fetchAllTaxConfigs();
   }
 
   // Save tax configuration
-  void _saveTaxConfig() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-
-      // Create a new tax config
-      Map<String, dynamic> newTaxConfig = {
-        'taxName': _taxNameController.text,
-        'taxPercentage': _taxPercentageController.text,
-        'taxType': _taxType,
-        'outlet': _selectedOutlet,
-      };
-
+  // Fetch all tax configurations from API
+  Future<void> _fetchAllTaxConfigs() async {
+    try {
+      List<Map<String, dynamic>> configs =
+          await taxApiService.getAllTaxConfigs();
       setState(() {
-        taxConfigurations.add(newTaxConfig);
-        // Clear form fields after saving
-        _taxNameController.clear();
-        _taxPercentageController.clear();
-        _taxType = 'exclusive';
-        _selectedOutlet = null;
+        taxConfigurations = configs;
       });
-
+    } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Tax configuration saved successfully')));
+          SnackBar(content: Text('Failed to fetch tax configurations')));
     }
   }
 
-  // Delete tax configuration
-  void _deleteTaxConfig(int index) {
+// Save a new tax configuration
+  void _saveTaxConfig() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      Map<String, dynamic> newTaxConfig = {
+        'tax_name': _taxNameController.text,
+        'tax_percentage': double.tryParse(_taxPercentageController.text) ?? 0.0,
+        'tax_type': _taxType,
+        'outlet_name': _selectedOutlet,
+        'greater_than': double.tryParse(_greaterthanController.text) ?? 0.0,
+        'less_than': double.tryParse(_lessthanController.text) ?? 0.0,
+        'property_id': properties[0]['property_id']
+      };
+
+      try {
+        await taxApiService.createTaxConfig(newTaxConfig);
+        _fetchAllTaxConfigs(); // Refresh list
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Tax configuration saved successfully')));
+        _clearForm();
+      } catch (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save tax configuration')));
+      }
+    }
+  }
+
+// Delete tax configuration
+  void _deleteTaxConfig(String id) async {
+    try {
+      await taxApiService.deleteTaxConfig(id);
+      // Refresh list
+      setState(() {
+        taxConfigurations
+            .removeWhere((item) => item['id'].toString() == id.toString());
+      });
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Tax configuration deleted')));
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete tax configuration')));
+    }
+  }
+
+// Clear form fields
+  void _clearForm() {
+    _taxNameController.clear();
+    _taxPercentageController.clear();
+    _greaterthanController.clear();
+    _lessthanController.clear();
     setState(() {
-      taxConfigurations.removeAt(index);
+      _taxType = 'exclusive';
+      _selectedOutlet = null;
     });
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Tax configuration deleted')));
   }
 
   @override
@@ -160,6 +202,44 @@ class _TaxConfigFormState extends State<TaxConfigForm> {
                     },
                   ),
                   SizedBox(height: 16),
+                  // Tax greater Than Input
+                  TextFormField(
+                    controller: _greaterthanController,
+                    decoration: InputDecoration(
+                      labelText: 'Tax On Greater Than',
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter
+                          .digitsOnly, // Restricts input to digits only
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a tax value';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
+                  // Tax less Than Input
+                  TextFormField(
+                    controller: _lessthanController,
+                    decoration: InputDecoration(
+                      labelText: 'Tax On Less Than',
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter
+                          .digitsOnly, // Restricts input to digits only
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a tax percentage';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
                   // Tax Type Dropdown (Exclusive/Inclusive)
                   DropdownButtonFormField<String>(
                     value: _taxType,
@@ -199,18 +279,19 @@ class _TaxConfigFormState extends State<TaxConfigForm> {
                     ),
                     child: ListTile(
                       leading: Icon(Icons.money, color: Colors.green),
-                      title: Text(taxConfig['taxName']),
+                      title: Text(taxConfig['tax_name']),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Percentage: ${taxConfig['taxPercentage']}%'),
-                          Text('Type: ${taxConfig['taxType']}'),
-                          Text('Outlet: ${taxConfig['outlet']}'),
+                          Text('Percentage: ${taxConfig['tax_percentage']}%'),
+                          Text('Type: ${taxConfig['tax_type']}'),
+                          Text('Outlet: ${taxConfig['outlet_name']}'),
                         ],
                       ),
                       trailing: IconButton(
                         icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteTaxConfig(index),
+                        onPressed: () =>
+                            _deleteTaxConfig(taxConfig['id'].toString()),
                       ),
                     ),
                   );
