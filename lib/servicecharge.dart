@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class ServiceChargeConfigForm extends StatefulWidget {
   @override
-  _ServiceChargeConfigFormState createState() => _ServiceChargeConfigFormState();
+  _ServiceChargeConfigFormState createState() =>
+      _ServiceChargeConfigFormState();
 }
 
 class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
@@ -12,13 +15,47 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
   final _maxAmountController = TextEditingController();
   String _applyOn = 'all bills';
   String _status = 'active';
-  String _selectedOutlet = 'Outlet 1'; // Default selected outlet
+  String? _selectedOutlet; // Default selected outlet
 
   // List of available outlets (for example purposes, replace with actual data)
-  List<String> outlets = ['Outlet 1', 'Outlet 2', 'Outlet 3', 'Outlet 4'];
+  List<String> outlets = [];
 
   // Map to store service charges by outlet
   Map<String, List<Map<String, dynamic>>> outletServiceCharges = {};
+
+  List<dynamic> properties = [];
+  List<dynamic> outletConfigurations = [];
+  @override
+  void initState() {
+    super.initState();
+    _loadDataFromHive();
+  }
+
+  // Load data from Hive
+  Future<void> _loadDataFromHive() async {
+    var box = await Hive.openBox('appData');
+
+    // Retrieve the data
+    var properties = box.get('properties');
+    var outletConfigurations = box.get('outletConfigurations');
+
+    // Check if outletConfigurations is not null
+    if (outletConfigurations != null) {
+      // Extract the outlet names into the outlets list
+      List<String> outletslist = [];
+      for (var outlet in outletConfigurations) {
+        if (outlet['outlet_name'] != null) {
+          outletslist.add(outlet['outlet_name'].toString());
+        }
+      }
+
+      setState(() {
+        this.properties = properties ?? [];
+        this.outletConfigurations = outletConfigurations ?? [];
+        this.outlets = outletslist; // Set the outlets list
+      });
+    }
+  }
 
   // Save service charge configuration
   void _saveServiceChargeConfig() {
@@ -37,9 +74,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
       // Add service charge to the selected outlet's list
       if (outletServiceCharges.containsKey(_selectedOutlet)) {
         outletServiceCharges[_selectedOutlet]!.add(newServiceCharge);
-      } else {
-        outletServiceCharges[_selectedOutlet] = [newServiceCharge];
-      }
+      } else {}
 
       setState(() {
         // Clear the form fields after saving
@@ -94,6 +129,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                     }).toList(),
                     decoration: InputDecoration(labelText: 'Select Outlet'),
                   ),
+
                   SizedBox(height: 16),
                   // Charge Percentage Input
                   TextFormField(
@@ -103,6 +139,10 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                       prefixText: '%',
                     ),
                     keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter
+                          .digitsOnly, // Restricts input to digits only
+                    ],
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a charge percentage';
@@ -119,6 +159,10 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                       prefixText: '₹',
                     ),
                     keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter
+                          .digitsOnly, // Restricts input to digits only
+                    ],
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a minimum amount';
@@ -135,6 +179,10 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                       prefixText: '₹',
                     ),
                     keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter
+                          .digitsOnly, // Restricts input to digits only
+                    ],
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a maximum amount';
@@ -205,8 +253,10 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         child: ListTile(
-                          leading: Icon(Icons.attach_money, color: Colors.green),
-                          title: Text('Charge: ${serviceCharge['chargePercentage']}%'),
+                          leading:
+                              Icon(Icons.attach_money, color: Colors.green),
+                          title: Text(
+                              'Charge: ${serviceCharge['chargePercentage']}%'),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -218,7 +268,8 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                           ),
                           trailing: IconButton(
                             icon: Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteServiceCharge(outlet, serviceCharges.indexOf(serviceCharge)),
+                            onPressed: () => _deleteServiceCharge(
+                                outlet, serviceCharges.indexOf(serviceCharge)),
                           ),
                         ),
                       );

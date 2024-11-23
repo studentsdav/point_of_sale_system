@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:point_of_sale_system/backend/date_config_api_service.dart';
 
 class SoftwareDateConfigForm extends StatefulWidget {
   @override
@@ -6,45 +8,121 @@ class SoftwareDateConfigForm extends StatefulWidget {
 }
 
 class _SoftwareDateConfigFormState extends State<SoftwareDateConfigForm> {
+  DateConfigApiService dateConfigApiService =
+      DateConfigApiService(baseUrl: 'http://localhost:3000/api');
+
   final _formKey = GlobalKey<FormState>();
   String? _selectedOutlet;
   DateTime? _selectedDate;
   TextEditingController _descriptionController = TextEditingController();
 
   // Sample outlets data (this should be fetched from your database in a real scenario)
-  List<String> outlets = ['Outlet 1', 'Outlet 2', 'Outlet 3'];
+  List<String> outlets = [];
 
   // List to store saved configurations
-  List<Map<String, String>> savedConfigs = [];
+  List<Map<String, dynamic>> savedConfigs = [];
 
-  // Function to save the configuration
-  void _saveSoftwareDateConfig() {
-    if (_formKey.currentState!.validate()) {
-      // Save configuration to list (this can also be saved to the database)
+  List<dynamic> properties = [];
+  List<dynamic> outletConfigurations = [];
+  @override
+  void initState() {
+    super.initState();
+    _loadDataFromHive();
+  }
+
+  // Load data from Hive
+  Future<void> _loadDataFromHive() async {
+    var box = await Hive.openBox('appData');
+
+    // Retrieve the data
+    var properties = box.get('properties');
+    var outletConfigurations = box.get('outletConfigurations');
+
+    // Check if outletConfigurations is not null
+    if (outletConfigurations != null) {
+      // Extract the outlet names into the outlets list
+      List<String> outletslist = [];
+      for (var outlet in outletConfigurations) {
+        if (outlet['outlet_name'] != null) {
+          outletslist.add(outlet['outlet_name'].toString());
+        }
+      }
+
       setState(() {
-        savedConfigs.add({
-          'outlet': _selectedOutlet!,
-          'date': _selectedDate != null
-              ? "${_selectedDate!.toLocal()}".split(' ')[0]
-              : 'No Date Selected',
-          'description': _descriptionController.text.isEmpty
-              ? 'No Description'
-              : _descriptionController.text,
-        });
+        this.properties = properties ?? [];
+        this.outletConfigurations = outletConfigurations ?? [];
+        this.outlets = outletslist; // Set the outlets list
       });
+    }
+    _fetchDateConfigs();
+  }
 
-      // Show confirmation message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Software Date configuration saved successfully')),
-      );
+  void _fetchDateConfigs() async {
+    try {
+      List<Map<String, dynamic>> configs =
+          await dateConfigApiService.getDateConfigs();
 
-      // Reset form after saving
       setState(() {
+        savedConfigs.clear();
+        savedConfigs.addAll(configs);
+      });
+    } catch (e) {
+      print('Error fetching date configurations: $e');
+    }
+  }
+
+  void _saveSoftwareDateConfig() async {
+    if (_formKey.currentState!.validate()) {
+      final newConfig = {
+        'property_id': properties[0]
+            ['property_id'], // Replace with dynamic property ID
+        'outlet': _selectedOutlet,
+        'selected_date': _selectedDate?.toIso8601String(),
+        'description': _descriptionController.text,
+      };
+
+      try {
+        // Check if a configuration with the same property_id and outlet already exists
+        final existingConfig = savedConfigs.firstWhere(
+          (config) =>
+              config['property_id'] == newConfig['property_id'].toString() &&
+              config['outlet'] == newConfig['outlet'],
+          orElse: () => {}, // Return an empty map if not found
+        );
+
+        if (existingConfig.isNotEmpty) {
+          // If it exists, call the update function
+          final updatedConfig = {
+            'selected_date': newConfig['selected_date'],
+            'description': newConfig['description'],
+          };
+
+          await dateConfigApiService.updateDateConfig(
+              existingConfig['date_config_id'].toString(), updatedConfig);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Date configuration updated successfully')),
+          );
+        } else {
+          // If it doesn't exist, create a new configuration
+          await dateConfigApiService.createDateConfig(newConfig);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Date configuration saved successfully')),
+          );
+        }
+
+        // Refresh the list and reset the form
+        _fetchDateConfigs();
+        _formKey.currentState!.reset();
+        _descriptionController.clear();
         _selectedOutlet = null;
         _selectedDate = null;
-        _descriptionController.clear();
-      });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving configuration: $e')),
+        );
+      }
     }
   }
 
@@ -60,6 +138,22 @@ class _SoftwareDateConfigFormState extends State<SoftwareDateConfigForm> {
       setState(() {
         _selectedDate = picked;
       });
+    }
+  }
+
+  void _deleteDateConfig(String dateConfigId) async {
+    try {
+      await dateConfigApiService.deleteDateConfig(dateConfigId);
+
+      setState(() {
+        savedConfigs.removeWhere((config) =>
+            config['date_config_id'].toString() == dateConfigId.toString());
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Date configuration deleted successfully')),
+      );
+    } catch (e) {
+      print('Error deleting configuration: $e');
     }
   }
 
@@ -177,9 +271,16 @@ class _SoftwareDateConfigFormState extends State<SoftwareDateConfigForm> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildLogInfoRow('Outlet:', config['outlet']!),
-                              _buildLogInfoRow('Date:', config['date']!),
+                              _buildLogInfoRow('Date:',
+                                  _formatDate(config['selected_date'])),
                               _buildLogInfoRow(
                                   'Description:', config['description']!),
+                              IconButton(
+                                  onPressed: () {
+                                    _deleteDateConfig(
+                                        config['date_config_id'].toString());
+                                  },
+                                  icon: Icon(Icons.delete))
                             ],
                           ),
                         ),
@@ -222,5 +323,20 @@ class _SoftwareDateConfigFormState extends State<SoftwareDateConfigForm> {
         ],
       ),
     );
+  }
+
+  String _formatDate(dynamic date) {
+    try {
+      if (date is String) {
+        final parsedDate =
+            DateTime.parse(date).toLocal(); // Convert to local timezone
+        return "${parsedDate.day}-${parsedDate.month}-${parsedDate.year}";
+      } else if (date is DateTime) {
+        return "${date.toLocal().day}-${date.toLocal().month}-${date.toLocal().year}";
+      }
+    } catch (e) {
+      print("Error formatting date: $e");
+    }
+    return "Invalid Date";
   }
 }

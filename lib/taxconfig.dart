@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class TaxConfigForm extends StatefulWidget {
   @override
@@ -13,10 +15,44 @@ class _TaxConfigFormState extends State<TaxConfigForm> {
   String? _selectedOutlet; // To store the selected outlet
 
   // Sample outlets for selection (replace with actual data from your database)
-  List<String> outlets = ['Outlet 1', 'Outlet 2', 'Outlet 3', 'Outlet 4'];
+  List<String> outlets = [];
 
   // Map to store tax configurations
   List<Map<String, dynamic>> taxConfigurations = [];
+
+  List<dynamic> properties = [];
+  List<dynamic> outletConfigurations = [];
+  @override
+  void initState() {
+    super.initState();
+    _loadDataFromHive();
+  }
+
+  // Load data from Hive
+  Future<void> _loadDataFromHive() async {
+    var box = await Hive.openBox('appData');
+
+    // Retrieve the data
+    var properties = box.get('properties');
+    var outletConfigurations = box.get('outletConfigurations');
+
+    // Check if outletConfigurations is not null
+    if (outletConfigurations != null) {
+      // Extract the outlet names into the outlets list
+      List<String> outletslist = [];
+      for (var outlet in outletConfigurations) {
+        if (outlet['outlet_name'] != null) {
+          outletslist.add(outlet['outlet_name'].toString());
+        }
+      }
+
+      setState(() {
+        this.properties = properties ?? [];
+        this.outletConfigurations = outletConfigurations ?? [];
+        this.outlets = outletslist; // Set the outlets list
+      });
+    }
+  }
 
   // Save tax configuration
   void _saveTaxConfig() {
@@ -69,7 +105,30 @@ class _TaxConfigFormState extends State<TaxConfigForm> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Outlet Selection Dropdown
+                  DropdownButtonFormField<String>(
+                    value: _selectedOutlet,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedOutlet = value;
+                      });
+                    },
+                    items: outlets.map((outlet) {
+                      return DropdownMenuItem<String>(
+                        value: outlet,
+                        child: Text(outlet),
+                      );
+                    }).toList(),
+                    decoration: InputDecoration(labelText: 'Select Outlet'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select an outlet';
+                      }
+                      return null;
+                    },
+                  ),
                   // Tax Name Input
+                  SizedBox(height: 16),
                   TextFormField(
                     controller: _taxNameController,
                     decoration: InputDecoration(labelText: 'Tax Name'),
@@ -89,6 +148,10 @@ class _TaxConfigFormState extends State<TaxConfigForm> {
                       suffixText: '%',
                     ),
                     keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter
+                          .digitsOnly, // Restricts input to digits only
+                    ],
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a tax percentage';
@@ -113,29 +176,7 @@ class _TaxConfigFormState extends State<TaxConfigForm> {
                     }).toList(),
                     decoration: InputDecoration(labelText: 'Tax Type'),
                   ),
-                  SizedBox(height: 16),
-                  // Outlet Selection Dropdown
-                  DropdownButtonFormField<String>(
-                    value: _selectedOutlet,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedOutlet = value;
-                      });
-                    },
-                    items: outlets.map((outlet) {
-                      return DropdownMenuItem<String>(
-                        value: outlet,
-                        child: Text(outlet),
-                      );
-                    }).toList(),
-                    decoration: InputDecoration(labelText: 'Select Outlet'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select an outlet';
-                      }
-                      return null;
-                    },
-                  ),
+
                   SizedBox(height: 32),
                   ElevatedButton(
                     onPressed: _saveTaxConfig,
