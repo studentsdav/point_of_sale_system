@@ -121,9 +121,11 @@ class _PrinterConfigFormState extends State<PrinterConfigForm> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Printer deleted successfully')),
       );
-
       // Refresh the printer list
-      _fetchPrinters();
+      setState(() {
+        printers.removeWhere(
+            (item) => item['id'].toString() == printerNumber.toString());
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error deleting printer: $e')),

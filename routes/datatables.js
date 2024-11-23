@@ -296,6 +296,7 @@
 //     id SERIAL PRIMARY KEY,  -- Unique ID for the service charge configuration
 //     property_id VARCHAR(100) NOT NULL,  -- Property ID the service charge is applied to
 //     service_charge DECIMAL(5, 2) NOT NULL,  -- Percentage of service charge to apply
+//     outlet_name VARCHAR(255) NOT NULL,  -- The Name of the outlet (referencing outlet_configurations.outlet_name)
 //     min_amount DECIMAL(10, 2) NOT NULL,  -- Minimum amount for the service charge to apply
 //     max_amount DECIMAL(10, 2) NOT NULL,  -- Maximum amount for the service charge to apply
 //     apply_on VARCHAR(50) DEFAULT 'all bills',  -- Condition to apply the charge (e.g., 'all bills', 'certain items')
@@ -346,6 +347,15 @@
 //     CONSTRAINT user_permission_unique UNIQUE (user_id, outlet_id, permission_name, property_id)  -- Ensure unique permissions per user
 // );
 
+
+// ALTER TABLE servicecharge_config
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
+
+// ALTER TABLE servicecharge_config
+// add COLUMN outlet_name varchar(50) NOT NULL;
+
+// ALTER TABLE tax_config
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
 
 // ALTER TABLE printer_config
 // ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
