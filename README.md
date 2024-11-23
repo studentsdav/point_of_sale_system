@@ -68,4 +68,4 @@ This is a **Point of Sale (POS)** system designed specifically for restaurants. 
 1. **Clone the repository**:
    Clone this repository to your local machine using the following command:
    ```bash
-   git clone https://github.com/FlutterX88/point_of_sale_system.git
+   git clone https://github.com/studentsdav/point_of_sale_system.git
