@@ -253,17 +253,18 @@ class _AdminDashboard extends State {
           buildDrawerItem(Icons.receipt, 'Bill Config'),
           buildDrawerItem(Icons.layers, 'Item Master'),
           buildDrawerItem(Icons.person_pin, 'Waiter Master'),
-          buildDrawerItem(Icons.settings, 'Settings'),
-          buildDrawerItem(Icons.exit_to_app, 'Logout'),
-          buildDrawerItem(Icons.fastfood, 'KOT Config'),
           buildDrawerItem(Icons.info, 'Guest Info Add'),
+          buildDrawerItem(Icons.book, 'Reservation'),
+          buildDrawerItem(Icons.fastfood, 'KOT Config'),
           buildDrawerItem(Icons.calendar_today, 'Date Config'),
-          buildDrawerItem(Icons.access_alarm, 'Happy Hour Config'),
-          buildDrawerItem(Icons.inventory, 'Inventory'),
           buildDrawerItem(Icons.print, 'Printer Config'),
           buildDrawerItem(Icons.lock, 'Password Reset'),
           buildDrawerItem(Icons.toll, 'Tax Config'),
           buildDrawerItem(Icons.local_offer, 'Service Charge Config'),
+          buildDrawerItem(Icons.access_alarm, 'Happy Hour Config'),
+          buildDrawerItem(Icons.inventory, 'Inventory'),
+          buildDrawerItem(Icons.settings, 'Settings'),
+          buildDrawerItem(Icons.exit_to_app, 'Logout'),
         ],
       ),
     );
@@ -343,6 +344,9 @@ class _AdminDashboard extends State {
               context,
               MaterialPageRoute(
                   builder: (context) => GuestRegistrationScreen()));
+        } else if (title == 'Reservation') {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => ReservationFormScreen()));
         }
       },
     );
