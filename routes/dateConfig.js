@@ -54,13 +54,13 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { property_id, outlet, selected_date, description } = req.body;
+        const { selected_date, description } = req.body;
 
         const result = await pool.query(
             `UPDATE date_config
-             SET property_id = $1, outlet = $2, selected_date = $3, description = $4, updated_at = NOW()
-             WHERE date_config_id = $5 RETURNING *`,
-            [property_id, outlet, selected_date, description, id]
+             SET selected_date = $1, description = $2, updated_at = NOW()
+             WHERE date_config_id = $3 RETURNING *`,
+            [selected_date, description, id]
         );
 
         if (result.rows.length === 0) {

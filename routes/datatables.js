@@ -347,6 +347,9 @@
 // );
 
 
+// ALTER TABLE printer_config
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
+
 // ALTER TABLE user_permissions
 // add COLUMN username varchar(50) NOT NULL;
 
