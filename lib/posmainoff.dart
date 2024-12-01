@@ -9,7 +9,10 @@ import 'package:point_of_sale_system/poslogin.dart';
 import 'package:point_of_sale_system/reservation.dart';
 
 class POSMainScreen extends StatefulWidget {
-  const POSMainScreen({super.key});
+  final propertyid;
+  final outlet;
+  const POSMainScreen(
+      {super.key, required this.propertyid, required this.outlet});
 
   @override
   _POSMainScreenState createState() => _POSMainScreenState();
@@ -88,7 +91,9 @@ class _POSMainScreenState extends State<POSMainScreen> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => KOTFormScreen()));
+                                builder: (context) => KOTFormScreen(
+                                    propertyid: widget.propertyid,
+                                    outlet: widget.outlet)));
                       }),
                   ListTile(
                       leading: const Icon(Icons.payment),
@@ -146,7 +151,9 @@ class _POSMainScreenState extends State<POSMainScreen> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => POSLoginScreen()));
+                                builder: (context) => POSLoginScreen(
+                                    propertyid: widget.propertyid,
+                                    outlet: widget.outlet)));
                       }),
                   ListTile(
                       leading: const Icon(Icons.admin_panel_settings),
@@ -233,7 +240,9 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => KOTFormScreen()));
+                                        builder: (context) => KOTFormScreen(
+                                            propertyid: widget.propertyid,
+                                            outlet: widget.outlet)));
                               },
                               child: Container(
                                 width: 50,

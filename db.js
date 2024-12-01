@@ -20,6 +20,9 @@ module.exports = pool;
 
 // # Push the tag to GitHub
 // git push origin v1.0.0
+//npm install express
+//npm install -g nodemon
+
 
 
 

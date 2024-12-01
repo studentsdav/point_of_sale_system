@@ -348,6 +348,9 @@
 // );
 
 
+// ALTER TABLE orders
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
+
 // ALTER TABLE servicecharge_config
 // ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
 
@@ -376,6 +379,12 @@
 // ALTER TABLE reservation
 // ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
 
+// ALTER TABLE order_items
+// add  property_id  VARCHAR(50);
+
+// ALTER TABLE order_items
+// add  outlet_name  VARCHAR(50);
+
 // ALTER TABLE outlet_configurations
 // ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
 
@@ -387,3 +396,129 @@
 
 // ALTER TABLE user_login
 // ADD COLUMN full_name VARCHAR(255);
+
+
+
+// CREATE TABLE orders (
+//     order_id SERIAL PRIMARY KEY,
+//     order_number VARCHAR(50) NOT NULL,
+//     table_number INT NOT NULL,
+//     waiter_name VARCHAR(255),
+//     person_count INT,
+//     remarks TEXT,
+//     property_id INT,
+//     guest_id INT,
+//     customer_name VARCHAR(255),
+//     customer_contact VARCHAR(20),
+//     payment_method VARCHAR(50),
+//     payment_status VARCHAR(50),
+//     payment_date TIMESTAMP,
+//     transaction_id VARCHAR(255),
+//     tax_percentage DECIMAL(5, 2),
+//     tax_value DECIMAL(10, 2),
+//     total_amount DECIMAL(10, 2),
+//     discount_percentage DECIMAL(5, 2),
+//     total_discount_value DECIMAL(10, 2),
+//     service_charge_per DECIMAL(5, 2),
+//     total_service_charge DECIMAL(10, 2),
+//     total_happy_hour_discount DECIMAL(10, 2),
+//     subtotal DECIMAL(10, 2),
+//     total DECIMAL(10, 2),
+//     cashier VARCHAR(255),
+//     status VARCHAR(50),
+//     order_type VARCHAR(50),
+//     order_notes TEXT,
+//     is_priority_order BOOLEAN,
+//     customer_feedback TEXT,
+//     staff_id INT,
+//     order_cancelled_by INT,
+//     cancellation_reason TEXT,
+//     created_by INT,
+//     updated_by INT,
+//     delivery_address TEXT,
+//     delivery_time TIMESTAMP,
+//     order_received_time TIMESTAMP,
+//     order_ready_time TIMESTAMP,
+//     served_by VARCHAR(255),
+//     payment_method_details TEXT,
+//     dining_case BOOLEAN,
+//     packing_case BOOLEAN,
+//     complimentary_case BOOLEAN,
+//     cancelled_case BOOLEAN,
+//     modified_case BOOLEAN,
+//     bill_generated BOOLEAN,
+//     bill_generated_at TIMESTAMP,
+//     bill_payment_status VARCHAR(50),
+//     partial_payment DECIMAL(10, 2),
+//     final_payment DECIMAL(10, 2),
+//     order_type_change BOOLEAN,
+//     modified_by INT,
+//     modify_reason TEXT,
+//     refund_status VARCHAR(50),
+//     refund_amount DECIMAL(10, 2),
+//     refund_date TIMESTAMP,
+//     refund_processed_by INT,
+//     refund_reason TEXT,
+//     outlet_name VARCHAR(255)
+//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp for record creation
+//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- Timestamp for record updates
+//   );
+
+
+// CREATE TABLE order_items (
+//     item_id SERIAL PRIMARY KEY,
+//     order_id INT REFERENCES orders(order_id) ON DELETE CASCADE,
+//     item_name VARCHAR(255) NOT NULL,
+//     item_category VARCHAR(255),
+//     item_quantity INT,
+//     item_rate DECIMAL(10, 2),
+//     item_amount DECIMAL(10, 2),
+//     item_tax DECIMAL(10, 2),
+//     total_item_value DECIMAL(10, 2),
+//     proeprty_id VARCHAR(255) NOT NULL,
+//     outlet_name VARCHAR(255) NOT NULL
+//   );
+  
+
+// CREATE TABLE payments (
+//     payment_id SERIAL PRIMARY KEY,
+//     order_id INT REFERENCES orders(order_id) ON DELETE CASCADE,
+//     payment_method VARCHAR(50),
+//     payment_status VARCHAR(50),
+//     payment_date TIMESTAMP,
+//     transaction_id VARCHAR(255),
+//     refund_status VARCHAR(50),
+//     refund_amount DECIMAL(10, 2),
+//     refund_date TIMESTAMP,
+//     refund_processed_by INT,
+//     refund_reason TEXT
+//   );
+  
+
+// CREATE TABLE staff (
+//     staff_id SERIAL PRIMARY KEY,
+//     staff_name VARCHAR(255),
+//     role VARCHAR(255)
+//   );
+
+
+// CREATE TABLE order_cancellations (
+//     cancellation_id SERIAL PRIMARY KEY,
+//     order_id INT REFERENCES orders(order_id) ON DELETE CASCADE,
+//     cancelled_by INT REFERENCES staff(staff_id),
+//     cancellation_reason TEXT,
+//     cancelled_at TIMESTAMP
+//   );
+
+// CREATE TABLE order_modifications (
+//     modification_id SERIAL PRIMARY KEY,
+//     order_id INT REFERENCES orders(order_id) ON DELETE CASCADE,
+//     modified_by INT REFERENCES staff(staff_id),
+//     modification_reason TEXT,
+//     modified_at TIMESTAMP
+//   );
+  
+
+// ///ALTER TABLE orders
+// ADD created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+// ADD updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;

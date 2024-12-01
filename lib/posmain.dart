@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/ItemMaster.dart';
 import 'package:point_of_sale_system/admin.dart';
+import 'package:point_of_sale_system/backend/table_api_service.dart';
 import 'package:point_of_sale_system/billing.dart';
 import 'package:point_of_sale_system/guest_info.dart';
 import 'package:point_of_sale_system/kotform.dart';
@@ -9,15 +10,19 @@ import 'package:point_of_sale_system/poslogin.dart';
 import 'package:point_of_sale_system/reservation.dart';
 
 class POSMainScreen extends StatefulWidget {
-  const POSMainScreen({super.key});
+  final outlet;
+  final propertyid;
+  const POSMainScreen(
+      {super.key, required this.outlet, required this.propertyid});
 
   @override
   _POSMainScreenState createState() => _POSMainScreenState();
 }
 
 class _POSMainScreenState extends State<POSMainScreen> {
+  final tableapiService = TableApiService(apiUrl: 'http://localhost:3000/api');
   String selectedOutlet = 'Restaurant';
-  final List<String> outlets = [
+  List<String> outlets = [
     'Restaurant',
     'Bar',
     'Packing',
@@ -27,12 +32,85 @@ class _POSMainScreenState extends State<POSMainScreen> {
     'Room Service'
   ];
   final Map<String, List<String>> areas = {
-    'OPEN AREA': ['01', '02', '03', '04', '05', '06', '07', '08'],
-    'HALL': ['01', '02', '03', '04'],
-    'ROOF TOP': ['04', '05', '01', '02', '03', '04'],
-    'GARDEN': ['01', '02', '03', '04', '05', '06', '07'],
-    'VIP AREA': ['01', '02', '03', '04'],
+    // 'OPEN AREA': ['01', '02', '03', '04', '05', '06', '07', '08'],
+    // 'HALL': ['01', '02', '03', '04'],
+    // 'ROOF TOP': ['04', '05', '01', '02', '03', '04'],
+    // 'GARDEN': ['01', '02', '03', '04', '05', '06', '07'],
+    // 'VIP AREA': ['01', '02', '03', '04'],
   };
+
+  @override
+  void initState() {
+    outlets = widget.outlet;
+    loadtables();
+    super.initState();
+  }
+
+  void loadtables() async {
+    try {
+      // Fetch data from API
+      final tableConfigs = await tableapiService.getTableConfigs();
+
+      // Populate the map
+      for (var table in tableConfigs) {
+        final location = table['location'] as String; // Dynamic location
+        final tableNo = table['table_no'] as String;
+
+        // Add table numbers under their respective location
+        if (!areas.containsKey(location)) {
+          areas[location] = [];
+        }
+        setState(() {
+          areas[location]?.add(tableNo);
+        });
+      }
+
+      // Display location-wise tables
+      print('Location-wise tables:');
+      areas.forEach((location, tables) {
+        print('$location: $tables');
+      });
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  void loadtablesnew(selectedoutletnew) async {
+    setState(() {
+      areas.clear();
+    });
+    try {
+      // Fetch data from API
+      final tableConfigs = await tableapiService.getTableConfigs();
+
+      final outletTables = tableConfigs.where((table) {
+        return table['outlet_name'].toString().toLowerCase() ==
+            selectedoutletnew;
+      }).toList();
+
+      for (var table in outletTables) {
+        final location = table['location'] as String;
+        final tableNo = table['table_no'] as String;
+
+        // Add table numbers under their respective location
+
+        if (!areas.containsKey(location)) {
+          areas[location] = [];
+        }
+        setState(() {
+          areas[location]?.add(tableNo);
+        });
+      }
+
+      // Display location-wise tables for the selected outlet
+      print('Tables for outlet "$selectedoutletnew":');
+      areas.forEach((location, tables) {
+        print('$location: $tables');
+      });
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +168,9 @@ class _POSMainScreenState extends State<POSMainScreen> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => KOTFormScreen()));
+                            builder: (context) => KOTFormScreen(
+                                propertyid: widget.propertyid,
+                                outlet: selectedOutlet)));
                   }),
                   _buildDrawerItem(Icons.payment, 'Billing', () {
                     Navigator.push(
@@ -124,7 +204,9 @@ class _POSMainScreenState extends State<POSMainScreen> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => POSLoginScreen()));
+                            builder: (context) => POSLoginScreen(
+                                propertyid: widget.propertyid,
+                                outlet: widget.outlet)));
                   }),
                   _buildDrawerItem(Icons.admin_panel_settings, 'Admin', () {
                     Navigator.push(
@@ -162,6 +244,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                     onPressed: () {
                       setState(() {
                         selectedOutlet = outlet;
+                        loadtablesnew(outlet.toLowerCase());
                       });
                     },
                     child: Text(outlet),
@@ -207,7 +290,9 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => KOTFormScreen()));
+                                        builder: (context) => KOTFormScreen(
+                                            propertyid: widget.propertyid,
+                                            outlet: selectedOutlet)));
                               },
                               child: Container(
                                 decoration: BoxDecoration(

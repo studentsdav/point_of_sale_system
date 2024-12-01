@@ -1,20 +1,93 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:point_of_sale_system/backend/outlet_service.dart';
 import 'package:point_of_sale_system/poslogin.dart';
 
-void main() {
-  _initializeHive();
+final OutletApiService apiService =
+    OutletApiService(baseUrl: 'http://localhost:3000/api');
+void main() async {
+  await _initializeHive();
+  await _loadData();
   runApp(const MyApp());
 }
 
+// Method to save fetched data into SharedPreferences
 Future<void> _initializeHive() async {
   final appDocumentDir = await getApplicationDocumentsDirectory();
   Hive.init(appDocumentDir.path);
 }
 
-class MyApp extends StatelessWidget {
+Future<void> _loadData() async {
+  try {
+    final fetchedProperties = await apiService.getAllProperties();
+    final fetchedOutletConfigurations =
+        await apiService.fetchOutletConfigurations();
+
+    // If your data is in JSON format, you should decode it first:
+    // List<dynamic> jsonData = json.decode(fetchedProperties);
+    List<Map<String, dynamic>> propertiesList =
+        List<Map<String, dynamic>>.from(fetchedProperties);
+    List<Map<String, dynamic>> outletConfigurationsList =
+        List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
+
+    // Save data to SharedPreferences
+    await _saveDataToHive(propertiesList, outletConfigurationsList);
+  } catch (error) {
+    print(error);
+  }
+}
+
+Future<void> _saveDataToHive(List<Map<String, dynamic>> properties,
+    List<Map<String, dynamic>> outletConfigurations) async {
+  var box = await Hive.openBox('appData');
+
+  // Store the data in a Hive box
+  await box.put('properties', properties);
+  await box.put('outletConfigurations', outletConfigurations);
+}
+
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State {
+  List<String> outlets = []; // List of outlets to select
+  List<dynamic> properties = [];
+  List<dynamic> outletConfigurations = [];
+  @override
+  void initState() {
+    super.initState();
+    _loadDataFromHive();
+  }
+
+  // Load data from Hive
+  Future<void> _loadDataFromHive() async {
+    var box = await Hive.openBox('appData');
+
+    // Retrieve the data
+    var properties = box.get('properties');
+    var outletConfigurations = box.get('outletConfigurations');
+
+    // Check if outletConfigurations is not null
+    if (outletConfigurations != null) {
+      // Extract the outlet names into the outlets list
+      List<String> outletslist = [];
+      for (var outlet in outletConfigurations) {
+        if (outlet['outlet_name'] != null) {
+          outletslist.add(outlet['outlet_name'].toString());
+        }
+      }
+
+      setState(() {
+        this.properties = properties ?? [];
+        this.outletConfigurations = outletConfigurations ?? [];
+        this.outlets = outletslist; // Set the outlets list
+      });
+    }
+  }
 
   // This widget is the root of your application.
   @override
@@ -40,7 +113,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const POSLoginScreen(),
+      home: POSLoginScreen(
+        propertyid: properties[0]['property_id'],
+        outlet: outlets,
+      ),
     );
   }
 }

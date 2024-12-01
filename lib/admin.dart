@@ -36,62 +36,10 @@ class _AdminDashboard extends State {
   String selectedOutlet = 'Restaurant';
   final List<String> outlets = ['BISTRO', 'SUNSET'];
   ChartType chartType = ChartType.line;
-  final OutletApiService apiService =
-      OutletApiService(baseUrl: 'http://localhost:3000/api');
-  List<dynamic> properties = [];
-  List<dynamic> outletConfigurations = [];
-  bool isLoading = true;
-
-  Future<void> _loadData() async {
-    try {
-      final fetchedProperties = await apiService.getAllProperties();
-      final fetchedOutletConfigurations =
-          await apiService.fetchOutletConfigurations();
-
-      // If your data is in JSON format, you should decode it first:
-      // List<dynamic> jsonData = json.decode(fetchedProperties);
-      List<Map<String, dynamic>> propertiesList =
-          List<Map<String, dynamic>>.from(fetchedProperties);
-      List<Map<String, dynamic>> outletConfigurationsList =
-          List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
-
-      // Save data to SharedPreferences
-      await _saveDataToHive(propertiesList, outletConfigurationsList);
-
-      setState(() {
-        properties = propertiesList;
-        outletConfigurations = outletConfigurationsList;
-        isLoading = false;
-      });
-    } catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load data: $error')),
-      );
-    }
-  }
-
-  // Method to save fetched data into SharedPreferences
-  Future<void> _initializeHive() async {
-    final appDocumentDir = await getApplicationDocumentsDirectory();
-    Hive.init(appDocumentDir.path);
-  }
-
-  Future<void> _saveDataToHive(List<Map<String, dynamic>> properties,
-      List<Map<String, dynamic>> outletConfigurations) async {
-    var box = await Hive.openBox('appData');
-
-    // Store the data in a Hive box
-    await box.put('properties', properties);
-    await box.put('outletConfigurations', outletConfigurations);
-  }
 
   @override
   void initState() {
-    _initializeHive();
-    _loadData();
+    ;
     super.initState();
   }
 
