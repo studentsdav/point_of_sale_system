@@ -7,7 +7,8 @@ class OrderApiService {
   OrderApiService({required this.baseUrl});
 
   // 1. Create Order
-  Future<Map<String, dynamic>> createOrder(Map<String, dynamic> orderData) async {
+  Future<Map<String, dynamic>> createOrder(
+      Map<String, dynamic> orderData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/orders'),
       headers: {'Content-Type': 'application/json'},
@@ -15,14 +16,16 @@ class OrderApiService {
     );
 
     if (response.statusCode == 201) {
-      return json.decode(response.body); // Returning the response with order details
+      return json
+          .decode(response.body); // Returning the response with order details
     } else {
       throw Exception('Failed to create order: ${response.body}');
     }
   }
 
   // 2. Update Order
-  Future<Map<String, dynamic>> updateOrder(String orderId, Map<String, dynamic> orderData) async {
+  Future<Map<String, dynamic>> updateOrder(
+      String orderId, Map<String, dynamic> orderData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/orders/$orderId'),
       headers: {'Content-Type': 'application/json'},
@@ -30,7 +33,8 @@ class OrderApiService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body); // Returning the response indicating update success
+      return json.decode(
+          response.body); // Returning the response indicating update success
     } else if (response.statusCode == 404) {
       throw Exception('Order not found');
     } else {

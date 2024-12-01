@@ -4,7 +4,10 @@ import 'package:point_of_sale_system/posmain.dart';
 import 'package:point_of_sale_system/registration.dart';
 
 class POSLoginScreen extends StatelessWidget {
-  const POSLoginScreen({super.key});
+  final outlet;
+  final propertyid;
+  const POSLoginScreen(
+      {super.key, required this.outlet, required this.propertyid});
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +102,8 @@ class POSLoginScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => POSMainScreen()),
+                              builder: (context) => POSMainScreen(
+                                  propertyid: propertyid, outlet: outlet)),
                         );
                       },
                       child: const Text(

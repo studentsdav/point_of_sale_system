@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/posmain.dart';
 
 class POSLoginForm extends StatelessWidget {
-  const POSLoginForm({super.key});
+  final propertyid;
+  final outlet;
+  const POSLoginForm(
+      {super.key, required this.outlet, required this.propertyid});
 
   @override
   Widget build(BuildContext context) {
@@ -70,8 +73,11 @@ class POSLoginForm extends StatelessWidget {
               // Login Button
               ElevatedButton(
                 onPressed: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => POSMainScreen()));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => POSMainScreen(
+                              propertyid: propertyid, outlet: outlet)));
                   // Handle login action
                 },
                 child: const Text('Login'),
