@@ -348,8 +348,14 @@
 // );
 
 
+
+// ALTER TABLE order_items
+// add taxRate int;
+
 // ALTER TABLE orders
 // ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
+
+// ALTER TABLE orders ALTER COLUMN table_number SET DATA TYPE VARCHAR(50);
 
 // ALTER TABLE servicecharge_config
 // ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
@@ -522,3 +528,19 @@
 // ///ALTER TABLE orders
 // ADD created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 // ADD updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+// ALTER TABLE orders
+// ADD COLUMN bill_number VARCHAR(50),
+// ADD COLUMN packing_charge_percentage DECIMAL(10, 2),
+// ADD COLUMN packing_charge DECIMAL(10, 2),
+// ADD COLUMN delivery_charge_percentage DECIMAL(10, 2),
+// ADD COLUMN delivery_charge DECIMAL(10, 2);
+
+// ALTER TABLE order_items
+// ADD COLUMN bill_number VARCHAR(50),
+// ADD COLUMN discount_percentage DECIMAL(10, 2),
+// ADD COLUMN total_discount_value DECIMAL(10, 2),
+// ADD COLUMN packing_charge_percentage DECIMAL(10, 2),
+// ADD COLUMN packing_charge DECIMAL(10, 2),
+// ADD COLUMN delivery_charge_percentage DECIMAL(10, 2),
+// ADD COLUMN delivery_charge DECIMAL(10, 2);

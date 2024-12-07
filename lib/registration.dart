@@ -11,7 +11,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _financialYearController = TextEditingController();
+  final TextEditingController _financialYearController =
+      TextEditingController();
   final TextEditingController _posTerminalController = TextEditingController();
 
   String _role = 'User';
@@ -30,7 +31,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Registration'),
-        backgroundColor: Colors.purple,
+        backgroundColor: Colors.teal,
       ),
       body: Center(
         child: Container(
@@ -87,7 +88,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 DropdownButtonFormField<String>(
                   value: _role,
                   items: ['User', 'Admin']
-                      .map((role) => DropdownMenuItem(value: role, child: Text(role)))
+                      .map((role) =>
+                          DropdownMenuItem(value: role, child: Text(role)))
                       .toList(),
                   onChanged: (value) => setState(() => _role = value!),
                   decoration: const InputDecoration(
@@ -129,9 +131,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 Center(
                   child: ElevatedButton.icon(
                     onPressed: _register,
-                    icon: const Icon(Icons.app_registration, color: Colors.white,),
-                    label: const Text('Register',style: TextStyle(color: Colors.white),),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+                    icon: const Icon(
+                      Icons.app_registration,
+                      color: Colors.white,
+                    ),
+                    label: const Text(
+                      'Register',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.teal),
                   ),
                 ),
               ],

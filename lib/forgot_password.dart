@@ -68,7 +68,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Forgot Password'),
-        backgroundColor: Colors.purple,
+        backgroundColor: Colors.teal,
       ),
       body: Center(
         child: Container(
@@ -130,7 +130,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         icon: const Icon(Icons.send),
                         label: const Text('Send OTP'),
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple),
+                            backgroundColor: Colors.teal),
                       ),
                     ),
                   ),
@@ -161,7 +161,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           style: TextStyle(color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple),
+                            backgroundColor: Colors.teal),
                       ),
                     ),
                   ),
@@ -209,7 +209,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               style: TextStyle(color: Colors.white),
                             ),
                             style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.purple),
+                                backgroundColor: Colors.teal),
                           ),
                         ),
                       ),

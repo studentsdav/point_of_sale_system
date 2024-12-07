@@ -41,7 +41,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.purple,
+        backgroundColor: Colors.teal,
         title: Row(
           children: [
             const Text('Property name: Nourish Bistro and Cafe'),
@@ -56,12 +56,12 @@ class _POSMainScreenState extends State<POSMainScreen> {
         child: Column(
           children: [
             UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(color: Colors.purple),
+              decoration: const BoxDecoration(color: Colors.teal),
               accountName: const Text('User A'),
               accountEmail: const Text('Session Started: 4h ago'),
               currentAccountPicture: const CircleAvatar(
                 backgroundColor: Colors.white,
-                child: Icon(Icons.person, color: Colors.purple),
+                child: Icon(Icons.person, color: Colors.teal),
               ),
             ),
             Expanded(
@@ -92,6 +92,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => KOTFormScreen(
+                                    tableno: "1",
                                     propertyid: widget.propertyid,
                                     outlet: widget.outlet)));
                       }),
@@ -175,7 +176,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
         children: [
           // Outlet Tabs
           Container(
-            color: Colors.purple,
+            color: Colors.teal,
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -219,7 +220,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                           style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.purple),
+                              color: Colors.teal),
                         ),
                         const SizedBox(height: 8),
                         GridView.builder(
@@ -241,6 +242,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) => KOTFormScreen(
+                                            tableno: "1",
                                             propertyid: widget.propertyid,
                                             outlet: widget.outlet)));
                               },
@@ -248,8 +250,8 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                 width: 50,
                                 height: 50,
                                 decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: Colors.purple, width: 2),
+                                  border:
+                                      Border.all(color: Colors.teal, width: 2),
                                 ),
                                 child: Center(
                                   child: Text(
@@ -257,7 +259,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                     style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.purple),
+                                        color: Colors.teal),
                                   ),
                                 ),
                               ),
@@ -284,7 +286,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                 _buildStatBox('Today Sale', '120 ₹', Colors.green),
                 _buildStatBox('Running Order', '120 ₹', Colors.blue),
                 _buildStatBox('Pending Payment', '120 ₹', Colors.orange),
-                _buildStatBox('Total Packing', '120 ₹', Colors.purple),
+                _buildStatBox('Total Packing', '120 ₹', Colors.teal),
                 _buildStatBox('Today Collection', '120 ₹', Colors.yellow),
               ],
             ),
@@ -314,7 +316,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
         },
         icon: const Icon(Icons.help),
         label: const Text("Help"),
-        backgroundColor: Colors.purple,
+        backgroundColor: Colors.teal,
       ),
     );
   }

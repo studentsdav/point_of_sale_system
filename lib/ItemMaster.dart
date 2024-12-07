@@ -317,7 +317,7 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Item Master'),
-        backgroundColor: Colors.purple,
+        backgroundColor: Colors.teal,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

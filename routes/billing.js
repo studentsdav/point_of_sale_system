@@ -3,156 +3,141 @@ const pool = require('../db'); // Replace with your database connection file
 
 const router = express.Router();
 
-
-// Update Bill with Necessary Fields
-router.put('/:id/bill', async (req, res) => {
-  const orderId = req.params.id;
-  const {
-    total_amount,
-    total_tax,
-    total_service_charge,
-    net_receivable,
-    cashier,
-    total_discount_value,
-    subtotal,
-    total_happy_hour_discount,
-    person_count,
-    guest_id,
-    status,
-  } = req.body;
-
-  try {
-    const result = await pool.query(
-      `UPDATE kot_orders SET
-        total_amount = $1, total_tax = $2, total_service_charge = $3, net_receivable = $4,
-        total_discount_value = $5, subtotal = $6, total_happy_hour_discount = $7,
-        person_count = $8, guest_id = $9, status = $10, cashier = $11, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $12 RETURNING id`,
-      [
-        total_amount, total_tax, total_service_charge, net_receivable, total_discount_value,
-        subtotal, total_happy_hour_discount, person_count, guest_id, status, cashier, orderId
-      ]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
-    res.status(200).json({ message: 'Bill updated successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update bill', details: error.message });
-  }
-});
-
-// Generate Bill (Mark Order as Completed and Update Bill Number)
+// Update and Finalize Order with Bill and Item Details
 router.put('/:id/generate-bill', async (req, res) => {
   const orderId = req.params.id;
-  const { bill_number, cashier } = req.body;
-
-  try {
-    const result = await pool.query(
-      `UPDATE kot_orders SET
-        status = 'completed', bill_number = $1, cashier = $2, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $3 RETURNING id`,
-      [bill_number, cashier, orderId]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
-    // Update kot_order_items for the same bill_number
-    await pool.query(
-      `UPDATE kot_order_items SET
-        bill_number = $1, status = 'completed', updated_at = CURRENT_TIMESTAMP
-      WHERE kot_order_id = $2`,
-      [bill_number, orderId]
-    );
-
-    res.status(200).json({ message: 'Bill generated and order marked as completed successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to generate bill', details: error.message });
-  }
-});
-
-// Delete Bill (Delete Order and Associated Items)
-router.delete('/:id', async (req, res) => {
-  const orderId = req.params.id;
-
-  try {
-    const result = await pool.query(
-      `DELETE FROM kot_orders WHERE id = $1 RETURNING id`,
-      [orderId]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
-    // Delete associated order items
-    await pool.query(`DELETE FROM kot_order_items WHERE kot_order_id = $1`, [orderId]);
-
-    res.status(200).json({ message: 'Order and associated items deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete order and items', details: error.message });
-  }
-});
-
-// Edit Bill (Update Bill Details)
-router.put('/:id/edit-bill', async (req, res) => {
-  const orderId = req.params.id;
   const {
-    total_amount,
-    total_tax,
-    total_service_charge,
-    net_receivable,
-    cashier,
-    total_discount_value,
-    subtotal,
+    guest_id,
+    payment_status,
+    tax_value,
+    discount_percentage,
+    discount_value,
+    service_charge_percentage,
+    service_charge_value,
     total_happy_hour_discount,
+    cashier,
     status,
+    staff_id,
+    created_by,
+    bill_generated,
+    bill_generated_at,
+    bill_payment_status,
+    bill_number,
+    packing_charge,
+    packing_charge_percentage,
+    delivery_charge,
+    delivery_charge_percentage,
+    itemDiscounts, // Array of { item_id, discount_percentage, discount_value }
+    table_no, // Table number to identify the active order
   } = req.body;
 
+  if (!itemDiscounts || !Array.isArray(itemDiscounts)) {
+    return res.status(400).json({ error: 'Invalid itemDiscounts format. It must be an array.' });
+  }
+
   try {
-    const result = await pool.query(
-      `UPDATE kot_orders SET
-        total_amount = $1, total_tax = $2, total_service_charge = $3, net_receivable = $4,
-        total_discount_value = $5, subtotal = $6, total_happy_hour_discount = $7,
-        status = $8, cashier = $9, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $10 RETURNING id`,
+    // Identify the running order based on table_no and status
+    const runningOrder = await pool.query(
+      `SELECT id FROM orders WHERE table_no = $1 AND status = 'pending' LIMIT 1`,
+      [table_no]
+    );
+
+    if (runningOrder.rowCount === 0) {
+      return res.status(404).json({ error: 'No running order found for the given table' });
+    }
+
+    const runningOrderId = runningOrder.rows[0].id;
+
+    // Update the order details
+    const orderResult = await pool.query(
+      `UPDATE orders SET
+        guest_id = $1,
+        payment_status = $2,
+        tax_value = $3,
+        discount_percentage = $4,
+        discount_value = $5,
+        service_charge_percentage = $6,
+        service_charge_value = $7,
+        total_happy_hour_discount = $8,
+        cashier = $9,
+        status = 'billed',  // Update status to 'billed'
+        staff_id = $10,
+        created_by = $11,
+        bill_generated = $12,
+        bill_generated_at = $13,
+        bill_payment_status = $14,
+        bill_number = $15,
+        packing_charge = $16,
+        packing_charge_percentage = $17,
+        delivery_charge = $18,
+        delivery_charge_percentage = $19,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $20 RETURNING id`,
       [
-        total_amount, total_tax, total_service_charge, net_receivable, total_discount_value,
-        subtotal, total_happy_hour_discount, status, cashier, orderId
+        guest_id,
+        payment_status,
+        tax_value,
+        discount_percentage,
+        discount_value,
+        service_charge_percentage,
+        service_charge_value,
+        total_happy_hour_discount,
+        cashier,
+        status,  // 'billed'
+        staff_id,
+        created_by,
+        bill_generated,
+        bill_generated_at,
+        bill_payment_status,
+        bill_number,
+        packing_charge,
+        packing_charge_percentage,
+        delivery_charge,
+        delivery_charge_percentage,
+        runningOrderId, // Use the identified running order id
       ]
     );
 
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Order not found' });
+    if (orderResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Failed to update order details' });
     }
 
-    res.status(200).json({ message: 'Bill updated successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to edit bill', details: error.message });
-  }
-});
+    // Update the discount details and bill number for all items in the order
+    for (const item of itemDiscounts) {
+      const { item_id, discount_percentage, discount_value } = item;
 
-// Select Bill (Get Bill Details)
-router.get('/:id/bill', async (req, res) => {
-  const orderId = req.params.id;
-
-  try {
-    const result = await pool.query(
-      `SELECT * FROM kot_orders WHERE id = $1`,
-      [orderId]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Order not found' });
+      // Update order_items using item_id and order_id
+      await pool.query(
+        `UPDATE order_items SET
+          discount_percentage = $1,
+          discount_value = $2,
+          bill_number = $3,
+          packing_charge = $4,
+          packing_charge_percentage = $5,
+          delivery_charge = $6,
+          delivery_charge_percentage = $7,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE item_id = $8 AND order_id = $9`, // Use item_id and order_id
+        [
+          discount_percentage,
+          discount_value,
+          bill_number,
+          packing_charge,
+          packing_charge_percentage,
+          delivery_charge,
+          delivery_charge_percentage,
+          item_id,   // Item ID
+          runningOrderId, // Order ID
+        ]
+      );
     }
 
-    res.status(200).json(result.rows[0]);
+    res.status(200).json({
+      message: 'Order and item details updated with bill successfully',
+      orderId: orderResult.rows[0].id,
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch bill', details: error.message });
+    res.status(500).json({ error: 'Failed to update order and items with bill details', details: error.message });
   }
 });
 
