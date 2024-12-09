@@ -166,12 +166,12 @@ router.post('/', async (req, res) => {
       for (let item of items) {
         await client.query(
           `INSERT INTO order_items (
-            order_id, item_name, item_category, item_quantity, item_rate, item_amount, item_tax, total_item_value, outlet_name, property_id
+            order_id, item_name, item_category, item_quantity, item_rate, item_amount, item_tax, total_item_value, outlet_name, property_id, taxRate
           ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8,$9,$10
+            $1, $2, $3, $4, $5, $6, $7, $8,$9,$10,$11
           )`,
           [
-            orderId, item.item_name, item.item_category, item.item_quantity, item.item_rate, item.item_amount, item.item_tax, item.total_item_value, outlet_name, property_id
+            orderId, item.item_name, item.item_category, item.item_quantity, item.item_rate, item.item_amount, item.item_tax, item.total_item_value, outlet_name, property_id, item.taxRate
           ]
         );
       }

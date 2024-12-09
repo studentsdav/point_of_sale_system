@@ -23,7 +23,8 @@ class BillApiService {
   }
 
   // 2. PUT: Edit Bill (Update Bill Details)
-  Future<Map<String, dynamic>> editBill(String orderId, Map<String, dynamic> billData) async {
+  Future<Map<String, dynamic>> editBill(
+      String orderId, Map<String, dynamic> billData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/$orderId/edit-bill'),
       headers: {'Content-Type': 'application/json'},
@@ -40,14 +41,12 @@ class BillApiService {
   }
 
   // 3. PUT: Generate Bill (Mark Order as Completed and Update Bill Number)
-  Future<Map<String, dynamic>> generateBill(String orderId, String billNumber, String cashier) async {
+  Future<Map<String, dynamic>> generateBill(
+      String orderId, Map<String, dynamic> billData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/$orderId/generate-bill'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'bill_number': billNumber,
-        'cashier': cashier,
-      }),
+      body: json.encode(billData),
     );
 
     if (response.statusCode == 200) {

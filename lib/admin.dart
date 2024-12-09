@@ -406,7 +406,7 @@ class _AdminDashboard extends State {
           children: [
             Expanded(
                 child: buildSalesCard('Yearly Sale', Icons.assessment,
-                    '₹ 5,00,000', Colors.purple, '20%')),
+                    '₹ 5,00,000', Colors.teal, '20%')),
             SizedBox(width: 16),
             Expanded(
                 child: buildSalesCard(

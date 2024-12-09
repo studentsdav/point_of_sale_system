@@ -93,7 +93,7 @@ class POSLoginScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple,
+                        backgroundColor: Colors.teal,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -127,7 +127,7 @@ class POSLoginScreen extends StatelessWidget {
                         },
                         child: const Text(
                           'Forgot Password?',
-                          style: TextStyle(color: Colors.purple),
+                          style: TextStyle(color: Colors.teal),
                         ),
                       ),
                       TextButton(
@@ -140,7 +140,7 @@ class POSLoginScreen extends StatelessWidget {
                         },
                         child: const Text(
                           "Don't have an Account? Sign Up",
-                          style: TextStyle(color: Colors.purple),
+                          style: TextStyle(color: Colors.teal),
                         ),
                       ),
                     ],

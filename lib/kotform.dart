@@ -4,10 +4,14 @@ import 'dart:convert';
 import 'package:point_of_sale_system/backend/OrderApiService.dart';
 
 class KOTFormScreen extends StatefulWidget {
+  final tableno;
   final propertyid;
   final outlet;
   const KOTFormScreen(
-      {Key? key, required this.propertyid, required this.outlet})
+      {Key? key,
+      required this.propertyid,
+      required this.outlet,
+      required this.tableno})
       : super(key: key);
 
   @override
@@ -55,7 +59,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
   final TextEditingController _remarksController = TextEditingController();
 
   String _selectedCategory = 'Starters';
-  int _tableNumber = 1;
+  String _tableNumber = "";
   String _waiterName = '';
   int _personCount = 1;
   final double taxRate = 0.1; // 10% tax rate, adjust as needed
@@ -65,6 +69,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
 
   @override
   void initState() {
+    _tableNumber = widget.tableno;
     super.initState();
     _orderNumber =
         'ORD-${DateTime.now().millisecondsSinceEpoch % 10000}-${Random().nextInt(1000)}';
@@ -123,6 +128,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
             'item_quantity': qty,
             'item_rate': rate,
             'item_amount': amount,
+            'taxRate': taxRate * 100,
             'item_tax': tax,
             'total_item_value': amount + tax
           };
@@ -162,8 +168,8 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
         'subtotal': totalAmount,
         'total': totalAmount,
         'cashier': '',
-        'status': '',
-        'order_type': '',
+        'status': 'Pending',
+        'order_type': 'Dine-in',
         'order_notes': '',
         'is_priority_order': false,
         'customer_feedback': '',
@@ -284,7 +290,14 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
 
       // Send the order data with all items
       await orderApiService.createOrder(orderData);
-
+      setState(() {
+        _orderItems.clear();
+        _orderNumber = '';
+        _tableNumber = '';
+        _waiterName = '';
+        _personCount = 0;
+        _remarksController.text = "";
+      });
       // Notify user once the order is saved successfully
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Order saved successfully!')),
@@ -309,7 +322,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create KOT'),
-        backgroundColor: Colors.purple,
+        backgroundColor: Colors.teal,
       ),
       body: Row(
         children: [
@@ -414,7 +427,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                     initialValue: _tableNumber.toString(),
                     keyboardType: TextInputType.number,
                     onChanged: (value) =>
-                        setState(() => _tableNumber = int.tryParse(value) ?? 1),
+                        setState(() => _tableNumber = value ?? "1"),
                     decoration: const InputDecoration(
                       labelText: 'Table Number',
                       prefixIcon: Icon(Icons.table_bar),

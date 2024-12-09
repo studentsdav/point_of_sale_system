@@ -39,6 +39,13 @@ class _POSMainScreenState extends State<POSMainScreen> {
     // 'VIP AREA': ['01', '02', '03', '04'],
   };
 
+  final Map<String, String> tableStates = {
+    '1': 'occupied',
+    '2': 'vacant',
+    '3': 'dirty',
+    // Add more table states here
+  };
+
   @override
   void initState() {
     outlets = widget.outlet;
@@ -169,6 +176,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => KOTFormScreen(
+                                tableno: "1",
                                 propertyid: widget.propertyid,
                                 outlet: selectedOutlet)));
                   }),
@@ -281,34 +289,197 @@ class _POSMainScreenState extends State<POSMainScreen> {
                             crossAxisCount: 6,
                             crossAxisSpacing: 8,
                             mainAxisSpacing: 8,
-                            childAspectRatio: 4,
+                            childAspectRatio: 3,
                           ),
                           itemCount: entry.value.length,
                           itemBuilder: (context, index) {
+                            final tableNo = entry.value[index];
+
+                            // Determine the color based on the table's state
+                            final tableState = tableStates[tableNo] ??
+                                'vacant'; // Default to 'vacant'
+                            Color tableColor;
+
+                            switch (tableState) {
+                              case 'occupied':
+                                tableColor = Colors.green;
+                                break;
+                              case 'dirty':
+                                tableColor = Colors.grey;
+                                break;
+                              case 'vacant':
+                              default:
+                                tableColor = Colors.teal.shade100;
+                                break;
+                            }
                             return GestureDetector(
                               onTap: () {
-                                Navigator.push(
+                                if (tableState == 'occupied') {
+                                  // Navigate to billing screen
+                                  Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => KOTFormScreen(
-                                            propertyid: widget.propertyid,
-                                            outlet: selectedOutlet)));
+                                      builder: (context) => BillingFormScreen(
+                                          // tableno: tableNo,
+                                          // propertyid: widget.propertyid,
+                                          // outlet: selectedOutlet,
+                                          ),
+                                    ),
+                                  );
+                                } else if (tableState == 'vacant') {
+                                  // Navigate to order form
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => KOTFormScreen(
+                                        tableno: tableNo,
+                                        propertyid: widget.propertyid,
+                                        outlet: selectedOutlet,
+                                      ),
+                                    ),
+                                  );
+                                } else if (tableState == 'dirty') {
+                                  // Show a message or do nothing
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Table $tableNo is dirty and cannot be used.',
+                                      ),
+                                      backgroundColor: Colors.brown,
+                                    ),
+                                  );
+                                }
                               },
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.teal.shade100,
+                                  color: tableColor,
                                   border: Border.all(
-                                      color: Colors.teal.shade700, width: 2),
+                                    color: Colors.teal.shade700,
+                                    width: 2,
+                                  ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    entry.value[index],
-                                    style: const TextStyle(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // Display the table number
+                                    Text(
+                                      entry.value[index],
+                                      style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.teal),
-                                  ),
+                                        color: Colors.teal,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Display appropriate icons based on table state
+                                    if (tableState == 'occupied') ...[
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.receipt_long,
+                                                color: Colors.teal),
+                                            onPressed: () {
+                                              // Navigate to view bill screen
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      BillingFormScreen(
+                                                          // tableno: tableNo,
+                                                          // propertyid: widget.propertyid,
+                                                          // outlet: selectedOutlet,
+                                                          ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(
+                                                Icons.restaurant_menu,
+                                                color: Colors.teal),
+                                            onPressed: () {
+                                              // Navigate to add item screen
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      KOTFormScreen(
+                                                    tableno: tableNo,
+                                                    propertyid:
+                                                        widget.propertyid,
+                                                    outlet: selectedOutlet,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ] else if (tableState == 'dirty') ...[
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.payment,
+                                                color: Colors.brown),
+                                            onPressed: () {
+                                              // Navigate to payment screen
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      PaymentFormScreen(
+                                                          // tableno: tableNo,
+                                                          // propertyid:
+                                                          //     widget.propertyid,
+                                                          // outlet: selectedOutlet,
+                                                          ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(
+                                                Icons.cleaning_services,
+                                                color: Colors.brown),
+                                            onPressed: () {
+                                              // Clear the table action
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                      'Table $tableNo cleared successfully.'),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ] else if (tableState == 'vacant') ...[
+                                      IconButton(
+                                        icon: const Icon(Icons.restaurant_menu,
+                                            color: Colors.green),
+                                        onPressed: () {
+                                          // Navigate to order form
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  KOTFormScreen(
+                                                tableno: tableNo,
+                                                propertyid: widget.propertyid,
+                                                outlet: selectedOutlet,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
                             );
@@ -334,7 +505,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                 _buildStatBox('Today Sale', '₹120', Colors.green),
                 _buildStatBox('Running Order', '₹120', Colors.blue),
                 _buildStatBox('Pending Payment', '₹120', Colors.orange),
-                _buildStatBox('Total Packing', '₹120', Colors.purple),
+                _buildStatBox('Total Packing', '₹120', Colors.teal),
                 _buildStatBox('Today Collection', '₹120', Colors.yellow),
               ],
             ),
