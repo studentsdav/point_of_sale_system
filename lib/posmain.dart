@@ -21,6 +21,7 @@ class POSMainScreen extends StatefulWidget {
 
 class _POSMainScreenState extends State<POSMainScreen> {
   final tableapiService = TableApiService(apiUrl: 'http://localhost:3000/api');
+
   String selectedOutlet = 'Restaurant';
   List<String> outlets = [
     'Restaurant',
@@ -40,16 +41,37 @@ class _POSMainScreenState extends State<POSMainScreen> {
   };
 
   final Map<String, String> tableStates = {
-    '1': 'occupied',
-    '2': 'vacant',
-    '3': 'dirty',
+    // '1': 'occupied',
+    // '2': 'vacant',
+    // '3': 'dirty',
     // Add more table states here
   };
+
+  Future<void> _fetchTableConfigs() async {
+    try {
+      final tables = await tableapiService.getTableConfigs();
+      setState(() {
+        tableStates.clear(); // Clear previous data if necessary
+
+        for (var table in tables) {
+          String tableNumber = table['table_no']
+              .toString(); // Assuming table_no is the identifier
+          String tableStatus =
+              table['status'] ?? 'vacant'; // Assuming 'status' is the field
+          tableStates[tableNumber] = tableStatus;
+        }
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to load tables')));
+    }
+  }
 
   @override
   void initState() {
     outlets = widget.outlet;
     loadtables();
+    _fetchTableConfigs();
     super.initState();
   }
 
@@ -117,6 +139,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
     } catch (e) {
       print('Error: $e');
     }
+    _fetchTableConfigs();
   }
 
   @override
@@ -184,7 +207,11 @@ class _POSMainScreenState extends State<POSMainScreen> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => BillingFormScreen()));
+                            builder: (context) => BillingFormScreen(
+                                  tableno: '1',
+                                  propertyid: widget.propertyid,
+                                  outlet: selectedOutlet,
+                                )));
                   }),
                   _buildDrawerItem(Icons.payment, 'Payment', () {
                     Navigator.push(
@@ -297,36 +324,36 @@ class _POSMainScreenState extends State<POSMainScreen> {
 
                             // Determine the color based on the table's state
                             final tableState = tableStates[tableNo] ??
-                                'vacant'; // Default to 'vacant'
+                                'Vacant'; // Default to 'vacant'
                             Color tableColor;
 
                             switch (tableState) {
-                              case 'occupied':
+                              case 'Occupied':
                                 tableColor = Colors.green;
                                 break;
-                              case 'dirty':
+                              case 'Dirty':
                                 tableColor = Colors.grey;
                                 break;
-                              case 'vacant':
+                              case 'Vacant':
                               default:
                                 tableColor = Colors.teal.shade100;
                                 break;
                             }
                             return GestureDetector(
                               onTap: () {
-                                if (tableState == 'occupied') {
+                                if (tableState == 'Occupied') {
                                   // Navigate to billing screen
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => BillingFormScreen(
-                                          // tableno: tableNo,
-                                          // propertyid: widget.propertyid,
-                                          // outlet: selectedOutlet,
-                                          ),
+                                        tableno: tableNo,
+                                        propertyid: widget.propertyid,
+                                        outlet: selectedOutlet,
+                                      ),
                                     ),
                                   );
-                                } else if (tableState == 'vacant') {
+                                } else if (tableState == 'Vacant') {
                                   // Navigate to order form
                                   Navigator.push(
                                     context,
@@ -338,7 +365,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                       ),
                                     ),
                                   );
-                                } else if (tableState == 'dirty') {
+                                } else if (tableState == 'Dirty') {
                                   // Show a message or do nothing
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -373,7 +400,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     // Display appropriate icons based on table state
-                                    if (tableState == 'occupied') ...[
+                                    if (tableState == 'Occupied') ...[
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
@@ -388,10 +415,11 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                                 MaterialPageRoute(
                                                   builder: (context) =>
                                                       BillingFormScreen(
-                                                          // tableno: tableNo,
-                                                          // propertyid: widget.propertyid,
-                                                          // outlet: selectedOutlet,
-                                                          ),
+                                                    tableno: tableNo,
+                                                    propertyid:
+                                                        widget.propertyid,
+                                                    outlet: selectedOutlet,
+                                                  ),
                                                 ),
                                               );
                                             },
@@ -418,7 +446,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                           ),
                                         ],
                                       ),
-                                    ] else if (tableState == 'dirty') ...[
+                                    ] else if (tableState == 'Dirty') ...[
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
@@ -459,7 +487,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                           ),
                                         ],
                                       ),
-                                    ] else if (tableState == 'vacant') ...[
+                                    ] else if (tableState == 'Vacant') ...[
                                       IconButton(
                                         icon: const Icon(Icons.restaurant_menu,
                                             color: Colors.green),

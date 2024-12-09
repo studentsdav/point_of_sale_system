@@ -391,6 +391,12 @@
 // ALTER TABLE order_items
 // add  outlet_name  VARCHAR(50);
 
+// ALTER TABLE bills 
+// add  property_id  VARCHAR(50);
+
+// ALTER TABLE bills 
+// add  outlet_name  VARCHAR(50);
+
 // ALTER TABLE outlet_configurations
 // ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
 
@@ -544,3 +550,27 @@
 // ADD COLUMN packing_charge DECIMAL(10, 2),
 // ADD COLUMN delivery_charge_percentage DECIMAL(10, 2),
 // ADD COLUMN delivery_charge DECIMAL(10, 2);
+
+// CREATE TABLE bills (
+//     id SERIAL PRIMARY KEY,
+//     bill_number VARCHAR(50) UNIQUE NOT NULL, -- Unique bill number
+//     total_amount NUMERIC(10, 2), -- Base total billing amount
+//     discount_value NUMERIC(10, 2), -- Total discount value
+//     tax_value NUMERIC(10, 2), -- Tax value
+//     service_charge_value NUMERIC(10, 2), -- Service charge value
+//     packing_charge NUMERIC(10, 2), -- Packing charge
+//     delivery_charge NUMERIC(10, 2), -- Delivery charge
+//     other_charge NUMERIC(10, 2), -- Other charges
+//     grand_total NUMERIC(10, 2), -- Grand total (calculated as Total - Discounts + All Charges)
+//     bill_generated_at TIMESTAMP, -- Bill generation timestamp
+//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Record creation timestamp
+//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last update timestamp
+// );
+
+
+// ALTER TABLE bills
+// ADD COLUMN packing_charge_percentage NUMERIC(5, 2), -- Percentage for packing charge
+// ADD COLUMN delivery_charge_percentage NUMERIC(5, 2), -- Percentage for delivery charge
+// ADD COLUMN discount_percentage NUMERIC(5, 2), -- Percentage for discount
+// ADD COLUMN service_charge_percentage NUMERIC(5, 2); -- Percentage for service charge
+

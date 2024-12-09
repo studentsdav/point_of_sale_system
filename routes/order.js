@@ -161,6 +161,11 @@ router.post('/', async (req, res) => {
 
     const orderId = orderResult.rows[0].order_id;
 
+    await pool.query(
+      `UPDATE table_configurations SET status = 'Occupied' WHERE table_no = $1 AND status != 'Occupied'`,
+      [table_number]
+    );
+
     // Insert items for the order if the items array exists
     if (items && Array.isArray(items)) {
       for (let item of items) {

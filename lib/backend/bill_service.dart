@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-class BillApiService {
+class BillingApiService {
   final String baseUrl;
 
-  BillApiService({required this.baseUrl});
+  BillingApiService({required this.baseUrl});
 
   // 1. GET: Fetch Bill Details by Order ID
   Future<Map<String, dynamic>> getBill(String orderId) async {
@@ -42,9 +42,9 @@ class BillApiService {
 
   // 3. PUT: Generate Bill (Mark Order as Completed and Update Bill Number)
   Future<Map<String, dynamic>> generateBill(
-      String orderId, Map<String, dynamic> billData) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/$orderId/generate-bill'),
+      Map<String, dynamic> billData) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/bill'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(billData),
     );
