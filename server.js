@@ -1,5 +1,7 @@
 const express = require('express');
 const pool = require('./db'); // Database connection module
+const http = require('http');
+const socketIo = require('socket.io');
 const userLoginRoute = require('./routes/userLogin');
 const billConfig = require('./routes/billConfig');
 const propertyRoutes = require('./routes/propertyRoutes');
@@ -22,11 +24,46 @@ const subcategoriesRoutes = require('./routes/subcategories');
 const taxconfigRoutes = require('./routes/tax_config');
 const userpermissionsRoutes = require('./routes/user_permissions');
 const waitersRoutes = require('./routes/waiterMaster');
-
 const app = express();
+const server = http.createServer(app);
+
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json()); // Middleware for JSON parsing
+// Initialize Socket.io with CORS configuration
+const io = socketIo(server, {
+  cors: {
+    origin: "http://localhost:3000", // Replace with your Flutter app's URL
+    methods: ["GET", "POST"],
+  },
+});
+
+// Middleware for JSON parsing
+app.use(express.json());
+
+// Listen for PostgreSQL notifications
+async function listenForNotifications() {
+  try {
+    const client = await pool.connect();
+    await client.query('LISTEN table_update');
+    console.log('Listening for table updates...');
+
+    client.on('notification', (msg) => {
+      console.log('Notification received:', msg);
+      io.emit('table_update', msg.payload);
+    });
+  } catch (err) {
+    console.error('Error listening for notifications:', err);
+  }
+}
+listenForNotifications();
+
+// Socket.io connection to handle real-time notifications
+io.on('connection', (socket) => {
+  console.log('A client connected');
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
+});
 
 // Use the routes
 app.use('/api/users', userLoginRoute);
@@ -58,7 +95,13 @@ app.get('/', (req, res) => {
   res.send('Welcome to the Point of Sale System API!');
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something went wrong!');
+});
+
 // Start the server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

@@ -567,10 +567,69 @@
 //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last update timestamp
 // );
 
+// CREATE TABLE payments (
+//     id SERIAL PRIMARY KEY,                  -- Unique identifier for each payment record
+//     bill_id INT NOT NULL,                   -- Reference to the related bill
+//     payment_method VARCHAR(50) NOT NULL,    -- Payment method (e.g., Cash, UPI, Card, etc.)
+//     payment_amount NUMERIC(10, 2) NOT NULL, -- Amount paid using this method
+//     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp of payment
+//     transaction_id VARCHAR(100),           -- Transaction ID (for online payments)
+//     remarks TEXT,                          -- Any additional remarks about the payment
+//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp when record is created
+//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp when record is updated
+// 	outlet_name VARCHAR(255),
+// 	property_id VARCHAR(50) NOT NULL,        -- Associated property ID (mandatory, matches properties table type)
+// 	CONSTRAINT fk_bill FOREIGN KEY (bill_id) REFERENCES bills(id) ON DELETE CASCADE
+// );
 
 // ALTER TABLE bills
 // ADD COLUMN packing_charge_percentage NUMERIC(5, 2), -- Percentage for packing charge
 // ADD COLUMN delivery_charge_percentage NUMERIC(5, 2), -- Percentage for delivery charge
 // ADD COLUMN discount_percentage NUMERIC(5, 2), -- Percentage for discount
 // ADD COLUMN service_charge_percentage NUMERIC(5, 2); -- Percentage for service charge
+
+
+
+
+// To build the trigger for the table_configurations table specifically, you can simplify the code to target just that table. Here's the PL/pgSQL script to create a trigger for the table_configurations table:
+
+// PL/pgSQL Script for table_configurations
+// sql
+// Copy code
+// DO $$ 
+// BEGIN
+//   -- Create the trigger for the 'table_configurations' table
+//   EXECUTE format('
+//     CREATE TRIGGER table_configurations_update_trigger
+//     AFTER INSERT OR UPDATE OR DELETE ON public.table_configurations
+//     FOR EACH ROW
+//     EXECUTE FUNCTION notify_table_update();');
+// END $$;
+// Explanation:
+// Trigger Name: table_configurations_update_trigger is the name of the trigger.
+// Event Type: The trigger fires after an INSERT, UPDATE, or DELETE operation on the table_configurations table.
+// Action: The trigger will call the function notify_table_update(). Ensure this function exists in your database. If it doesn't, you need to define it.
+// Schema: public is the default schema; you can change it if your table is in a different schema.
+// Ensure notify_table_update() Function Exists:
+// Make sure the notify_table_update() function is defined. If it's not defined, you can create a simple NOTIFY function like this:
+
+// sql
+// Copy code
+// CREATE OR REPLACE FUNCTION notify_table_update() 
+// RETURNS trigger AS $$
+// BEGIN
+//   -- Trigger action: Notify about the table update
+//   PERFORM pg_notify('table_update', 'Table configurations updated');
+//   RETURN NULL;
+// END;
+// $$ LANGUAGE plpgsql;
+// Key Points:
+// This will create a trigger that listens for changes (insert, update, or delete) on the table_configurations table.
+// The pg_notify() function sends a notification whenever a change occurs. You can listen for this notification from your application using PostgreSQL's LISTEN/NOTIFY mechanism to get real-time updates.
+// How to Use in Your Application:
+// After setting up the trigger and the pg_notify() function, you can listen for the table_update notification in your application, and whenever a change occurs in the table_configurations table, your application will be notified in real-time.
+
+
+//npm install socket.io
+// npm list socket.io
 

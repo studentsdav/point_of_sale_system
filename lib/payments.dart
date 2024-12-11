@@ -1,45 +1,83 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:point_of_sale_system/backend/paymentApiService.dart';
 
 class PaymentFormScreen extends StatefulWidget {
+  final tableno;
+  final billid;
+  final propertyid;
+  final outletname;
+  const PaymentFormScreen(
+      {super.key,
+      required this.billid,
+      required this.propertyid,
+      required this.outletname,
+      required this.tableno});
   @override
   _PaymentFormScreenState createState() => _PaymentFormScreenState();
 }
 
 class _PaymentFormScreenState extends State<PaymentFormScreen> {
+  PaymentApiService paymentApiService =
+      PaymentApiService(baseUrl: 'http://localhost:3000/api');
   final _formKey = GlobalKey<FormState>();
   String? _paymentMethod;
   double _amount = 0.0;
-  final _paymentDateController = TextEditingController();
   final _billIdController = TextEditingController();
 
   // List of bills for demonstration (replace with your actual bill data)
   final List<Map<String, String>> _bills = [
-    {'bill_id': '101', 'amount': '1500.00'},
-    {'bill_id': '102', 'amount': '2000.00'},
-    {'bill_id': '103', 'amount': '1200.00'},
+    {'bill_id': '1', 'amount': '1500.00'},
+    {'bill_id': '2', 'amount': '2000.00'},
+    {'bill_id': '3', 'amount': '1200.00'},
   ];
 
   // List of payment methods
   final List<String> _paymentMethods = ['Cash', 'Card', 'Mobile Payment'];
 
+  DateTime? paymentDate;
+
   @override
   void dispose() {
-    _paymentDateController.dispose();
     _billIdController.dispose();
     super.dispose();
   }
 
-  // Form submit function
-  void _submitPayment() {
-    if (_formKey.currentState!.validate()) {
-      // Save payment data
-  
-      // Here you can save the payment data to the database
+  String generateTransactionId() {
+    final now = DateTime.now();
+    final transactionId =
+        '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+    return transactionId;
+  }
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Payment successfully saved!')),
-      );
+  // Form submit function
+  Future<void> _submitPayment() async {
+    if (_formKey.currentState!.validate()) {
+      final paymentData = {
+        'bill_id': int.parse(_billIdController.text),
+        'payment_method': _paymentMethod,
+        'payment_amount': _amount,
+        'payment_date': paymentDate!.toIso8601String(),
+        'transaction_id': generateTransactionId(), // Add transaction ID
+        'remarks': '_remarks', // Add remarks
+        'outlet_name': widget.outletname, // Add outlet name
+        'property_id': widget.propertyid, // Add property ID
+        'table_no': widget.tableno
+      };
+      try {
+        await paymentApiService.createPayment(paymentData);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payment successfully saved!')),
+        );
+      } catch (exeption) {
+        // Show error message if something goes wrong
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving order: $exeption')),
+        );
+        throw (exeption);
+      }
     }
   }
 
@@ -89,7 +127,8 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
               padding: EdgeInsets.all(16.0),
               child: Container(
                 width: double.infinity, // Take up the full width
-                constraints: BoxConstraints(maxWidth: 600), // Set max width for better appearance
+                constraints: BoxConstraints(
+                    maxWidth: 600), // Set max width for better appearance
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -156,7 +195,12 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter
+                                .digitsOnly, // Restricts input to digits only
+                          ],
+                          keyboardType:
+                              TextInputType.numberWithOptions(decimal: true),
                           decoration: InputDecoration(
                             labelText: 'Amount',
                             hintText: 'Enter Payment Amount',
@@ -173,7 +217,8 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                             if (value == null || value.isEmpty) {
                               return 'Please enter the amount';
                             }
-                            if (double.tryParse(value) == null || double.parse(value) <= 0) {
+                            if (double.tryParse(value) == null ||
+                                double.parse(value) <= 0) {
                               return 'Please enter a valid amount';
                             }
                             return null;
@@ -181,24 +226,35 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
                       // Payment Date
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(
-                          controller: _paymentDateController,
+                          keyboardType: TextInputType.datetime,
                           decoration: InputDecoration(
-                            labelText: 'Payment Date',
-                            hintText: 'Enter Payment Date (YYYY-MM-DD)',
                             border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.calendar_today),
+                            labelText: 'Payment Date',
+                            prefixIcon: Icon(Icons.date_range),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter the payment date';
-                            }
-                            return null;
+                          readOnly: true,
+                          onTap: () async {
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                            );
+                            if (pickedDate != null)
+                              setState(() => paymentDate = pickedDate);
                           },
+                          validator: (_) => paymentDate == null
+                              ? 'Please select a payment date'
+                              : null,
+                          controller: TextEditingController(
+                            text: paymentDate == null
+                                ? ''
+                                : "${paymentDate!.day}-${paymentDate!.month}-${paymentDate!.year}",
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -212,7 +268,8 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                             ElevatedButton(
                               onPressed: _submitPayment,
                               child: Text('Save Payment'),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green),
                             ),
                           ],
                         ),

@@ -29,15 +29,46 @@ router.get('/:id', async (req, res) => {
 
 // POST (Create) new payment
 router.post('/', async (req, res) => {
-  const { property_id, outlet_id, payment_method, amount, payment_date, bill_id } = req.body;
+  const {
+    bill_id,
+    payment_method,
+    payment_amount,
+    payment_date,
+    transaction_id,
+    remarks,
+    outlet_name,
+    property_id, table_no
+  } = req.body;
 
   try {
     const result = await pool.query(
-      `INSERT INTO payments (property_id, outlet_id, payment_method, amount, payment_date, bill_id)
-      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [property_id, outlet_id, payment_method, amount, payment_date, bill_id]
+      `INSERT INTO payments (
+        bill_id, payment_method, payment_amount, payment_date, transaction_id,
+        remarks, outlet_name, property_id
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      [
+        bill_id,
+        payment_method,
+        payment_amount,
+        payment_date,
+        transaction_id,
+        remarks,
+        outlet_name,
+        property_id
+      ]
     );
-    res.status(201).json({ message: 'Payment created successfully', paymentId: result.rows[0].id });
+    await pool.query(
+      `UPDATE table_configurations SET status = 'Vacant' WHERE table_no = $1 AND status = 'Dirty'`,
+      [table_no]
+    );
+    // Notify PostgreSQL trigger to send notification
+    await pool.query("NOTIFY table_update, 'Table configuration updated'");
+
+    res.status(201).json({
+      message: 'Payment created successfully',
+      paymentId: result.rows[0].id
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to create payment', details: error.message });
   }
@@ -46,14 +77,42 @@ router.post('/', async (req, res) => {
 // PUT (Update) payment by ID
 router.put('/:id', async (req, res) => {
   const paymentId = req.params.id;
-  const { payment_method, amount, payment_date, bill_id } = req.body;
+  const {
+    bill_id,
+    payment_method,
+    payment_amount,
+    payment_date,
+    transaction_id,
+    remarks,
+    outlet_name,
+    property_id
+  } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE payments
-      SET payment_method = $1, amount = $2, payment_date = $3, bill_id = $4, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $5 RETURNING id`,
-      [payment_method, amount, payment_date, bill_id, paymentId]
+      SET
+        bill_id = $1,
+        payment_method = $2,
+        payment_amount = $3,
+        payment_date = $4,
+        transaction_id = $5,
+        remarks = $6,
+        outlet_name = $7,
+        property_id = $8,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $9 RETURNING id`,
+      [
+        bill_id,
+        payment_method,
+        payment_amount,
+        payment_date,
+        transaction_id,
+        remarks,
+        outlet_name,
+        property_id,
+        paymentId
+      ]
     );
 
     if (result.rowCount === 0) {

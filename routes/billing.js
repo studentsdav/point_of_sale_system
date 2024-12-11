@@ -217,9 +217,11 @@ router.post('/', async (req, res) => {
     );
 
     await pool.query(
-      `UPDATE table_configurations SET status = 'Vacant' WHERE table_no = $1`,
+      `UPDATE table_configurations SET status = 'Dirty' WHERE table_no = $1 AND status = 'Occupied'`,
       [table_no]
     );
+    // Notify PostgreSQL trigger to send notification
+    await pool.query("NOTIFY table_update, 'Table configuration updated'");
 
     res.status(201).json({
       message: 'Bill generated successfully',

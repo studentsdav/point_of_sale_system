@@ -165,6 +165,8 @@ router.post('/', async (req, res) => {
       `UPDATE table_configurations SET status = 'Occupied' WHERE table_no = $1 AND status != 'Occupied'`,
       [table_number]
     );
+    // Notify PostgreSQL trigger to send notification
+    await pool.query("NOTIFY table_update, 'Table configuration updated'");
 
     // Insert items for the order if the items array exists
     if (items && Array.isArray(items)) {

@@ -114,7 +114,7 @@ class _MyAppState extends State {
         useMaterial3: true,
       ),
       home: POSLoginScreen(
-        propertyid: properties[0]['property_id'],
+        propertyid: properties[0]['property_id'] ?? 0,
         outlet: outlets,
       ),
     );
