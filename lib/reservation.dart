@@ -76,7 +76,8 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
 
       // Loop through the tables and find those matching the selected outlet
       for (var table in tables!) {
-        if (table['outlet_name'] == selectedOutlet &&
+        if (table['outlet_name'].toString().toLowerCase() ==
+                selectedOutlet.toLowerCase() &&
             table['table_no'] != null) {
           filteredTables.add(table['table_no'].toString());
         }

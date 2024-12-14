@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:point_of_sale_system/backend/OrderApiService.dart';
 import 'package:point_of_sale_system/backend/bill_service.dart';
 
 class BillingFormScreen extends StatefulWidget {
@@ -20,6 +21,8 @@ class BillingFormScreen extends StatefulWidget {
 class _BillingFormScreenState extends State<BillingFormScreen> {
   BillingApiService billingApiService =
       BillingApiService(baseUrl: 'http://localhost:3000/api');
+  OrderApiService orderApiService =
+      OrderApiService(baseUrl: 'http://localhost:3000/api');
   final TextEditingController _billNoController = TextEditingController();
   final TextEditingController _orderNoController =
       TextEditingController(text: 'ORD67890');
@@ -32,31 +35,135 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
   final TextEditingController _flatDiscountController = TextEditingController();
   final TextEditingController _percentDiscountController =
       TextEditingController();
+  List<Map<String, dynamic>> orders = [];
+  List<Map<String, dynamic>> orderItems = [];
+  var selectedOrderId;
+  bool isLoadingOrders = true;
+  bool isLoadingItems = false;
 
   bool _isInitialized = false;
   String _discountType = 'Percentage'; // Default to Percentage Discount
 
   // Mock data for items
-  final List<Map<String, dynamic>> _items = List.generate(10, (index) {
-    return {
-      'sno': index + 1,
-      'name': 'Item ${index + 1}',
-      'qty': 1,
-      'rate': 100.0,
-      'amount': 100.0,
-      'tax': 5.0,
-      'discount_amount': 10.0,
-      'happy_hour_discount': 5.0,
-      'scheme': 'None',
-      'category': 'Category ${index % 3}',
-    };
-  });
+  // final List<Map<String, dynamic>> _items = List.generate(10, (index) {
+  //   return {
+  //     'sno': index + 1,
+  //     'name': 'Item ${index + 1}',
+  //     'qty': 1,
+  //     'rate': 100.0,
+  //     'amount': 100.0,
+  //     'tax': 5.0,
+  //     'discount_amount': 10.0,
+  //     'happy_hour_discount': 5.0,
+  //     'scheme': 'None',
+  //     'category': 'Category ${index % 3}',
+  //   };
+  // });
+  Map<String, Map<String, dynamic>> itemMap = {};
 
   @override
   void initState() {
     _billNoController.text = generateBillId();
     _tableNoController.text = widget.tableno;
+    _fetchOrders();
     super.initState();
+  }
+
+  Future<void> _fetchOrders() async {
+    setState(() {
+      isLoadingOrders = true;
+    });
+
+    try {
+      // Fetch orders by table and status (assuming this fetches the 10 orders)
+      orders = await orderApiService.getOrdersByTableAndStatus(
+          widget.tableno, 'Pending');
+
+      // Check if there are orders, then extract their IDs
+      if (orders.isNotEmpty) {
+        // Extract all order IDs from the fetched orders
+        List<String> orderIds =
+            orders.map((order) => order['order_id'].toString()).toList();
+
+        // Fetch items for all selected orders
+        _fetchOrderItems(orderIds);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching orders: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoadingOrders = false;
+      });
+    }
+  }
+
+  Future<void> _fetchOrderItems(List<String> orderIds) async {
+    setState(() {
+      isLoadingItems = true;
+    });
+
+    try {
+      // Fetch items for all selected orders
+      final fetchedItems = await orderApiService.getOrderItemsByIds(orderIds);
+
+      // Process fetched items
+      for (var item in [...orderItems, ...fetchedItems]) {
+        final key = item['item_name'];
+
+        // Safely parse item quantity, rate, and tax
+        int itemQuantity = 0;
+        if (item['item_quantity'] != null) {
+          if (item['item_quantity'] is String) {
+            itemQuantity = int.tryParse(item['item_quantity']) ?? 0;
+          } else if (item['item_quantity'] is int) {
+            itemQuantity = item['item_quantity'] as int;
+          }
+        }
+
+        double itemRate = 0.0;
+        if (item['item_rate'] != null) {
+          if (item['item_rate'] is String) {
+            itemRate = double.tryParse(item['item_rate']) ?? 0.0;
+          } else if (item['item_rate'] is double) {
+            itemRate = item['item_rate'] as double;
+          }
+        }
+
+        int taxRate = 0;
+        if (item['taxrate'] != null && item['taxrate'] is int) {
+          taxRate = item['taxrate'];
+        }
+
+        if (itemMap.containsKey(key)) {
+          itemMap[key]!['quantity'] += itemQuantity;
+          itemMap[key]!['total'] = itemMap[key]!['quantity'] * itemRate;
+        } else {
+          itemMap[key] = {
+            'sno': itemMap.length + 1,
+            'item_name': item['item_name'],
+            'quantity': itemQuantity,
+            'price': itemRate,
+            'tax': taxRate,
+            'total': itemQuantity * itemRate,
+          };
+        }
+      }
+
+      setState(() {
+        orderItems = itemMap.values.toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching order items: ${e.toString()}')),
+      );
+      print("Error: $e");
+    } finally {
+      setState(() {
+        isLoadingItems = false;
+      });
+    }
   }
 
   String generateBillId() {
@@ -324,23 +431,25 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                           DataColumn(label: Text('Rate')),
                           DataColumn(label: Text('Amount')),
                           DataColumn(label: Text('Tax')),
-                          DataColumn(label: Text('Discount Amount')),
-                          DataColumn(label: Text('Happy Hour Discount')),
-                          DataColumn(label: Text('Scheme')),
-                          DataColumn(label: Text('Category')),
+                          // DataColumn(label: Text('Discount Amount')),
+                          // DataColumn(label: Text('Happy Hour Discount')),
+                          // DataColumn(label: Text('Scheme')),
+                          // DataColumn(label: Text('Category')),
                         ],
-                        rows: _items.map((item) {
+                        rows: itemMap.entries.map((entry) {
+                          var item =
+                              entry.value; // Accessing the value of the entry
                           return DataRow(cells: [
                             DataCell(Text(item['sno'].toString())),
-                            DataCell(Text(item['name'])),
-                            DataCell(Text(item['qty'].toString())),
-                            DataCell(Text('₹${item['rate']}')),
-                            DataCell(Text('₹${item['amount']}')),
+                            DataCell(Text(item['item_name'])),
+                            DataCell(Text(item['quantity'].toString())),
+                            DataCell(Text('₹${item['price']}')),
+                            DataCell(Text('₹${item['total']}')),
                             DataCell(Text('${item['tax']}%')),
-                            DataCell(Text('₹${item['discount_amount']}')),
-                            DataCell(Text('₹${item['happy_hour_discount']}')),
-                            DataCell(Text(item['scheme'])),
-                            DataCell(Text(item['category'])),
+                            // DataCell(Text('₹${item['discount_amount']}')),
+                            // DataCell(Text('₹${item['happy_hour_discount']}')),
+                            // DataCell(Text(item['scheme'])),
+                            // DataCell(Text(item['category'])),
                           ]);
                         }).toList(),
                       ),

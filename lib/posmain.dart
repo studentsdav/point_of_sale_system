@@ -5,6 +5,7 @@ import 'package:point_of_sale_system/backend/table_api_service.dart';
 import 'package:point_of_sale_system/billing.dart';
 import 'package:point_of_sale_system/guest_info.dart';
 import 'package:point_of_sale_system/kotform.dart';
+import 'package:point_of_sale_system/orderlist.dart';
 import 'package:point_of_sale_system/payments.dart';
 import 'package:point_of_sale_system/poslogin.dart';
 import 'package:point_of_sale_system/reservation.dart';
@@ -100,6 +101,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
         // Example: Update cache instead of refetching
 
         // If you want to refresh UI, you can call _fetchTableConfigs()
+        //   loadtables();
         _fetchTableConfigs(); // Optionally refresh the UI
       } catch (error) {
         print('Error during table update handling: $error');
@@ -242,13 +244,8 @@ class _POSMainScreenState extends State<POSMainScreen> {
                   }),
                   _buildDrawerItem(Icons.swap_horiz, 'Table Shift', () {}),
                   _buildDrawerItem(Icons.receipt, 'Orders', () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => KOTFormScreen(
-                                tableno: "1",
-                                propertyid: widget.propertyid,
-                                outlet: selectedOutlet)));
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => OrderList()));
                   }),
                   _buildDrawerItem(Icons.payment, 'Billing', () {
                     Navigator.push(
