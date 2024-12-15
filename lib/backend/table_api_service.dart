@@ -47,6 +47,18 @@ class TableApiService {
     }
   }
 
+  Future<bool> cleartable(String id) async {
+    final response = await http.put(
+      Uri.parse('$apiUrl/table-config/clear/$id'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      return true; // Table updated successfully
+    } else {
+      throw Exception('Failed to update table');
+    }
+  }
+
   // Delete request: Delete table configuration
   Future<bool> deleteTableConfig(int id) async {
     final response = await http.delete(

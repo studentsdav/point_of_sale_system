@@ -541,6 +541,9 @@
 // ADD COLUMN packing_charge DECIMAL(10, 2),
 // ADD COLUMN delivery_charge_percentage DECIMAL(10, 2),
 // ADD COLUMN delivery_charge DECIMAL(10, 2);
+//ALTER TABLE items ADD COLUMN tag VARCHAR(50)
+// ALTER TABLE bills ADD COLUMN status VARCHAR(50)
+// /ALTER TABLE bills ADD COLUMN table_no VARCHAR(50)
 
 // ALTER TABLE order_items
 // ADD COLUMN bill_number VARCHAR(50),

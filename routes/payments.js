@@ -62,6 +62,11 @@ router.post('/', async (req, res) => {
       `UPDATE table_configurations SET status = 'Vacant' WHERE table_no = $1 AND status = 'Dirty'`,
       [table_no]
     );
+
+    await pool.query(
+      `UPDATE bills SET status = 'Paid' WHERE id = $1`,
+      [bill_id]
+    );
     // Notify PostgreSQL trigger to send notification
     await pool.query("NOTIFY table_update, 'Table configuration updated'");
 

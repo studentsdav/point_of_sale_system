@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/ItemMaster.dart';
 import 'package:point_of_sale_system/admin.dart';
 import 'package:point_of_sale_system/backend/table_api_service.dart';
+import 'package:point_of_sale_system/bill_section.dart';
 import 'package:point_of_sale_system/billing.dart';
 import 'package:point_of_sale_system/guest_info.dart';
 import 'package:point_of_sale_system/kotform.dart';
@@ -248,14 +249,8 @@ class _POSMainScreenState extends State<POSMainScreen> {
                         MaterialPageRoute(builder: (context) => OrderList()));
                   }),
                   _buildDrawerItem(Icons.payment, 'Billing', () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => BillingFormScreen(
-                                  tableno: '1',
-                                  propertyid: widget.propertyid,
-                                  outlet: selectedOutlet,
-                                )));
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => BillPage()));
                   }),
                   _buildDrawerItem(Icons.payment, 'Payment', () {
                     Navigator.push(
@@ -525,6 +520,8 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                                 Icons.cleaning_services,
                                                 color: Colors.brown),
                                             onPressed: () {
+                                              tableapiService.cleartable(
+                                                  tableNo.toString());
                                               // Clear the table action
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(

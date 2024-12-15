@@ -315,6 +315,27 @@ router.get('/table/:status', async (req, res) => {
 });
 
 
+router.get('/bills/:billid', async (req, res) => {
+  try {
+    const { billid } = req.params;
+
+    const result = await pool.query(
+      'SELECT order_id, order_number, table_number, status, created_at, order_type FROM orders WHERE bill_id = $1',
+      [billid]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No orders found for the specified bill id' });
+    }
+
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(`Error fetching orders for ${req.params.billid}:`, err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // General route for orders by table number and status
 router.get('/:tableNo/:status', async (req, res) => {
   try {

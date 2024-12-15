@@ -140,7 +140,7 @@ class _OrderListState extends State<OrderList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Restaurant POS')),
+      appBar: AppBar(title: Text('Order List')),
       body: Row(
         children: [
           // Left Panel - Pending Orders

@@ -16,6 +16,7 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
   final ItemsApiService _apiService = ItemsApiService(
       baseUrl: 'http://localhost:3000/api'); // Replace with actual base URL
   final List<String> _categories = ['Starters', 'Main Course', 'Desserts'];
+  final List<String> tags = ['Veg', 'Non Veg'];
   final List<String> _brands = ['Brand A', 'Brand B', 'Brand C'];
   final List<String> _subcategories = ['Vegetarian', 'Non-Vegetarian', 'Vegan'];
   final _itemNameController = TextEditingController();
@@ -29,6 +30,7 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
   final _itemCodeController =
       TextEditingController(); // For item code, default non-editable
   String? _selectedCategory = 'Starters';
+  String? _selectedTag = 'Veg';
   String? _selectedBrand = 'Brand A';
   String? _selectedSubcategory = 'Vegetarian';
   String? _selectedOutlet = '';
@@ -154,9 +156,11 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
         'is_active': _isActive,
         'on_sale': _isOnSale,
         'happy_hour': _isHappyHour,
+
         'discountable': _isDiscountable,
         'property_id': properties[0][
-            'property_id'] // Assuming this is the property ID (you may get it dynamically or set a default)
+            'property_id'], // Assuming this is the property ID (you may get it dynamically or set a default)
+        'tag': _selectedTag,
       };
 
       try {
@@ -350,6 +354,22 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
                       ),
                     ),
 
+                    const SizedBox(height: 10),
+
+                    // tag Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedTag,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedTag = value;
+                        });
+                      },
+                      decoration: const InputDecoration(labelText: 'Tag'),
+                      items: tags
+                          .map((tag) =>
+                              DropdownMenuItem(value: tag, child: Text(tag)))
+                          .toList(),
+                    ),
                     const SizedBox(height: 10),
 
                     // Category Dropdown

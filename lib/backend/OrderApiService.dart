@@ -114,6 +114,24 @@ class OrderApiService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getOrdersBybillid(String billid) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/orders/bills/$billid'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> ordersJson =
+          json.decode(response.body); // Assuming response is an array
+      return List<Map<String, dynamic>>.from(
+          ordersJson); // Convert to List<Map<String, dynamic>>
+    } else if (response.statusCode == 404) {
+      throw Exception('No orders found for the specified table and status');
+    } else {
+      throw Exception('Failed to fetch orders: ${response.body}');
+    }
+  }
+
 // Fetch order items by order IDs
   Future<List<Map<String, dynamic>>> getOrderItemsByIds(
       List<String> orderIds) async {

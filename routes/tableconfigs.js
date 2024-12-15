@@ -13,6 +13,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+
+router.put('/clear/:tableno', async (req, res) => {
+  const tableno = req.params.tableno;
+  try {
+    const result = await pool.query(
+      `UPDATE table_configurations SET status = 'Vacant' WHERE table_no = $1 AND status = 'Dirty'`,
+      [tableno]
+    );
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve table configurations', details: error.message });
+  }
+});
+
 // GET table configuration by ID
 router.get('/:id', async (req, res) => {
   const tableId = req.params.id;

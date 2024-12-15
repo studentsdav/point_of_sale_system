@@ -22,6 +22,24 @@ class BillingApiService {
     }
   }
 
+  // Fetch orders by table number and status
+  Future<List<Map<String, dynamic>>> getbillByStatus(String status) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/bill/$status'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      List<dynamic> billJson =
+          json.decode(response.body); // Assuming response is an array
+      return List<Map<String, dynamic>>.from(
+          billJson); // Convert to List<Map<String, dynamic>>
+    } else if (response.statusCode == 404) {
+      throw Exception('No bill found for the specified table and status');
+    } else {
+      throw Exception('Failed to fetch bill: ${response.body}');
+    }
+  }
+
   // 2. PUT: Edit Bill (Update Bill Details)
   Future<Map<String, dynamic>> editBill(
       String orderId, Map<String, dynamic> billData) async {
