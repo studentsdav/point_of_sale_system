@@ -116,7 +116,12 @@ class _POSMainScreenState extends State<POSMainScreen> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => PaymentFormScreen()));
+                                builder: (context) => PaymentFormScreen(
+                                      tableno: '1',
+                                      billid: '1',
+                                      propertyid: widget.propertyid,
+                                      outletname: selectedOutlet,
+                                    )));
                       }),
                   ListTile(
                       leading: const Icon(Icons.report),

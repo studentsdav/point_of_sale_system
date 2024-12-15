@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/ItemMaster.dart';
 import 'package:point_of_sale_system/admin.dart';
 import 'package:point_of_sale_system/backend/table_api_service.dart';
+import 'package:point_of_sale_system/bill_section.dart';
 import 'package:point_of_sale_system/billing.dart';
 import 'package:point_of_sale_system/guest_info.dart';
 import 'package:point_of_sale_system/kotform.dart';
+import 'package:point_of_sale_system/orderlist.dart';
 import 'package:point_of_sale_system/payments.dart';
 import 'package:point_of_sale_system/poslogin.dart';
 import 'package:point_of_sale_system/reservation.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class POSMainScreen extends StatefulWidget {
   final outlet;
@@ -21,6 +24,7 @@ class POSMainScreen extends StatefulWidget {
 
 class _POSMainScreenState extends State<POSMainScreen> {
   final tableapiService = TableApiService(apiUrl: 'http://localhost:3000/api');
+  late IO.Socket socket;
 
   String selectedOutlet = 'Restaurant';
   List<String> outlets = [
@@ -70,9 +74,48 @@ class _POSMainScreenState extends State<POSMainScreen> {
   @override
   void initState() {
     outlets = widget.outlet;
+    // Load table configurations initially
     loadtables();
     _fetchTableConfigs();
+    _initializeWebSocket();
     super.initState();
+  }
+
+  void _initializeWebSocket() {
+    socket = IO.io('http://localhost:3000', <String, dynamic>{
+      'transports': ['websocket'], // Force WebSocket transport
+      'autoConnect': true,
+    });
+
+    socket.on('connect', (_) {
+      print('Connected to WebSocket server');
+    });
+
+    socket.on('connect_error', (error) {
+      print('Error connecting to WebSocket: $error');
+    });
+
+    socket.on('table_update', (data) async {
+      try {
+        print('Received update notification: $data');
+
+        // Example: Update cache instead of refetching
+
+        // If you want to refresh UI, you can call _fetchTableConfigs()
+        //   loadtables();
+        _fetchTableConfigs(); // Optionally refresh the UI
+      } catch (error) {
+        print('Error during table update handling: $error');
+        // Optionally, throw error if necessary
+        throw 'Error updating table state $error';
+      }
+    });
+
+    socket.on('disconnect', (_) {
+      print('Disconnected from WebSocket');
+    });
+
+    socket.connect();
   }
 
   void loadtables() async {
@@ -143,6 +186,13 @@ class _POSMainScreenState extends State<POSMainScreen> {
   }
 
   @override
+  void dispose() {
+    // Disconnect WebSocket when the widget is disposed
+    socket.disconnect();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -195,29 +245,23 @@ class _POSMainScreenState extends State<POSMainScreen> {
                   }),
                   _buildDrawerItem(Icons.swap_horiz, 'Table Shift', () {}),
                   _buildDrawerItem(Icons.receipt, 'Orders', () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => KOTFormScreen(
-                                tableno: "1",
-                                propertyid: widget.propertyid,
-                                outlet: selectedOutlet)));
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => OrderList()));
                   }),
                   _buildDrawerItem(Icons.payment, 'Billing', () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => BillingFormScreen(
-                                  tableno: '1',
-                                  propertyid: widget.propertyid,
-                                  outlet: selectedOutlet,
-                                )));
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => BillPage()));
                   }),
                   _buildDrawerItem(Icons.payment, 'Payment', () {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => PaymentFormScreen()));
+                            builder: (context) => PaymentFormScreen(
+                                  tableno: '1',
+                                  billid: '1',
+                                  propertyid: widget.propertyid,
+                                  outletname: selectedOutlet,
+                                )));
                   }),
                   _buildDrawerItem(Icons.report, 'Reports', () {}),
                   _buildDrawerItem(Icons.add_box, 'Item Add', () {
@@ -461,11 +505,12 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                                 MaterialPageRoute(
                                                   builder: (context) =>
                                                       PaymentFormScreen(
-                                                          // tableno: tableNo,
-                                                          // propertyid:
-                                                          //     widget.propertyid,
-                                                          // outlet: selectedOutlet,
-                                                          ),
+                                                    tableno: tableNo,
+                                                    billid: '1',
+                                                    propertyid:
+                                                        widget.propertyid,
+                                                    outletname: selectedOutlet,
+                                                  ),
                                                 ),
                                               );
                                             },
@@ -475,6 +520,8 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                                 Icons.cleaning_services,
                                                 color: Colors.brown),
                                             onPressed: () {
+                                              tableapiService.cleartable(
+                                                  tableNo.toString());
                                               // Clear the table action
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(

@@ -149,8 +149,53 @@ const pool = require('../db'); // Database connection
 
 const router = express.Router();
 
+
+router.get('/:status', async (req, res) => {
+  try {
+    // Get the 'status' parameter from the URL (not query string)
+    const { status } = req.params;
+
+    // Check if the status is provided
+    if (!status) {
+      return res.status(400).json({ error: 'Status is required' });
+    }
+
+    // Construct the base query
+    const query = `
+      SELECT 
+        id,
+        bill_number, 
+        total_amount, 
+        tax_value, 
+        discount_value, 
+        grand_total, 
+        outlet_name, 
+        status, 
+        bill_generated_at, 
+        table_no
+      FROM bills 
+      WHERE status = $1
+    `;
+
+    // Execute the query with the provided status
+    const result = await pool.query(query, [status]);
+
+    // Check if no bills are found
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No bills found for the specified status' });
+    }
+
+    // Return the results
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Error retrieving bills:', error.message);
+    res.status(500).json({ error: 'Failed to retrieve bills', details: error.message });
+  }
+});
+
+
 router.post('/', async (req, res) => {
-  const { table_no, tax_value, discount_percentage, service_charge_percentage, packing_charge_percentage, delivery_charge_percentage, other_charge, property_id, outletname } = req.body;
+  const { table_no, tax_value, discount_percentage, service_charge_percentage, packing_charge_percentage, delivery_charge_percentage, other_charge, property_id, outletname, billstatus } = req.body;
 
   try {
     // Fetch all pending orders for the table
@@ -186,8 +231,8 @@ router.post('/', async (req, res) => {
     // Insert the new bill into the `bills` table
     const billResult = await pool.query(
       `INSERT INTO bills (bill_number, total_amount, tax_value, discount_value, service_charge_value, 
-                          packing_charge, delivery_charge, other_charge, grand_total, property_id, outlet_name,packing_charge_percentage,delivery_charge_percentage,discount_percentage,service_charge_percentage, bill_generated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10, $11,$12,$13,$14,$15, CURRENT_TIMESTAMP) RETURNING id`,
+                          packing_charge, delivery_charge, other_charge, grand_total, property_id, outlet_name,packing_charge_percentage,delivery_charge_percentage,discount_percentage,service_charge_percentage, status, table_no, bill_generated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10, $11,$12,$13,$14,$15, $16, $17, CURRENT_TIMESTAMP) RETURNING id`,
       [
         `BILL-${Date.now()}`, // Generate a unique bill number
         total_amount,
@@ -203,7 +248,9 @@ router.post('/', async (req, res) => {
         packing_charge_percentage,
         delivery_charge_percentage,
         discount_percentage,
-        service_charge_percentage
+        service_charge_percentage,
+        billstatus,
+        table_no
       ]
     );
 
@@ -217,9 +264,15 @@ router.post('/', async (req, res) => {
     );
 
     await pool.query(
-      `UPDATE table_configurations SET status = 'Vacant' WHERE table_no = $1`,
+      `UPDATE table_configurations SET status = 'Dirty' WHERE table_no = $1 AND status = 'Occupied'`,
       [table_no]
     );
+    await pool.query(
+      `UPDATE bills SET status = 'UnPaid' WHERE id = $1`,
+      [billId]
+    );
+    // Notify PostgreSQL trigger to send notification
+    await pool.query("NOTIFY table_update, 'Table configuration updated'");
 
     res.status(201).json({
       message: 'Bill generated successfully',

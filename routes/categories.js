@@ -50,6 +50,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+
+
 // Update a category by ID
 router.put('/:id', async (req, res) => {
     try {

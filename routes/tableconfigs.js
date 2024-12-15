@@ -13,6 +13,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+
+router.put('/clear/:tableno', async (req, res) => {
+  const tableno = req.params.tableno;
+  try {
+    const result = await pool.query(
+      `UPDATE table_configurations SET status = 'Vacant' WHERE table_no = $1 AND status = 'Dirty'`,
+      [tableno]
+    );
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve table configurations', details: error.message });
+  }
+});
+
 // GET table configuration by ID
 router.get('/:id', async (req, res) => {
   const tableId = req.params.id;
@@ -37,6 +51,8 @@ router.post('/', async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
       [table_no, seats, status, outlet_name, property_id, category, location]
     );
+    // Notify PostgreSQL trigger to send notification
+    await pool.query("NOTIFY table_update, 'Table configuration created'");
     res.status(201).json({ message: 'Table configuration created successfully', tableConfigId: result.rows[0].id });
   } catch (error) {
     res.status(500).json({ error: 'Failed to create table configuration', details: error.message });
@@ -60,6 +76,8 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Table configuration not found' });
     }
 
+    // Notify PostgreSQL trigger to send notification
+    await pool.query("NOTIFY table_update, 'Table configuration updated'");
     res.status(200).json({ message: 'Table configuration updated successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update table configuration', details: error.message });
@@ -74,6 +92,8 @@ router.delete('/:id', async (req, res) => {
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Table configuration not found' });
     }
+    // Notify PostgreSQL trigger to send notification
+    await pool.query("NOTIFY table_update, 'Table configuration deleted'");
     res.status(200).json({ message: 'Table configuration deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete table configuration', details: error.message });

@@ -93,7 +93,7 @@ class _MyAppState extends State {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Point Of Sale',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -114,7 +114,7 @@ class _MyAppState extends State {
         useMaterial3: true,
       ),
       home: POSLoginScreen(
-        propertyid: properties[0]['property_id'],
+        propertyid: properties[0]['property_id'] ?? 0,
         outlet: outlets,
       ),
     );

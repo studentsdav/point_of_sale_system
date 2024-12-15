@@ -13,8 +13,6 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(404).json({ message: 'Email not found' });
     }
 
-    // Here you can implement sending a reset password link to the user email.
-    // For demo purposes, we're just sending a success message.
     res.json({ message: 'Password reset link sent to your email' });
   } catch (err) {
     console.error('Error sending reset password email:', err.message);

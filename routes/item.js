@@ -3,6 +3,20 @@ const pool = require('../db'); // Replace with your database connection file
 
 const router = express.Router();
 
+// READ - Get required fields for all items
+router.get('/', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT item_name, category, price, tax_rate, tag FROM items`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching items:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // CREATE - Insert a new item
 router.post('/', async (req, res) => {
   try {
@@ -23,14 +37,15 @@ router.post('/', async (req, res) => {
       on_sale,
       happy_hour,
       discountable,
-      property_id
+      property_id,
+      tag
     } = req.body;
 
     const result = await pool.query(
       `INSERT INTO items 
        (item_code, item_name, category, brand, subcategory_id, outlet, description, price, tax_rate, discount_percentage, 
-        stock_quantity, reorder_level, is_active, on_sale, happy_hour, discountable, property_id) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) 
+        stock_quantity, reorder_level, is_active, on_sale, happy_hour, discountable, property_id, tag) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) 
        RETURNING *`,
       [
         item_code,
@@ -49,7 +64,8 @@ router.post('/', async (req, res) => {
         on_sale,
         happy_hour,
         discountable,
-        property_id
+        property_id,
+        tag
       ]
     );
     res.status(201).json(result.rows[0]);

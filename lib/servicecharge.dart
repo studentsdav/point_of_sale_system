@@ -77,7 +77,6 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
         }
         organizedCharges[outletName]!.add(charge);
       }
-
       setState(() {
         outletServiceCharges = organizedCharges;
       });

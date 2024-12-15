@@ -165,6 +165,8 @@ router.post('/', async (req, res) => {
       `UPDATE table_configurations SET status = 'Occupied' WHERE table_no = $1 AND status != 'Occupied'`,
       [table_number]
     );
+    // Notify PostgreSQL trigger to send notification
+    await pool.query("NOTIFY table_update, 'Table configuration updated'");
 
     // Insert items for the order if the items array exists
     if (items && Array.isArray(items)) {
@@ -262,6 +264,101 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to update order', details: error.message });
   }
 });
+
+
+// Specific route for order items
+router.get('/orderitem', async (req, res) => {
+  try {
+    const { orderIds } = req.query; // Expecting a comma-separated list of orderIds
+    const orderIdsArray = orderIds.split(','); // Convert to an array of orderIds
+
+    const result = await pool.query(
+      `SELECT item_id, order_id, item_name, item_quantity, item_rate, taxrate, 
+        (item_quantity * item_rate) AS subtotal, 
+        ((item_quantity * item_rate) * taxrate / 100) AS tax, 
+        ((item_quantity * item_rate) + ((item_quantity * item_rate) * taxrate / 100)) AS total 
+      FROM order_items 
+      WHERE order_id = ANY($1::int[])`, // Use ANY with an array of values
+      [orderIdsArray] // Pass the array of orderIds
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No items found for the specified order IDs' });
+    }
+
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Error fetching items for order IDs:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+router.get('/table/:status', async (req, res) => {
+  try {
+    const { status } = req.params;
+
+    const result = await pool.query(
+      'SELECT order_id, order_number, table_number, status, created_at, order_type FROM orders WHERE status = $1',
+      [status]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No orders found for the specified table and status' });
+    }
+
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(`Error fetching orders for table ${req.params.tableNo} with status ${req.params.status}:`, err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+router.get('/bills/:billid', async (req, res) => {
+  try {
+    const { billid } = req.params;
+
+    const result = await pool.query(
+      'SELECT order_id, order_number, table_number, status, created_at, order_type FROM orders WHERE bill_id = $1',
+      [billid]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No orders found for the specified bill id' });
+    }
+
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(`Error fetching orders for ${req.params.billid}:`, err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// General route for orders by table number and status
+router.get('/:tableNo/:status', async (req, res) => {
+  try {
+    const { tableNo, status } = req.params;
+
+    const result = await pool.query(
+      'SELECT order_id, order_number, table_number, status, created_at, order_type FROM orders WHERE table_number = $1 AND status = $2',
+      [tableNo, status]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No orders found for the specified table and status' });
+    }
+
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(`Error fetching orders for table ${req.params.tableNo} with status ${req.params.status}:`, err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 
 // Delete Order
 router.delete('/:id', async (req, res) => {
