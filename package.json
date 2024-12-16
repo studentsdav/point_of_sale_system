@@ -11,8 +11,5 @@
   "description": "",
   "dependencies": {
     "dotenv": "^16.4.5",
-    "express": "^4.21.1",
-    "pg": "^8.13.1",
-    "socket.io": "^4.8.1"
   }
 }
