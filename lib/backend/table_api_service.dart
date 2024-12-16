@@ -59,6 +59,19 @@ class TableApiService {
     }
   }
 
+  Future<bool> tableshift(
+      String oldtableno, String newtableno, String status) async {
+    final response = await http.put(
+      Uri.parse('$apiUrl/orders/tableshift/$oldtableno/$newtableno/$status'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      return true; // Table updated successfully
+    } else {
+      throw Exception('Failed to update table');
+    }
+  }
+
   // Delete request: Delete table configuration
   Future<bool> deleteTableConfig(int id) async {
     final response = await http.delete(

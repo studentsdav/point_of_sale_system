@@ -336,6 +336,55 @@ router.get('/bills/:billid', async (req, res) => {
 });
 
 
+router.put('/tableshift/:oldtableno/:newtableno/:status', async (req, res) => {
+  try {
+    const { oldtableno, newtableno, status } = req.params;
+
+    // Check if the new table exists and is not occupied
+    const newTableCheck = await pool.query(
+      `SELECT * FROM table_configurations WHERE table_no = $1 AND status != 'Occupied'`,
+      [newtableno]
+    );
+
+    if (newTableCheck.rowCount === 0) {
+      return res.status(404).json({ message: 'New table not found or already occupied' });
+    }
+
+    // Update the new table's status to "Occupied"
+    await pool.query(
+      `UPDATE table_configurations SET status = 'Occupied' WHERE table_no = $1 AND status != 'Occupied'`,
+      [newtableno]
+    );
+
+    // Update the old table's status to "Dirty"
+    const oldTableUpdate = await pool.query(
+      `UPDATE table_configurations SET status = 'Dirty' WHERE table_no = $1 AND status = 'Occupied'`,
+      [oldtableno]
+    );
+
+    if (oldTableUpdate.rowCount === 0) {
+      return res.status(404).json({ message: 'Old table not found or not occupied' });
+    }
+
+    // Update the orders to shift to the new table
+    const ordersUpdate = await pool.query(
+      `UPDATE orders SET table_number = $1 WHERE table_number = $2 AND status = 'Pending'`,
+      [newtableno, oldtableno]
+    );
+
+    if (ordersUpdate.rowCount === 0) {
+      return res.status(404).json({ message: 'No pending orders found for the old table' });
+    }
+
+    res.status(200).json({ message: 'Table shift successful' });
+  } catch (err) {
+    console.error(`Error during table shift:`, err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 // General route for orders by table number and status
 router.get('/:tableNo/:status', async (req, res) => {
   try {

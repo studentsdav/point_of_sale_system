@@ -178,7 +178,7 @@
 // );
 
 
-
+//deprecated///
 // CREATE TABLE kot_orders (
 //     id SERIAL PRIMARY KEY,  -- SERIAL for auto-increment in PostgreSQL
 //     order_number VARCHAR(255) NOT NULL,
@@ -202,6 +202,7 @@
 // );
 
 
+//deprecated///
 // CREATE TABLE kot_order_items (
 //     id SERIAL PRIMARY KEY,  -- Use SERIAL for auto-increment in PostgreSQL
 //     kot_order_id INT,
@@ -347,70 +348,6 @@
 //     CONSTRAINT user_permission_unique UNIQUE (user_id, outlet_id, permission_name, property_id)  -- Ensure unique permissions per user
 // );
 
-
-
-// ALTER TABLE order_items
-// add taxRate int;
-
-// ALTER TABLE orders
-// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
-
-// ALTER TABLE orders ALTER COLUMN table_number SET DATA TYPE VARCHAR(50);
-
-// ALTER TABLE servicecharge_config
-// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
-
-// ALTER TABLE servicecharge_config
-// add COLUMN outlet_name varchar(50) NOT NULL;
-
-// ALTER TABLE tax_config
-// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
-
-// ALTER TABLE printer_config
-// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
-
-// ALTER TABLE user_permissions
-// add COLUMN username varchar(50) NOT NULL;
-
-// ALTER TABLE reservation
-// ALTER COLUMN table_no SET DATA TYPE VARCHAR(50);
-
-// ALTER TABLE items
-// ALTER COLUMN subcategory_id SET DATA TYPE VARCHAR(50);
-
-
-// ALTER TABLE user_permissions
-// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
-
-// ALTER TABLE reservation
-// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
-
-// ALTER TABLE order_items
-// add  property_id  VARCHAR(50);
-
-// ALTER TABLE order_items
-// add  outlet_name  VARCHAR(50);
-
-// ALTER TABLE bills 
-// add  property_id  VARCHAR(50);
-
-// ALTER TABLE bills 
-// add  outlet_name  VARCHAR(50);
-
-// ALTER TABLE outlet_configurations
-// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
-
-// ALTER TABLE outlet_configurations
-// ALTER COLUMN property_id SET NOT NULL;
-
-// ALTER TABLE outlet_configurations
-// ADD CONSTRAINT unique_property_id UNIQUE (property_id);
-
-// ALTER TABLE user_login
-// ADD COLUMN full_name VARCHAR(255);
-
-
-
 // CREATE TABLE orders (
 //     order_id SERIAL PRIMARY KEY,
 //     order_number VARCHAR(50) NOT NULL,
@@ -530,30 +467,6 @@
 //     modified_at TIMESTAMP
 //   );
   
-
-// ///ALTER TABLE orders
-// ADD created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-// ADD updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-
-// ALTER TABLE orders
-// ADD COLUMN bill_number VARCHAR(50),
-// ADD COLUMN packing_charge_percentage DECIMAL(10, 2),
-// ADD COLUMN packing_charge DECIMAL(10, 2),
-// ADD COLUMN delivery_charge_percentage DECIMAL(10, 2),
-// ADD COLUMN delivery_charge DECIMAL(10, 2);
-//ALTER TABLE items ADD COLUMN tag VARCHAR(50)
-// ALTER TABLE bills ADD COLUMN status VARCHAR(50)
-// /ALTER TABLE bills ADD COLUMN table_no VARCHAR(50)
-
-// ALTER TABLE order_items
-// ADD COLUMN bill_number VARCHAR(50),
-// ADD COLUMN discount_percentage DECIMAL(10, 2),
-// ADD COLUMN total_discount_value DECIMAL(10, 2),
-// ADD COLUMN packing_charge_percentage DECIMAL(10, 2),
-// ADD COLUMN packing_charge DECIMAL(10, 2),
-// ADD COLUMN delivery_charge_percentage DECIMAL(10, 2),
-// ADD COLUMN delivery_charge DECIMAL(10, 2);
-
 // CREATE TABLE bills (
 //     id SERIAL PRIMARY KEY,
 //     bill_number VARCHAR(50) UNIQUE NOT NULL, -- Unique bill number
@@ -585,13 +498,79 @@
 // 	CONSTRAINT fk_bill FOREIGN KEY (bill_id) REFERENCES bills(id) ON DELETE CASCADE
 // );
 
+// -- Alter order_items table
+// ALTER TABLE order_items
+// ADD COLUMN taxRate INT,
+// ADD COLUMN property_id VARCHAR(50),
+// ADD COLUMN outlet_name VARCHAR(50),
+// ADD COLUMN bill_number VARCHAR(50),
+// ADD COLUMN discount_percentage DECIMAL(10, 2),
+// ADD COLUMN total_discount_value DECIMAL(10, 2),
+// ADD COLUMN packing_charge_percentage DECIMAL(10, 2),
+// ADD COLUMN packing_charge DECIMAL(10, 2),
+// ADD COLUMN delivery_charge_percentage DECIMAL(10, 2),
+// ADD COLUMN delivery_charge DECIMAL(10, 2);
+
+// -- Alter orders table
+// ALTER TABLE orders
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50),
+// ALTER COLUMN table_number SET DATA TYPE VARCHAR(50),
+// ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+// ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+// ADD COLUMN bill_number VARCHAR(50),
+// ADD COLUMN packing_charge_percentage DECIMAL(10, 2),
+// ADD COLUMN packing_charge DECIMAL(10, 2),
+// ADD COLUMN delivery_charge_percentage DECIMAL(10, 2),
+// ADD COLUMN delivery_charge DECIMAL(10, 2);
+
+// -- Alter servicecharge_config table
+// ALTER TABLE servicecharge_config
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50),
+// ADD COLUMN outlet_name VARCHAR(50) NOT NULL;
+
+// -- Alter tax_config table
+// ALTER TABLE tax_config
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
+
+// -- Alter printer_config table
+// ALTER TABLE printer_config
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
+
+// -- Alter user_permissions table
+// ALTER TABLE user_permissions
+// ADD COLUMN username VARCHAR(50) NOT NULL,
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
+
+// -- Alter reservation table
+// ALTER TABLE reservation
+// ALTER COLUMN table_no SET DATA TYPE VARCHAR(50),
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50);
+
+// -- Alter items table
+// ALTER TABLE items
+// ALTER COLUMN subcategory_id SET DATA TYPE VARCHAR(50),
+// ADD COLUMN tag VARCHAR(50);
+
+// -- Alter bills table
 // ALTER TABLE bills
-// ADD COLUMN packing_charge_percentage NUMERIC(5, 2), -- Percentage for packing charge
-// ADD COLUMN delivery_charge_percentage NUMERIC(5, 2), -- Percentage for delivery charge
-// ADD COLUMN discount_percentage NUMERIC(5, 2), -- Percentage for discount
-// ADD COLUMN service_charge_percentage NUMERIC(5, 2); -- Percentage for service charge
+// ADD COLUMN property_id VARCHAR(50),
+// ADD COLUMN outlet_name VARCHAR(50),
+// ADD COLUMN status VARCHAR(50),
+// ADD COLUMN table_no VARCHAR(50),
+// ADD COLUMN packing_charge_percentage NUMERIC(5, 2),
+// ADD COLUMN delivery_charge_percentage NUMERIC(5, 2),
+// ADD COLUMN discount_percentage NUMERIC(5, 2),
+// ADD COLUMN service_charge_percentage NUMERIC(5, 2);
 
+// -- Alter outlet_configurations table
+// ALTER TABLE outlet_configurations
+// ALTER COLUMN property_id SET DATA TYPE VARCHAR(50),
+// ALTER COLUMN property_id SET NOT NULL,
+// --ADD CONSTRAINT unique_property_id UNIQUE (property_id);
 
+// -- Alter user_login table
+// ALTER TABLE user_login
+// ADD COLUMN full_name VARCHAR(255);
 
 
 // To build the trigger for the table_configurations table specifically, you can simplify the code to target just that table. Here's the PL/pgSQL script to create a trigger for the table_configurations table:

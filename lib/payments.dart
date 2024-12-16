@@ -175,7 +175,8 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                           color: selectedColor,
                           margin: EdgeInsets.symmetric(vertical: 8.0),
                           child: ListTile(
-                            title: Text('Bill ID: ${bill['bill_number']}'),
+                            title: Text(
+                                'Bill ID: ${bill['bill_number']} |     Table No: ${bill['table_no']} '),
                             subtitle: Text('Amount: ${bill['amount']}'),
                             onTap: () => _selectBill(bill),
                           ),
