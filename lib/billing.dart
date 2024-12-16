@@ -615,10 +615,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                           Container(
                             height:
                                 130, // Increased height to allow vertical scroll as well
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+
                             child: SingleChildScrollView(
                               scrollDirection:
                                   Axis.vertical, // Allow vertical scrolling
@@ -633,6 +630,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                     DataColumn(label: Text('Rate')),
                                     DataColumn(label: Text('Amount')),
                                     DataColumn(label: Text('Tax')),
+                                    DataColumn(label: Text('Tax')),
                                   ],
                                   rows: itemMap.entries.map((entry) {
                                     var item = entry.value;
@@ -643,6 +641,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                           Text(item['quantity'].toString())),
                                       DataCell(Text('₹${item['price']}')),
                                       DataCell(Text('₹${item['total']}')),
+                                      DataCell(Text('${item['tax']}%')),
                                       DataCell(Text('${item['tax']}%')),
                                     ]);
                                   }).toList(),

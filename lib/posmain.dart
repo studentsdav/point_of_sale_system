@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/ItemMaster.dart';
 import 'package:point_of_sale_system/admin.dart';
+import 'package:point_of_sale_system/backend/OrderApiService.dart';
 import 'package:point_of_sale_system/backend/table_api_service.dart';
 import 'package:point_of_sale_system/bill_section.dart';
 import 'package:point_of_sale_system/billing.dart';
@@ -243,7 +244,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                         MaterialPageRoute(
                             builder: (context) => ReservationFormScreen()));
                   }),
-                  _buildDrawerItem(Icons.swap_horiz, 'Table Shift', () {}),
+                  //  _buildDrawerItem(Icons.swap_horiz, 'Table Shift', () {}),
                   _buildDrawerItem(Icons.receipt, 'Orders', () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) => OrderList()));
@@ -488,6 +489,147 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                               );
                                             },
                                           ),
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.swap_horiz,
+                                              color: Colors.teal,
+                                            ),
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) {
+                                                  String? selectedFromTable =
+                                                      tableNo; // Pre-fill current table
+                                                  String? selectedToTable;
+
+                                                  // Filter tables by availability
+                                                  List<String> availableTables = tableStates
+                                                      .entries
+                                                      .where((entry) =>
+                                                          entry.value ==
+                                                              'Vacant' && // Only vacant tables
+                                                          areas.values.any(
+                                                              (tables) => tables
+                                                                  .contains(entry
+                                                                      .key))) // Check if the table exists in any area
+                                                      .map((entry) => entry.key)
+                                                      .toList();
+
+                                                  return AlertDialog(
+                                                    title: const Text(
+                                                        "Shift Table"),
+                                                    content: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        // From Table Dropdown
+                                                        DropdownButtonFormField<
+                                                            String>(
+                                                          value:
+                                                              selectedFromTable,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                            labelText:
+                                                                'From Table',
+                                                            border:
+                                                                OutlineInputBorder(),
+                                                          ),
+                                                          items: [
+                                                            selectedFromTable!
+                                                          ] // Current table
+                                                              .map((table) =>
+                                                                  DropdownMenuItem(
+                                                                    value:
+                                                                        table,
+                                                                    child: Text(
+                                                                        'Table $table (${tableStates[table]})'),
+                                                                  ))
+                                                              .toList(),
+                                                          onChanged:
+                                                              null, // Disable editing for "From Table"
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 16.0),
+                                                        // To Table Dropdown
+                                                        DropdownButtonFormField<
+                                                            String>(
+                                                          value:
+                                                              selectedToTable,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                            labelText:
+                                                                'To Table',
+                                                            border:
+                                                                OutlineInputBorder(),
+                                                          ),
+                                                          items: availableTables
+                                                              .where((table) =>
+                                                                  table !=
+                                                                  selectedFromTable) // Exclude current table
+                                                              .map((table) =>
+                                                                  DropdownMenuItem(
+                                                                    value:
+                                                                        table,
+                                                                    child: Text(
+                                                                        'Table $table (${tableStates[table]})'),
+                                                                  ))
+                                                              .toList(),
+                                                          onChanged: (value) {
+                                                            selectedToTable =
+                                                                value;
+                                                          },
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    actions: [
+                                                      // Cancel Button
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.pop(
+                                                              context); // Close the dialog
+                                                        },
+                                                        child: const Text(
+                                                            'Cancel'),
+                                                      ),
+                                                      // Confirm Button
+                                                      ElevatedButton(
+                                                        onPressed: () {
+                                                          if (selectedToTable !=
+                                                              null) {
+                                                            tableapiService
+                                                                .tableshift(
+                                                              selectedFromTable!,
+                                                              selectedToTable!,
+                                                              'Pending',
+                                                            );
+                                                            Navigator.pop(
+                                                                context); // Close the dialog
+                                                            ScaffoldMessenger
+                                                                    .of(context)
+                                                                .showSnackBar(
+                                                              SnackBar(
+                                                                  content: Text(
+                                                                      'Table shifted successfully!')),
+                                                            );
+                                                          } else {
+                                                            ScaffoldMessenger
+                                                                    .of(context)
+                                                                .showSnackBar(
+                                                              SnackBar(
+                                                                  content: Text(
+                                                                      'Please select a valid table to shift to')),
+                                                            );
+                                                          }
+                                                        },
+                                                        child:
+                                                            const Text('Shift'),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          )
                                         ],
                                       ),
                                     ] else if (tableState == 'Dirty') ...[
