@@ -1,7 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:point_of_sale_system/backend/OrderApiService.dart';
 import 'package:point_of_sale_system/backend/bill_service.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'dart:io';
+import 'package:google_fonts/google_fonts.dart';
 
 class BillingFormScreen extends StatefulWidget {
   final tableno;
@@ -375,11 +381,13 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       };
 
       // Step 3: Send data to API
-      await billingApiService.generateBill(billData);
-
+      var result = await billingApiService.generateBill(billData);
+      processResponse(result);
+      //_generateAndSaveBill(result.billid);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Bill saved successfully!')),
       );
+
       _clearControllers();
     } catch (error) {
       // Handle any errors
@@ -389,6 +397,159 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
         SnackBar(content: Text('Error: $error')),
       );
     }
+  }
+
+  void processResponse(response) {
+    // Decode the JSON response into a map
+    Map<String, dynamic> result = json.decode(response);
+
+    // Extract the billId and grand_total from the result
+    int billId = result['billId'];
+    double grandTotal =
+        double.parse(result['grand_total']); // Convert string to double
+
+    // Print the extracted values
+    print("Bill ID: $billId");
+    print("Grand Total: ₹$grandTotal");
+
+    // Call _generateAndSaveBill with the billId
+    _generateAndSaveBill(billId);
+  }
+
+  Future<void> _generateAndSaveBill(billid) async {
+    final pdf = pw.Document();
+
+    // Calculate totals
+    double subtotal = orderItems.fold(
+        0, (sum, item) => sum + (item['quantity'] * item['price']));
+    double tax = subtotal * 0.05; // Example 5% tax
+    double total = subtotal + tax;
+
+    // Page format for 80mm receipt paper
+    final pageWidth = 80.0 * PdfPageFormat.mm;
+    final pageFormat = PdfPageFormat(pageWidth, double.infinity);
+
+    pdf.addPage(pw.Page(
+      pageFormat: pageFormat,
+      margin: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+      build: (pw.Context context) {
+        return pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            // Header
+            pw.Text('My Business Name',
+                textAlign: pw.TextAlign.center,
+                style:
+                    pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+            pw.Text('123 Business Street, City, Country',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+            pw.Text('Phone: +123456789 | Email: contact@business.com',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+            pw.Divider(thickness: 1, color: PdfColors.black),
+            pw.SizedBox(height: 5),
+
+            // Bill Info
+            pw.Text('Bill To:',
+                style:
+                    pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+            pw.Text('Customer Name: John Doe',
+                style: pw.TextStyle(fontSize: 9)),
+            pw.Text(
+                'Date: ${DateTime.now().toLocal().toString().split(' ')[0]}',
+                style: pw.TextStyle(fontSize: 9)),
+            pw.SizedBox(height: 5),
+
+            // Itemized Bill
+            pw.Text('Itemized Bill:',
+                style:
+                    pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 5),
+            pw.TableHelper.fromTextArray(
+              cellAlignment: pw.Alignment.centerLeft,
+              headers: ['Item', 'Qty', 'Price', 'Total'],
+              headerStyle: pw.TextStyle(
+                  fontSize: 9,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.black),
+              cellStyle: pw.TextStyle(fontSize: 9),
+              data: orderItems.map((item) {
+                double total = item['quantity'] * item['price'];
+                return [
+                  item['item_name'],
+                  '${item['quantity']}',
+                  '${item['price'].toStringAsFixed(2)}',
+                  '${total.toStringAsFixed(2)}',
+                ];
+              }).toList(),
+            ),
+            pw.SizedBox(height: 10),
+
+            // Totals
+            pw.Divider(thickness: 1, color: PdfColors.black),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Subtotal:', style: pw.TextStyle(fontSize: 10)),
+                pw.Text('${subtotal.toStringAsFixed(2)}',
+                    style: pw.TextStyle(fontSize: 10)),
+              ],
+            ),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Tax (5%):', style: pw.TextStyle(fontSize: 10)),
+                pw.Text('${tax.toStringAsFixed(2)}',
+                    style: pw.TextStyle(fontSize: 10)),
+              ],
+            ),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Total:',
+                    style: pw.TextStyle(
+                        fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                pw.Text('${total.toStringAsFixed(2)}',
+                    style: pw.TextStyle(
+                        fontSize: 12, fontWeight: pw.FontWeight.bold)),
+              ],
+            ),
+            pw.SizedBox(height: 10),
+
+            // Footer
+            pw.Text('Thank you for your purchase!',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                    fontStyle: pw.FontStyle.italic,
+                    color: PdfColors.green)),
+            pw.Text('Visit Again!',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+          ],
+        );
+      },
+    ));
+
+    // Get the directory for saving the PDF
+    final directory = Directory(
+        'C:\\Users\\Public\\Documents'); // Customize the path if needed
+    if (!(await directory.exists())) {
+      await directory.create(recursive: true);
+    }
+
+    // Save the file with the Bill ID as the filename
+    final file = File('${directory.path}\\$billid.pdf');
+    await file.writeAsBytes(await pdf.save());
+
+    print("PDF saved at: ${file.path}");
+
+    // Automatically open the PDF with the default viewer (Windows-specific)
+    Process.run('explorer', [file.path]).then((result) {
+      print("Opened PDF in default viewer: ${result.stdout}");
+    });
   }
 
   void _clearControllers() {
@@ -986,7 +1147,9 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                               ),
                               const SizedBox(width: 10),
                               ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  _generateAndSaveBill(1);
+                                },
                                 child: Text('Print Bill'),
                                 style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.orange),
