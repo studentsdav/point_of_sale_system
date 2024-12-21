@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT item_name, category, price, tax_rate, tag FROM items`
+      `SELECT item_name, category, price, tax_rate, tag, discountable FROM items`
     );
     res.json(result.rows);
   } catch (err) {

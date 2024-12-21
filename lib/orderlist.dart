@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/backend/OrderApiService.dart';
+import 'package:point_of_sale_system/modifyOrder.dart';
 
 class OrderList extends StatefulWidget {
   @override
@@ -14,22 +15,6 @@ class _OrderListState extends State<OrderList> {
   var selectedOrderId;
   bool isLoadingOrders = true;
   bool isLoadingItems = false;
-
-  // Mock data for items
-  // final List<Map<String, dynamic>> _items = List.generate(10, (index) {
-  //   return {
-  //     'sno': index + 1,
-  //     'name': 'Item ${index + 1}',
-  //     'qty': 1,
-  //     'rate': 100.0,
-  //     'amount': 100.0,
-  //     'tax': 5.0,
-  //     'discount_amount': 10.0,
-  //     'happy_hour_discount': 5.0,
-  //     'scheme': 'None',
-  //     'category': 'Category ${index % 3}',
-  //   };
-  // });
 
   Map<String, Map<String, dynamic>> itemMap = {};
 
@@ -47,16 +32,10 @@ class _OrderListState extends State<OrderList> {
     });
 
     try {
-      // Fetch orders by table and status (assuming this fetches the 10 orders)
       orders = await orderApiService.getOrdersByStatus('Pending');
-
-      // Check if there are orders, then extract their IDs
       if (orders.isNotEmpty) {
-        // Extract all order IDs from the fetched orders
         List<String> orderIds =
             orders.map((order) => order['order_id'].toString()).toList();
-
-        // Fetch items for all selected orders
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -77,14 +56,10 @@ class _OrderListState extends State<OrderList> {
     });
 
     try {
-      // Fetch items for all selected orders
       final fetchedItems = await orderApiService.getOrderItemsByIds(orderIds);
-
-      // Process fetched items
       for (var item in [...orderItems, ...fetchedItems]) {
         final key = item['item_name'];
 
-        // Safely parse item quantity, rate, and tax
         int itemQuantity = 0;
         if (item['item_quantity'] != null) {
           if (item['item_quantity'] is String) {
@@ -102,6 +77,7 @@ class _OrderListState extends State<OrderList> {
             itemRate = item['item_rate'] as double;
           }
         }
+
         int taxRate = 0;
         if (item['taxrate'] != null && item['taxrate'] is int) {
           taxRate = item['taxrate'];
@@ -137,13 +113,82 @@ class _OrderListState extends State<OrderList> {
     }
   }
 
+  void _showModifyDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Modify Order Items'),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return Container(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: itemMap.length,
+                  itemBuilder: (context, index) {
+                    final item = itemMap.values.toList()[index];
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(child: Text(item['item_name'])),
+                        IconButton(
+                          icon: Icon(Icons.remove),
+                          onPressed: () {
+                            setState(() {
+                              if (item['quantity'] > 1) {
+                                item['quantity'] -= 1;
+                                item['total'] =
+                                    item['quantity'] * item['price'];
+                              }
+                            });
+                          },
+                        ),
+                        Text('${item['quantity']}'),
+                        IconButton(
+                          icon: Icon(Icons.add),
+                          onPressed: () {
+                            setState(() {
+                              item['quantity'] += 1;
+                              item['total'] = item['quantity'] * item['price'];
+                            });
+                          },
+                        ),
+                        SizedBox(width: 10),
+                        Text('₹${item['total']}'),
+                      ],
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Close'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {}); // Save changes to the main state
+                Navigator.of(context).pop();
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Order List')),
       body: Row(
         children: [
-          // Left Panel - Pending Orders
           Expanded(
             flex: 1,
             child: Container(
@@ -171,8 +216,6 @@ class _OrderListState extends State<OrderList> {
               ),
             ),
           ),
-
-          // Right Panel - Order Details
           Expanded(
             flex: 2,
             child: Container(
@@ -190,7 +233,6 @@ class _OrderListState extends State<OrderList> {
                         SizedBox(height: 8),
                         Text('Order No: ${ordernumber}'),
                         Divider(),
-                        // List of order items
                         Expanded(
                           child: ListView.builder(
                             itemCount: itemMap.length,
@@ -199,33 +241,82 @@ class _OrderListState extends State<OrderList> {
                               return ListTile(
                                 title: Text(item["item_name"]),
                                 subtitle: Text('Quantity: ${item["quantity"]}'),
-                                trailing: Text('₹${item["total"]}'),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('₹${item["total"]}'),
+                                    IconButton(
+                                      icon:
+                                          Icon(Icons.delete, color: Colors.red),
+                                      onPressed: () {
+                                        // Confirm deletion with the user
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: Text('Delete Item'),
+                                              content: Text(
+                                                  'Are you sure you want to delete "${item["item_name"]}" from the order?'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: Text('Cancel'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    // Remove the item from the map
+                                                    setState(() {
+                                                      itemMap.remove(
+                                                          item["item_name"]);
+                                                    });
+
+                                                    // Close the dialog
+                                                    Navigator.of(context).pop();
+
+                                                    // Show a confirmation message
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                            '"${item["item_name"]}" has been removed from the order.'),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: Text(
+                                                    'Delete',
+                                                    style: TextStyle(
+                                                        color: Colors.red),
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
                               );
                             },
                           ),
                         ),
                         Divider(),
-                        // Action Buttons
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content:
-                                        Text('Modify order $selectedOrderId'),
-                                  ),
-                                );
-                              },
-                              icon: Icon(Icons.edit),
-                              label: Text('Modify'),
+                            ElevatedButton(
+                              onPressed: () => _modifyBill(orders),
+                              child: Text('Modify'),
                             ),
                             ElevatedButton.icon(
                               onPressed: () {
                                 setState(() {
                                   orders.removeWhere((order) =>
-                                      order['order_id'] == selectedOrderId);
+                                      order['order_id'].toString() ==
+                                      selectedOrderId.toString());
                                   itemMap.remove(selectedOrderId);
                                   selectedOrderId = null;
                                 });
@@ -267,5 +358,14 @@ class _OrderListState extends State<OrderList> {
         ],
       ),
     );
+  }
+
+  void _modifyBill(orders) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ModifyOrderList(
+                  orders: orders,
+                )));
   }
 }

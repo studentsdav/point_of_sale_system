@@ -3,6 +3,9 @@ import 'dart:math'; // For generating random order numbers
 import 'dart:convert';
 import 'package:point_of_sale_system/backend/OrderApiService.dart';
 import 'package:point_of_sale_system/backend/items_api_service.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'dart:io';
 
 class KOTFormScreen extends StatefulWidget {
   final tableno;
@@ -69,11 +72,15 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
 
   // Generating a random order number using the current time and random component
   late String _orderNumber;
+  List<Map<String, String>> searchResults = [];
 
   @override
   void initState() {
     _tableNumber = widget.tableno;
     _menuItemsFuture = fetchMenuItems();
+    _searchController.addListener(() {
+      _updateSearchResults();
+    });
     super.initState();
     _orderNumber =
         'ORD-${DateTime.now().millisecondsSinceEpoch % 10000}-${Random().nextInt(1000)}';
@@ -134,7 +141,8 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
           'name': item['item_name'],
           'tag': item['tag'],
           'rate': item['price'].toString(),
-          'tax': item['tax_rate'].toString()
+          'tax': item['tax_rate'].toString(),
+          'discountable': item['discountable'].toString()
         });
       }
 
@@ -164,6 +172,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
               .firstWhere((item) => item['name'] == itemName);
           final rate = double.parse(itemDetails['rate']!);
           final taxRate = double.parse(itemDetails['tax']!);
+          final discountable = bool.parse(itemDetails['discountable']!);
           final amount = rate * qty;
           final tax = (amount * taxRate) / 100;
 
@@ -176,7 +185,8 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
             'item_amount': amount,
             'taxRate': taxRate,
             'item_tax': tax,
-            'total_item_value': amount + tax
+            'total_item_value': amount + tax,
+            'discountable': discountable
           };
 
           // Add item data to the list of items
@@ -254,6 +264,8 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
 
       // Send the order data with all items
       await orderApiService.createOrder(orderData);
+      await _generateAndSavePdf();
+
       setState(() {
         _orderItems.clear();
         _orderNumber = '';
@@ -262,10 +274,12 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
         _personCount = 0;
         _remarksController.text = "";
       });
+
       // Notify user once the order is saved successfully
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Order saved successfully!')),
       );
+      Navigator.pop(context);
     } catch (e) {
       // Show error message if something goes wrong
       ScaffoldMessenger.of(context).showSnackBar(
@@ -274,11 +288,112 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
     }
   }
 
+  Future<void> _generateAndSavePdf() async {
+    final pdf = pw.Document();
+
+    // Set page format for 80mm width paper
+    final pageWidth = 80.0 * PdfPageFormat.mm; // 80mm
+    final pageHeight = double.infinity; // Variable height for continuous roll
+    final pageFormat = PdfPageFormat(pageWidth, pageHeight);
+
+    pdf.addPage(pw.Page(
+      pageFormat: pageFormat,
+      margin: const pw.EdgeInsets.symmetric(
+          horizontal: 5, vertical: 10), // Add margins
+      build: (pw.Context context) {
+        return pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            // Header Section
+            pw.Text('Order Receipt',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black)),
+            pw.SizedBox(height: 5),
+            pw.Text('Order Number: $_orderNumber',
+                style:
+                    pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+                'Date: ${DateTime.now().toLocal().toString().split(' ')[0]}',
+                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+            pw.Divider(thickness: 0.8, color: PdfColors.grey),
+            pw.SizedBox(height: 5),
+
+            // Order Items Section
+            for (var category in _orderItems.entries) ...[
+              pw.Text(category.key.toUpperCase(),
+                  style: pw.TextStyle(
+                      fontSize: 11,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.black)),
+              pw.SizedBox(height: 5),
+              ...category.value.entries.map((entry) {
+                return pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(entry.key, style: pw.TextStyle(fontSize: 9)),
+                    pw.Text('x ${entry.value}',
+                        style: pw.TextStyle(fontSize: 9)),
+                  ],
+                );
+              }).toList(),
+              pw.SizedBox(height: 10),
+            ],
+            pw.Divider(thickness: 0.8, color: PdfColors.grey),
+
+            // Footer Section
+            pw.SizedBox(height: 10),
+            pw.Text('Thank you for your order!',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                    fontStyle: pw.FontStyle.italic,
+                    color: PdfColors.green)),
+            pw.SizedBox(height: 5),
+            pw.Text('Contact Us: contact@business.com',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+          ],
+        );
+      },
+    ));
+
+    // Save the receipt
+    final directory = Directory(
+        'C:\\Users\\Public\\Documents'); // Specify the path for saving
+    if (!(await directory.exists())) {
+      await directory.create(recursive: true);
+    }
+
+    final file = File('${directory.path}\\order_$_orderNumber.pdf');
+    await file.writeAsBytes(await pdf.save());
+
+    print("PDF saved at: ${file.path}");
+    Process.run('explorer', [file.path]).then((result) {
+      print("Opened PDF in default viewer: ${result.stdout}");
+    });
+  }
+
   void _printOrder() {
+    _generateAndSavePdf();
     // Implement print logic here
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Printing Order...')),
     );
+  }
+
+  void _updateSearchResults() {
+    setState(() {
+      searchResults = _menuItems.values
+          .expand((items) => items)
+          .where((item) => item['name']!
+              .toLowerCase()
+              .contains(_searchController.text.toLowerCase()))
+          .toList();
+    });
   }
 
   @override
@@ -314,10 +429,10 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 10),
-                          TextFormField(
+                          TextField(
                             controller: _searchController,
                             decoration: InputDecoration(
-                              labelText: 'Search Menu',
+                              hintText: 'Search Items',
                               prefixIcon: Icon(Icons.search),
                             ),
                           ),

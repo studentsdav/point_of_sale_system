@@ -510,6 +510,7 @@
 // ADD COLUMN packing_charge DECIMAL(10, 2),
 // ADD COLUMN delivery_charge_percentage DECIMAL(10, 2),
 // ADD COLUMN delivery_charge DECIMAL(10, 2);
+// add Column discountable boolean
 
 // -- Alter orders table
 // ALTER TABLE orders

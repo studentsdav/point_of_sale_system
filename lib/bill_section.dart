@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/backend/OrderApiService.dart';
 import 'package:point_of_sale_system/backend/bill_service.dart';
+import 'package:point_of_sale_system/modifyOrder.dart';
 
 class BillPage extends StatefulWidget {
   @override
@@ -359,7 +360,8 @@ class _BillPageState extends State<BillPage> {
                                             child: Text('Cancel'),
                                           ),
                                           ElevatedButton(
-                                            onPressed: () => _modifyBill(),
+                                            onPressed: () =>
+                                                _modifyBill(orders),
                                             child: Text('Modify'),
                                           ),
                                         ],
@@ -397,8 +399,12 @@ class _BillPageState extends State<BillPage> {
   }
 
   // Method to handle Modify
-  void _modifyBill() {
-    print('Modifying bill: ${_selectedBill!['bill_number']}');
-    // Add your modify functionality here
+  void _modifyBill(orders) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ModifyOrderList(
+                  orders: orders,
+                )));
   }
 }

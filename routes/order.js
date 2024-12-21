@@ -173,12 +173,12 @@ router.post('/', async (req, res) => {
       for (let item of items) {
         await client.query(
           `INSERT INTO order_items (
-            order_id, item_name, item_category, item_quantity, item_rate, item_amount, item_tax, total_item_value, outlet_name, property_id, taxRate
+            order_id, item_name, item_category, item_quantity, item_rate, item_amount, item_tax, total_item_value, outlet_name, property_id, taxRate, discountable
           ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8,$9,$10,$11
+            $1, $2, $3, $4, $5, $6, $7, $8,$9,$10,$11,$12
           )`,
           [
-            orderId, item.item_name, item.item_category, item.item_quantity, item.item_rate, item.item_amount, item.item_tax, item.total_item_value, outlet_name, property_id, item.taxRate
+            orderId, item.item_name, item.item_category, item.item_quantity, item.item_rate, item.item_amount, item.item_tax, item.total_item_value, outlet_name, property_id, item.taxRate, item.discountable
           ]
         );
       }
@@ -273,7 +273,7 @@ router.get('/orderitem', async (req, res) => {
     const orderIdsArray = orderIds.split(','); // Convert to an array of orderIds
 
     const result = await pool.query(
-      `SELECT item_id, order_id, item_name, item_quantity, item_rate, taxrate, 
+      `SELECT item_id, order_id, item_name, item_quantity, item_rate, taxrate, discountable,
         (item_quantity * item_rate) AS subtotal, 
         ((item_quantity * item_rate) * taxrate / 100) AS tax, 
         ((item_quantity * item_rate) + ((item_quantity * item_rate) * taxrate / 100)) AS total 
