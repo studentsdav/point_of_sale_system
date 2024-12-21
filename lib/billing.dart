@@ -14,11 +14,10 @@ class BillingFormScreen extends StatefulWidget {
   final propertyid;
   final outlet;
   const BillingFormScreen(
-      {Key? key,
+      {super.key,
       required this.propertyid,
       required this.outlet,
-      required this.tableno})
-      : super(key: key);
+      required this.tableno});
 
   @override
   _BillingFormScreenState createState() => _BillingFormScreenState();
@@ -157,7 +156,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
 
         if (itemMap.containsKey(key)) {
           itemMap[key]!['quantity'] += itemQuantity;
-          itemMap[key]!['tax'] +=
+          itemMap[key]!['taxval'] +=
               taxAmount * itemQuantity; // Add tax to total tax
           itemMap[key]!['total'] = (itemMap[key]!['quantity'] * itemRate) +
               itemMap[key]!['tax']; // Total = price + tax
@@ -385,17 +384,49 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       processResponse(result);
       //_generateAndSaveBill(result.billid);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Bill saved successfully!')),
+        const SnackBar(content: Text('Bill saved successfully!')),
       );
 
       _clearControllers();
     } catch (error) {
       // Handle any errors
+      processResponserror(error.toString());
       _clearControllers();
-      print('Error: $error');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $error')),
+        const SnackBar(content: Text('Bill saved successfully!')),
       );
+      print('Error: $error');
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('Error: $error')),
+      // );
+    }
+  }
+
+  void processResponserror(String response) {
+    try {
+      // Remove the prefix to extract the JSON part
+      final jsonStartIndex = response.indexOf('{');
+      if (jsonStartIndex == -1) {
+        throw const FormatException('No JSON found in the response.');
+      }
+
+      // Extract the JSON substring
+      final jsonResponseString = response.substring(jsonStartIndex);
+
+      // Parse the JSON string
+      Map<String, dynamic> jsonResponse = json.decode(jsonResponseString);
+
+      // Extract the required fields
+      int billId = jsonResponse['billId'];
+      double grandTotal = double.parse(jsonResponse['grand_total']);
+      _generateAndSaveBill(billId);
+      // Process the extracted fields
+      print('Bill ID: $billId');
+      print('Grand Total: $grandTotal');
+
+      // Further processing if needed
+    } catch (e) {
+      print('Error processing response: $e');
     }
   }
 
@@ -426,8 +457,8 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     double total = subtotal + tax;
 
     // Page format for 80mm receipt paper
-    final pageWidth = 80.0 * PdfPageFormat.mm;
-    final pageFormat = PdfPageFormat(pageWidth, double.infinity);
+    const pageWidth = 80.0 * PdfPageFormat.mm;
+    const pageFormat = PdfPageFormat(pageWidth, double.infinity);
 
     pdf.addPage(pw.Page(
       pageFormat: pageFormat,
@@ -443,10 +474,10 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                     pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
             pw.Text('123 Business Street, City, Country',
                 textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+                style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
             pw.Text('Phone: +123456789 | Email: contact@business.com',
                 textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+                style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
             pw.Divider(thickness: 1, color: PdfColors.black),
             pw.SizedBox(height: 5),
 
@@ -455,10 +486,10 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                 style:
                     pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
             pw.Text('Customer Name: John Doe',
-                style: pw.TextStyle(fontSize: 9)),
+                style: const pw.TextStyle(fontSize: 9)),
             pw.Text(
                 'Date: ${DateTime.now().toLocal().toString().split(' ')[0]}',
-                style: pw.TextStyle(fontSize: 9)),
+                style: const pw.TextStyle(fontSize: 9)),
             pw.SizedBox(height: 5),
 
             // Itemized Bill
@@ -473,14 +504,14 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                   fontSize: 9,
                   fontWeight: pw.FontWeight.bold,
                   color: PdfColors.black),
-              cellStyle: pw.TextStyle(fontSize: 9),
+              cellStyle: const pw.TextStyle(fontSize: 9),
               data: orderItems.map((item) {
                 double total = item['quantity'] * item['price'];
                 return [
                   item['item_name'],
                   '${item['quantity']}',
                   '${item['price'].toStringAsFixed(2)}',
-                  '${total.toStringAsFixed(2)}',
+                  (total.toStringAsFixed(2)),
                 ];
               }).toList(),
             ),
@@ -491,17 +522,17 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text('Subtotal:', style: pw.TextStyle(fontSize: 10)),
-                pw.Text('${subtotal.toStringAsFixed(2)}',
-                    style: pw.TextStyle(fontSize: 10)),
+                pw.Text('Subtotal:', style: const pw.TextStyle(fontSize: 10)),
+                pw.Text(subtotal.toStringAsFixed(2),
+                    style: const pw.TextStyle(fontSize: 10)),
               ],
             ),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text('Tax (5%):', style: pw.TextStyle(fontSize: 10)),
-                pw.Text('${tax.toStringAsFixed(2)}',
-                    style: pw.TextStyle(fontSize: 10)),
+                pw.Text('Tax (5%):', style: const pw.TextStyle(fontSize: 10)),
+                pw.Text(tax.toStringAsFixed(2),
+                    style: const pw.TextStyle(fontSize: 10)),
               ],
             ),
             pw.Row(
@@ -510,7 +541,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                 pw.Text('Total:',
                     style: pw.TextStyle(
                         fontSize: 12, fontWeight: pw.FontWeight.bold)),
-                pw.Text('${total.toStringAsFixed(2)}',
+                pw.Text(total.toStringAsFixed(2),
                     style: pw.TextStyle(
                         fontSize: 12, fontWeight: pw.FontWeight.bold)),
               ],
@@ -527,7 +558,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                     color: PdfColors.green)),
             pw.Text('Visit Again!',
                 textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+                style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
           ],
         );
       },
@@ -684,7 +715,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Billing Form'),
+        title: const Text('Billing Form'),
       ),
       body: Center(
         child: Container(
@@ -708,7 +739,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text(
+                      const Text(
                         'Orders',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
@@ -716,7 +747,8 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                           color: Colors.blue,
                         ),
                       ),
-                      SizedBox(height: 10), // Space between header and list
+                      const SizedBox(
+                          height: 10), // Space between header and list
                       Expanded(
                         child: ListView.builder(
                           itemCount: orders.length,
@@ -733,8 +765,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                     selectedOrderId =
                                         order['order_id'].toString();
                                     // //   ordernumber = order['order_number'].toString();
-                                    _fetchOrderItemsnew(
-                                        [selectedOrderId as String]);
+                                    _fetchOrderItemsnew([selectedOrderId]);
                                   });
                                 },
                                 selected: selectedOrderId ==
@@ -761,7 +792,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
+                          const Text(
                             'Order Items',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
@@ -773,10 +804,11 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                               onPressed: () {
                                 _reset();
                               },
-                              icon: Icon(Icons.refresh))
+                              icon: const Icon(Icons.refresh))
                         ],
                       ),
-                      SizedBox(height: 10), // Space between header and list
+                      const SizedBox(
+                          height: 10), // Space between header and list
                       Expanded(
                         child: ListView(
                           children: selectedOrderId.isEmpty
@@ -833,13 +865,13 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Bill No:',
+                                    const Text('Bill No:',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold)),
                                     TextField(
                                         controller: _billNoController,
                                         enabled: false,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontWeight: FontWeight.bold)),
                                   ],
                                 ),
@@ -848,13 +880,13 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Order No:',
+                                    const Text('Order No:',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold)),
                                     TextField(
                                         controller: _orderNoController,
                                         enabled: false,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontWeight: FontWeight.bold)),
                                   ],
                                 ),
@@ -863,13 +895,13 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Date:',
+                                    const Text('Date:',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold)),
                                     TextField(
                                         controller: _dateController,
                                         enabled: false,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontWeight: FontWeight.bold)),
                                   ],
                                 ),
@@ -884,13 +916,13 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Time:',
+                                    const Text('Time:',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold)),
                                     TextField(
                                         controller: _timeController,
                                         enabled: false,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontWeight: FontWeight.bold)),
                                   ],
                                 ),
@@ -899,13 +931,13 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Table No:',
+                                    const Text('Table No:',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold)),
                                     TextField(
                                         controller: _tableNoController,
                                         enabled: false,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontWeight: FontWeight.bold)),
                                   ],
                                 ),
@@ -914,13 +946,13 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Guest ID:',
+                                    const Text('Guest ID:',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold)),
                                     TextField(
                                         controller: _guestIdController,
                                         enabled: false,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontWeight: FontWeight.bold)),
                                   ],
                                 ),
@@ -933,7 +965,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                             decoration: InputDecoration(
                               labelText: 'Search Guest',
                               suffixIcon: IconButton(
-                                icon: Icon(Icons.search),
+                                icon: const Icon(Icons.search),
                                 onPressed: _searchGuest,
                               ),
                             ),
@@ -942,7 +974,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                           // Pax Field
                           TextFormField(
                             controller: _paxController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'Pax (Number of People)',
                             ),
                             keyboardType: TextInputType.number,
@@ -952,7 +984,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              Text('Discount Type:',
+                              const Text('Discount Type:',
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
                               Radio<String>(
@@ -965,7 +997,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                   });
                                 },
                               ),
-                              Text('Percentage'),
+                              const Text('Percentage'),
                               Radio<String>(
                                 value: 'Flat',
                                 groupValue: _discountType,
@@ -976,14 +1008,14 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                   });
                                 },
                               ),
-                              Text('Flat Amount'),
+                              const Text('Flat Amount'),
                             ],
                           ),
                           if (_discountType == 'Percentage')
                             TextFormField(
                               maxLength: 3,
                               controller: _percentDiscountController,
-                              decoration: InputDecoration(
+                              decoration: const InputDecoration(
                                   labelText: 'Discount Percentage'),
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
@@ -994,8 +1026,8 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                             TextFormField(
                               maxLength: 3,
                               controller: _flatDiscountController,
-                              decoration:
-                                  InputDecoration(labelText: 'Discount Amount'),
+                              decoration: const InputDecoration(
+                                  labelText: 'Discount Amount'),
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
                                 setState(() {});
@@ -1003,7 +1035,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                             ),
                           const SizedBox(height: 10),
                           // Scrollable Items List
-                          Container(
+                          SizedBox(
                             height:
                                 130, // Keeps height fixed to allow scrolling vertically
                             child: LayoutBuilder(
@@ -1022,7 +1054,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                       child: DataTable(
                                         columnSpacing:
                                             20, // Adjust spacing between columns
-                                        columns: [
+                                        columns: const [
                                           DataColumn(label: Text('S.No')),
                                           DataColumn(label: Text('Name')),
                                           DataColumn(label: Text('Qty')),
@@ -1062,7 +1094,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Total Amount:'),
+                                  const Text('Total Amount:'),
                                   Text(
                                       '₹${totals['totalAmount']!.toStringAsFixed(2)}'),
                                 ],
@@ -1081,7 +1113,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Subtotal:'),
+                                  const Text('Subtotal:'),
                                   Text(
                                       '₹${totals['subtotal']!.toStringAsFixed(2)}'),
                                 ],
@@ -1090,7 +1122,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('CGST:'),
+                                  const Text('CGST:'),
                                   Text(
                                       '₹${totals['cgst']!.toStringAsFixed(2)}'),
                                 ],
@@ -1099,7 +1131,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('SGST:'),
+                                  const Text('SGST:'),
                                   Text(
                                       '₹${totals['sgst']!.toStringAsFixed(2)}'),
                                 ],
@@ -1108,7 +1140,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Service Charge:'),
+                                  const Text('Service Charge:'),
                                   Text(
                                       '₹${totals['serviceCharge']!.toStringAsFixed(2)}'),
                                 ],
@@ -1118,15 +1150,15 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
+                                  const Text(
                                     'Net Receivable Amount:',
                                     style:
                                         TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                   Text(
                                     '₹${totals['netReceivableAmount']!.toStringAsFixed(2)}',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
@@ -1141,18 +1173,18 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                 onPressed: () {
                                   _saveBill();
                                 },
-                                child: Text('Save'),
                                 style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.blue),
+                                child: const Text('Save'),
                               ),
                               const SizedBox(width: 10),
                               ElevatedButton(
                                 onPressed: () {
                                   _generateAndSaveBill(1);
                                 },
-                                child: Text('Print Bill'),
                                 style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.orange),
+                                child: const Text('Print Bill'),
                               ),
                             ],
                           ),

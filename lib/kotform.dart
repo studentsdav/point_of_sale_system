@@ -12,11 +12,10 @@ class KOTFormScreen extends StatefulWidget {
   final propertyid;
   final outlet;
   const KOTFormScreen(
-      {Key? key,
+      {super.key,
       required this.propertyid,
       required this.outlet,
-      required this.tableno})
-      : super(key: key);
+      required this.tableno});
 
   @override
   _KOTFormScreenState createState() => _KOTFormScreenState();
@@ -277,7 +276,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
 
       // Notify user once the order is saved successfully
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Order saved successfully!')),
+        const SnackBar(content: Text('Order saved successfully!')),
       );
       Navigator.pop(context);
     } catch (e) {
@@ -292,9 +291,9 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
     final pdf = pw.Document();
 
     // Set page format for 80mm width paper
-    final pageWidth = 80.0 * PdfPageFormat.mm; // 80mm
-    final pageHeight = double.infinity; // Variable height for continuous roll
-    final pageFormat = PdfPageFormat(pageWidth, pageHeight);
+    const pageWidth = 80.0 * PdfPageFormat.mm; // 80mm
+    const pageHeight = double.infinity; // Variable height for continuous roll
+    const pageFormat = PdfPageFormat(pageWidth, pageHeight);
 
     pdf.addPage(pw.Page(
       pageFormat: pageFormat,
@@ -317,7 +316,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                     pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
             pw.Text(
                 'Date: ${DateTime.now().toLocal().toString().split(' ')[0]}',
-                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+                style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
             pw.Divider(thickness: 0.8, color: PdfColors.grey),
             pw.SizedBox(height: 5),
 
@@ -333,12 +332,12 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                 return pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text(entry.key, style: pw.TextStyle(fontSize: 9)),
+                    pw.Text(entry.key, style: const pw.TextStyle(fontSize: 9)),
                     pw.Text('x ${entry.value}',
-                        style: pw.TextStyle(fontSize: 9)),
+                        style: const pw.TextStyle(fontSize: 9)),
                   ],
                 );
-              }).toList(),
+              }),
               pw.SizedBox(height: 10),
             ],
             pw.Divider(thickness: 0.8, color: PdfColors.grey),
@@ -355,7 +354,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
             pw.SizedBox(height: 5),
             pw.Text('Contact Us: contact@business.com',
                 textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+                style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
           ],
         );
       },
@@ -381,7 +380,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
     _generateAndSavePdf();
     // Implement print logic here
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Printing Order...')),
+      const SnackBar(content: Text('Printing Order...')),
     );
   }
 
@@ -403,7 +402,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             // Show a loading indicator while waiting for data
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             // Handle error
             return Center(
@@ -426,12 +425,12 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                       child: Column(
                         children: [
                           Text('Order Number: $_orderNumber',
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 10),
                           TextField(
                             controller: _searchController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               hintText: 'Search Items',
                               prefixIcon: Icon(Icons.search),
                             ),
@@ -450,7 +449,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                                       child: Text(category),
                                     ))
                                 .toList(),
-                            hint: Text(
+                            hint: const Text(
                                 "Select a category"), // Placeholder when no category is selected
                           ),
                           const SizedBox(height: 10),
@@ -478,7 +477,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                                             ),
                                             const SizedBox(width: 10),
                                             Text('₹${item['rate']}',
-                                                style: TextStyle(
+                                                style: const TextStyle(
                                                     color: Colors.black,
                                                     fontWeight:
                                                         FontWeight.bold)),
@@ -488,14 +487,14 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             IconButton(
-                                              icon: Icon(Icons.remove),
+                                              icon: const Icon(Icons.remove),
                                               onPressed: () =>
                                                   _removeItem(item['name']!),
                                             ),
                                             Text(
                                                 '${_orderItems[_selectedCategory]?[item['name']!] ?? 0}'),
                                             IconButton(
-                                              icon: Icon(Icons.add),
+                                              icon: const Icon(Icons.add),
                                               onPressed: () =>
                                                   _addItem(item['name']!),
                                             ),
@@ -570,7 +569,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Ordered Items',
+                          const Text('Ordered Items',
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 10),
@@ -623,11 +622,11 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                                                 MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(itemName,
-                                                  style: TextStyle(
+                                                  style: const TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold)),
                                               Text('₹$itemRate',
-                                                  style: TextStyle(
+                                                  style: const TextStyle(
                                                       fontSize: 16,
                                                       color: Colors.black)),
                                             ],
@@ -642,27 +641,28 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                                                         .spaceBetween,
                                                 children: [
                                                   Text('Qty: $quantity',
-                                                      style: TextStyle(
+                                                      style: const TextStyle(
                                                           fontWeight:
                                                               FontWeight.w500)),
                                                   Row(
                                                     children: [
                                                       IconButton(
-                                                        icon:
-                                                            Icon(Icons.remove),
+                                                        icon: const Icon(
+                                                            Icons.remove),
                                                         onPressed: quantity > 0
                                                             ? () => _removeItem(
                                                                 itemName)
                                                             : null,
                                                       ),
                                                       IconButton(
-                                                        icon: Icon(Icons.add),
+                                                        icon: const Icon(
+                                                            Icons.add),
                                                         onPressed: () =>
                                                             _addItem(itemName),
                                                       ),
                                                       IconButton(
-                                                        icon:
-                                                            Icon(Icons.delete),
+                                                        icon: const Icon(
+                                                            Icons.delete),
                                                         onPressed: () =>
                                                             _deleteItem(
                                                                 itemName),
@@ -671,15 +671,15 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(height: 5),
+                                              const SizedBox(height: 5),
                                               Text(
                                                   'Amount: ₹${itemAmount.toStringAsFixed(2)}',
-                                                  style: TextStyle(
+                                                  style: const TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold)),
                                               Text(
                                                   'Tax: ₹${itemTax.toStringAsFixed(2)}',
-                                                  style: TextStyle(
+                                                  style: const TextStyle(
                                                       color: Colors.grey)),
                                             ],
                                           ),
@@ -687,7 +687,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                                       ),
                                     );
                                   }).toList();
-                                }).toList(),
+                                }),
 
                                 // Summary section for Total Amount and Total Tax
                                 Padding(
@@ -697,26 +697,26 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Divider(thickness: 1.5),
-                                      Text('Summary',
+                                      const Divider(thickness: 1.5),
+                                      const Text('Summary',
                                           style: TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold)),
                                       const SizedBox(height: 10),
                                       Text(
                                           'Total Amount: ₹${_calculateTotalAmount().toStringAsFixed(2)}',
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold)),
                                       Text(
                                           'Total Tax: ₹${_calculateTotalTax().toStringAsFixed(2)}',
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold)),
                                       const SizedBox(height: 10),
                                       Text(
                                         'Grand Total: ₹${(_calculateTotalAmount() + _calculateTotalTax()).toStringAsFixed(2)}',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.blueAccent),
@@ -735,7 +735,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
               ),
             );
           }
-          return CircularProgressIndicator();
+          return const CircularProgressIndicator();
         });
   }
 

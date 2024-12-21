@@ -5,6 +5,8 @@ import 'package:point_of_sale_system/backend/outlet_service.dart';
 import 'package:point_of_sale_system/backend/property_service.dart';
 
 class PropertyConfigurationForm extends StatefulWidget {
+  const PropertyConfigurationForm({super.key});
+
   @override
   _PropertyConfigurationFormState createState() =>
       _PropertyConfigurationFormState();
@@ -21,7 +23,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
   String propertyId = '';
   bool isSaved = false;
 
-  PropertyService _propertyService = PropertyService();
+  final PropertyService _propertyService = PropertyService();
   List propertyList = [];
   bool isLoading = false;
 
@@ -182,7 +184,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
         taxRegNo: taxRegNo,
       );
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Property updated successfully')),
+        const SnackBar(content: Text('Property updated successfully')),
       );
       _fetchProperties();
     } catch (error) {
@@ -196,7 +198,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
     try {
       await _propertyService.deleteProperty(propertyId);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Property deleted successfully')),
+        const SnackBar(content: Text('Property deleted successfully')),
       );
       _fetchProperties();
     } catch (error) {
@@ -209,13 +211,13 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Property Configuration')),
+      appBar: AppBar(title: const Text('Property Configuration')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Enter Property Details',
+            const Text('Enter Property Details',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Form(
               key: _formKey,
@@ -223,7 +225,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
                 children: [
                   TextFormField(
                     initialValue: propertyName,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Property Name',
                       icon: Icon(Icons.business),
                     ),
@@ -233,7 +235,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
                   ),
                   TextFormField(
                     initialValue: address,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Address',
                       icon: Icon(Icons.location_on),
                     ),
@@ -243,7 +245,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
                   ),
                   TextFormField(
                     initialValue: contactNumber,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Contact Number',
                       icon: Icon(Icons.phone),
                     ),
@@ -254,7 +256,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
                   ),
                   TextFormField(
                     initialValue: email,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Email',
                       icon: Icon(Icons.email),
                     ),
@@ -265,7 +267,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
                   ),
                   TextFormField(
                     initialValue: businessHours,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Business Hours',
                       icon: Icon(Icons.access_time),
                     ),
@@ -275,7 +277,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
                   ),
                   TextFormField(
                     initialValue: taxRegNo,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Tax Registration Number (GST No)',
                       icon: Icon(Icons.card_giftcard),
                     ),
@@ -303,7 +305,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
                           isSaved = false;
                           _formKey.currentState!.reset();
                         }),
-                        child: Text('Clear'),
+                        child: const Text('Clear'),
                       ),
                     ],
                   ),
@@ -311,34 +313,66 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
               ),
             ),
             const SizedBox(height: 20),
-            if (isLoading) Center(child: CircularProgressIndicator()),
+            if (isLoading) const Center(child: CircularProgressIndicator()),
             if (!isLoading && propertyList.isNotEmpty)
               ListView.builder(
                 shrinkWrap: true,
                 itemCount: propertyList.length,
                 itemBuilder: (context, index) {
                   final property = propertyList[index];
-                  return ListTile(
-                    title: Text(property['property_name']),
-                    subtitle: Text(property['address']),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                            icon: Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () {
-                              setState(() {
-                                isSaved = false;
-                                _formKey.currentState!.reset();
-                              });
-                              _editPropertyConfiguration(property);
-                            }),
-                        IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteProperty(
-                              int.parse(property['property_id'])),
-                        ),
-                      ],
+                  return Card(
+                    margin:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            property['property_name'] ?? 'No Name',
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                              'Address: ${property['address'] ?? 'Not available'}'),
+                          const SizedBox(height: 8),
+                          Text(
+                              'Contact Number: ${property['contact_number'] ?? 'Not available'}'),
+                          const SizedBox(height: 8),
+                          Text(
+                              'Email: ${property['email'] ?? 'Not available'}'),
+                          const SizedBox(height: 8),
+                          Text(
+                              'Business Hours: ${property['business_hours'] ?? 'Not available'}'),
+                          const SizedBox(height: 8),
+                          Text(
+                              'Tax Registration No: ${property['tax_reg_no'] ?? 'Not available'}'),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () {
+                                  setState(() {
+                                    isSaved = false;
+                                    _formKey.currentState!.reset();
+                                  });
+                                  _editPropertyConfiguration(property);
+                                },
+                              ),
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _deleteProperty(
+                                    int.parse(property['property_id'])),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -351,5 +385,5 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
 }
 
 void main() {
-  runApp(MaterialApp(home: PropertyConfigurationForm()));
+  runApp(const MaterialApp(home: PropertyConfigurationForm()));
 }

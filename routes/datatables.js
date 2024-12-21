@@ -246,7 +246,7 @@
 //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- Timestamp for record updates
 // );
 
-
+//deprecated///
 // CREATE TABLE payments (
 //     id SERIAL PRIMARY KEY,  -- Unique payment ID
 //     property_id VARCHAR(100) NOT NULL,  -- Link to the property
@@ -424,11 +424,11 @@
 //     item_amount DECIMAL(10, 2),
 //     item_tax DECIMAL(10, 2),
 //     total_item_value DECIMAL(10, 2),
-//     proeprty_id VARCHAR(255) NOT NULL,
+//     property_id VARCHAR(255) NOT NULL,
 //     outlet_name VARCHAR(255) NOT NULL
 //   );
   
-
+//deprecated///
 // CREATE TABLE payments (
 //     payment_id SERIAL PRIMARY KEY,
 //     order_id INT REFERENCES orders(order_id) ON DELETE CASCADE,
@@ -509,7 +509,7 @@
 // ADD COLUMN packing_charge_percentage DECIMAL(10, 2),
 // ADD COLUMN packing_charge DECIMAL(10, 2),
 // ADD COLUMN delivery_charge_percentage DECIMAL(10, 2),
-// ADD COLUMN delivery_charge DECIMAL(10, 2);
+// ADD COLUMN delivery_charge DECIMAL(10, 2),
 // add Column discountable boolean
 
 // -- Alter orders table
@@ -523,6 +523,7 @@
 // ADD COLUMN packing_charge DECIMAL(10, 2),
 // ADD COLUMN delivery_charge_percentage DECIMAL(10, 2),
 // ADD COLUMN delivery_charge DECIMAL(10, 2);
+// Add column bill_id int
 
 // -- Alter servicecharge_config table
 // ALTER TABLE servicecharge_config
@@ -579,6 +580,7 @@
 // PL/pgSQL Script for table_configurations
 // sql
 // Copy code
+//start//
 // DO $$ 
 // BEGIN
 //   -- Create the trigger for the 'table_configurations' table
@@ -588,6 +590,7 @@
 //     FOR EACH ROW
 //     EXECUTE FUNCTION notify_table_update();');
 // END $$;
+//end///
 // Explanation:
 // Trigger Name: table_configurations_update_trigger is the name of the trigger.
 // Event Type: The trigger fires after an INSERT, UPDATE, or DELETE operation on the table_configurations table.
@@ -598,6 +601,7 @@
 
 // sql
 // Copy code
+//start//
 // CREATE OR REPLACE FUNCTION notify_table_update() 
 // RETURNS trigger AS $$
 // BEGIN
@@ -606,6 +610,7 @@
 //   RETURN NULL;
 // END;
 // $$ LANGUAGE plpgsql;
+//end //
 // Key Points:
 // This will create a trigger that listens for changes (insert, update, or delete) on the table_configurations table.
 // The pg_notify() function sends a notification whenever a change occurs. You can listen for this notification from your application using PostgreSQL's LISTEN/NOTIFY mechanism to get real-time updates.
@@ -614,5 +619,8 @@
 
 
 //npm install socket.io
-// npm list socket.io
+//npm list socket.io
+//npm install -g nodemon
+
+
 

@@ -84,7 +84,7 @@ class _MyAppState extends State {
       setState(() {
         this.properties = properties ?? [];
         this.outletConfigurations = outletConfigurations ?? [];
-        this.outlets = outletslist; // Set the outlets list
+        outlets = outletslist; // Set the outlets list
       });
     }
   }
