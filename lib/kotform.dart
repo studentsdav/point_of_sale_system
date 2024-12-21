@@ -69,11 +69,15 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
 
   // Generating a random order number using the current time and random component
   late String _orderNumber;
+  List<Map<String, String>> searchResults = [];
 
   @override
   void initState() {
     _tableNumber = widget.tableno;
     _menuItemsFuture = fetchMenuItems();
+    _searchController.addListener(() {
+      _updateSearchResults();
+    });
     super.initState();
     _orderNumber =
         'ORD-${DateTime.now().millisecondsSinceEpoch % 10000}-${Random().nextInt(1000)}';
@@ -134,7 +138,8 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
           'name': item['item_name'],
           'tag': item['tag'],
           'rate': item['price'].toString(),
-          'tax': item['tax_rate'].toString()
+          'tax': item['tax_rate'].toString(),
+          'discountable': item['discountable'].toString()
         });
       }
 
@@ -164,6 +169,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
               .firstWhere((item) => item['name'] == itemName);
           final rate = double.parse(itemDetails['rate']!);
           final taxRate = double.parse(itemDetails['tax']!);
+          final discountable = bool.parse(itemDetails['discountable']!);
           final amount = rate * qty;
           final tax = (amount * taxRate) / 100;
 
@@ -176,7 +182,8 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
             'item_amount': amount,
             'taxRate': taxRate,
             'item_tax': tax,
-            'total_item_value': amount + tax
+            'total_item_value': amount + tax,
+            'discountable': discountable
           };
 
           // Add item data to the list of items
@@ -281,6 +288,17 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
     );
   }
 
+  void _updateSearchResults() {
+    setState(() {
+      searchResults = _menuItems.values
+          .expand((items) => items)
+          .where((item) => item['name']!
+              .toLowerCase()
+              .contains(_searchController.text.toLowerCase()))
+          .toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, List<Map<String, String>>>>(
@@ -314,10 +332,10 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 10),
-                          TextFormField(
+                          TextField(
                             controller: _searchController,
                             decoration: InputDecoration(
-                              labelText: 'Search Menu',
+                              hintText: 'Search Items',
                               prefixIcon: Icon(Icons.search),
                             ),
                           ),

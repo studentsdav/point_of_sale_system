@@ -193,9 +193,12 @@ router.get('/:status', async (req, res) => {
   }
 });
 
-
 router.post('/', async (req, res) => {
-  const { table_no, tax_value, discount_percentage, service_charge_percentage, packing_charge_percentage, delivery_charge_percentage, other_charge, property_id, outletname, billstatus } = req.body;
+  const {
+    table_no, tax_value, discount_percentage, service_charge_percentage,
+    packing_charge_percentage, delivery_charge_percentage, other_charge,
+    property_id, outletname, billstatus, items
+  } = req.body;
 
   try {
     // Fetch all pending orders for the table
@@ -231,8 +234,11 @@ router.post('/', async (req, res) => {
     // Insert the new bill into the `bills` table
     const billResult = await pool.query(
       `INSERT INTO bills (bill_number, total_amount, tax_value, discount_value, service_charge_value, 
-                          packing_charge, delivery_charge, other_charge, grand_total, property_id, outlet_name,packing_charge_percentage,delivery_charge_percentage,discount_percentage,service_charge_percentage, status, table_no, bill_generated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10, $11,$12,$13,$14,$15, $16, $17, CURRENT_TIMESTAMP) RETURNING id`,
+                          packing_charge, delivery_charge, other_charge, grand_total, property_id, outlet_name, 
+                          packing_charge_percentage, delivery_charge_percentage, discount_percentage, service_charge_percentage, 
+                          status, table_no, bill_generated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP) 
+       RETURNING id`,
       [
         `BILL-${Date.now()}`, // Generate a unique bill number
         total_amount,
@@ -267,15 +273,29 @@ router.post('/', async (req, res) => {
       `UPDATE table_configurations SET status = 'Dirty' WHERE table_no = $1 AND status = 'Occupied'`,
       [table_no]
     );
+
     await pool.query(
       `UPDATE bills SET status = 'UnPaid' WHERE id = $1`,
       [billId]
     );
+
     // Notify PostgreSQL trigger to send notification
     await pool.query("NOTIFY table_update, 'Table configuration updated'");
 
+    // **Update order_items table** for the given items
+    for (const item of items) {
+      const { order_id, item_name, total, dis_amt, tax, discountPercentage } = item;
+
+      await pool.query(
+        `UPDATE order_items 
+         SET total_item_value = $1, total_discount_value = $2, item_tax=$3, discount_percentage=$4
+         WHERE order_id = $5 AND item_name = $6`,
+        [total, dis_amt, tax, discountPercentage, order_id, item_name]
+      );
+    }
+
     res.status(201).json({
-      message: 'Bill generated successfully',
+      message: 'Bill generated successfully and order items updated',
       billId,
       grand_total,
     });
@@ -284,5 +304,6 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate bill', details: error.message });
   }
 });
+
 
 module.exports = router;

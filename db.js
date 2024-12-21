@@ -37,7 +37,7 @@ module.exports = pool;
 // for update///
 // git pull origin main
 // git add .
-// git commit -m "billing order section added"
+// git commit -m "table shift"
 // git push origin main //
 
 
