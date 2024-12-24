@@ -1,0 +1,11 @@
+{
+  "clients": {
+    "hotelsainainn.localhost": {
+      "user": "user_hotelsainainn.localhost",
+      "password": "password_hotelsainainn.localhost",
+      "database": "db_hotelsainainn.localhost",
+      "host": "localhost",
+      "port": 5432
+    }
+  }
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/ItemMaster.dart';
 import 'package:point_of_sale_system/admin.dart';
 import 'package:point_of_sale_system/backend/OrderApiService.dart';
+import 'package:point_of_sale_system/backend/property_service.dart';
 import 'package:point_of_sale_system/backend/table_api_service.dart';
 import 'package:point_of_sale_system/bill_section.dart';
 import 'package:point_of_sale_system/billing.dart';
@@ -25,6 +26,8 @@ class POSMainScreen extends StatefulWidget {
 
 class _POSMainScreenState extends State<POSMainScreen> {
   final tableapiService = TableApiService(apiUrl: 'http://localhost:3000/api');
+
+  final PropertyService _propertyService = PropertyService();
   late IO.Socket socket;
 
   String selectedOutlet = 'Restaurant';
@@ -237,7 +240,9 @@ class _POSMainScreenState extends State<POSMainScreen> {
             Expanded(
               child: ListView(
                 children: [
-                  _buildDrawerItem(Icons.home, 'Home', () {}),
+                  _buildDrawerItem(Icons.home, 'Home', () {
+                    _propertyService.approve(widget.propertyid.toString());
+                  }),
                   _buildDrawerItem(Icons.book, 'Reservation', () {
                     Navigator.push(
                         context,
@@ -246,12 +251,22 @@ class _POSMainScreenState extends State<POSMainScreen> {
                   }),
                   //  _buildDrawerItem(Icons.swap_horiz, 'Table Shift', () {}),
                   _buildDrawerItem(Icons.receipt, 'Orders', () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => OrderList()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => OrderList(
+                                  outletname: widget.outlet,
+                                  propertyid: widget.propertyid,
+                                )));
                   }),
                   _buildDrawerItem(Icons.payment, 'Billing', () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => BillPage()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => BillPage(
+                                  outletname: widget.outlet,
+                                  propertyid: widget.propertyid,
+                                )));
                   }),
                   _buildDrawerItem(Icons.payment, 'Payment', () {
                     Navigator.push(
