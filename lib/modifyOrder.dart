@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/backend/OrderApiService.dart';
 import 'package:point_of_sale_system/backend/items_api_service.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'dart:io';
 
 class ModifyOrderList extends StatefulWidget {
   final orders;
@@ -52,7 +55,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
   bool isLoadingOrders = true;
   bool isLoadingItems = false;
   String _selectedCategory = "Main Course";
-  Map<String, int> _orderItems = {};
+  final Map<String, int> _orderItems = {};
   Map<String, Map<String, dynamic>> itemMap = {};
   String ordernumber = "";
 
@@ -197,10 +200,10 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Modify Order Items'),
+          title: const Text('Modify Order Items'),
           content: StatefulBuilder(
             builder: (context, setState) {
-              return Container(
+              return SizedBox(
                 width: double.maxFinite,
                 child: ListView.builder(
                   shrinkWrap: true,
@@ -212,7 +215,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                       children: [
                         Expanded(child: Text(item['item_name'])),
                         IconButton(
-                          icon: Icon(Icons.remove),
+                          icon: const Icon(Icons.remove),
                           onPressed: () {
                             setState(() {
                               if (item['quantity'] > 1) {
@@ -225,7 +228,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                         ),
                         Text('${item['quantity']}'),
                         IconButton(
-                          icon: Icon(Icons.add),
+                          icon: const Icon(Icons.add),
                           onPressed: () {
                             setState(() {
                               item['quantity'] += 1;
@@ -233,7 +236,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                             });
                           },
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Text('₹${item['total']}'),
                       ],
                     );
@@ -247,14 +250,14 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Close'),
+              child: const Text('Close'),
             ),
             ElevatedButton(
               onPressed: () {
                 setState(() {}); // Save changes to the main state
                 Navigator.of(context).pop();
               },
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -276,18 +279,18 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
         }
 
         return AlertDialog(
-          title: Text('Add New Item'),
+          title: const Text('Add New Item'),
           content: StatefulBuilder(builder: (context, setState) {
             return SingleChildScrollView(
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: 400),
-                child: Container(
+                constraints: const BoxConstraints(maxHeight: 400),
+                child: SizedBox(
                   height: 400,
                   width: double.maxFinite,
                   child: ListView(
                     children: [
                       TextField(
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Search Items',
                           prefixIcon: Icon(Icons.search),
                         ),
@@ -303,9 +306,9 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                           });
                         },
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       if (searchResults.isNotEmpty)
-                        Container(
+                        SizedBox(
                           height: 400,
                           width: double.maxFinite,
                           child: ListView.builder(
@@ -324,7 +327,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon: Icon(Icons.remove),
+                                      icon: const Icon(Icons.remove),
                                       onPressed: () {
                                         setState(() {
                                           if (itemQty > 1) {
@@ -343,7 +346,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                     ),
                                     Text(itemQty.toString()),
                                     IconButton(
-                                      icon: Icon(Icons.add),
+                                      icon: const Icon(Icons.add),
                                       onPressed: () {
                                         setState(() {
                                           itemQty++;
@@ -389,7 +392,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                           ),
                         ),
                       if (searchResults.isEmpty)
-                        Container(
+                        SizedBox(
                           height: 400,
                           width: double.maxFinite,
                           child: ListView.builder(
@@ -408,7 +411,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon: Icon(Icons.remove),
+                                      icon: const Icon(Icons.remove),
                                       onPressed: () {
                                         setState(() {
                                           if (itemQty > 1) {
@@ -426,7 +429,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                     ),
                                     Text(itemQty.toString()),
                                     IconButton(
-                                      icon: Icon(Icons.add),
+                                      icon: const Icon(Icons.add),
                                       onPressed: () {
                                         setState(() {
                                           itemQty++;
@@ -479,7 +482,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -489,7 +492,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                 });
                 Navigator.of(context).pop();
               },
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -726,13 +729,13 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Order List')),
+      appBar: AppBar(title: const Text('Order List')),
       body: FutureBuilder<Map<String, List<Map<String, String>>>>(
           future: _menuItemsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               // Show a loading indicator while waiting for data
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               // Handle error
               return Center(
@@ -773,21 +776,21 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                   Expanded(
                     flex: 2,
                     child: Container(
-                      padding: EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(16.0),
                       color: Colors.white,
                       child: selectedOrderId != null
                           ? Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
+                                const Text(
                                   'Order Details',
                                   style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold),
                                 ),
-                                SizedBox(height: 8),
-                                Text('Order No: ${ordernumber}'),
-                                Divider(),
+                                const SizedBox(height: 8),
+                                Text('Order No: $ordernumber'),
+                                const Divider(),
                                 Expanded(
                                   child: ListView.builder(
                                     itemCount: itemMap.length,
@@ -803,7 +806,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                           children: [
                                             Text('₹${item["total"]}'),
                                             IconButton(
-                                              icon: Icon(Icons.delete,
+                                              icon: const Icon(Icons.delete,
                                                   color: Colors.red),
                                               onPressed: () {
                                                 // Confirm deletion with the user
@@ -812,8 +815,8 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                                   builder:
                                                       (BuildContext context) {
                                                     return AlertDialog(
-                                                      title:
-                                                          Text('Delete Item'),
+                                                      title: const Text(
+                                                          'Delete Item'),
                                                       content: Text(
                                                           'Are you sure you want to delete "${item["item_name"]}" from the order?'),
                                                       actions: [
@@ -823,7 +826,8 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                                                     context)
                                                                 .pop();
                                                           },
-                                                          child: Text('Cancel'),
+                                                          child: const Text(
+                                                              'Cancel'),
                                                         ),
                                                         TextButton(
                                                           onPressed: () {
@@ -848,7 +852,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                                               ),
                                                             );
                                                           },
-                                                          child: Text(
+                                                          child: const Text(
                                                             'Delete',
                                                             style: TextStyle(
                                                                 color:
@@ -867,20 +871,20 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                     },
                                   ),
                                 ),
-                                Divider(),
+                                const Divider(),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     ElevatedButton.icon(
                                       onPressed: _showModifyDialog,
-                                      icon: Icon(Icons.edit),
-                                      label: Text('Modify'),
+                                      icon: const Icon(Icons.edit),
+                                      label: const Text('Modify'),
                                     ),
                                     ElevatedButton.icon(
                                       onPressed: _showAddItemDialog,
-                                      icon: Icon(Icons.add),
-                                      label: Text('Add Item'),
+                                      icon: const Icon(Icons.add),
+                                      label: const Text('Add Item'),
                                     ),
                                     ElevatedButton.icon(
                                       onPressed: () {
@@ -893,13 +897,13 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                         });
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
-                                          SnackBar(
+                                          const SnackBar(
                                             content: Text('Order deleted'),
                                           ),
                                         );
                                       },
-                                      icon: Icon(Icons.delete),
-                                      label: Text('Delete'),
+                                      icon: const Icon(Icons.delete),
+                                      label: const Text('Delete'),
                                       style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.red),
                                     ),
@@ -913,14 +917,14 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                           ),
                                         );
                                       },
-                                      icon: Icon(Icons.print),
-                                      label: Text('Print'),
+                                      icon: const Icon(Icons.print),
+                                      label: const Text('Print'),
                                     ),
                                   ],
                                 ),
                               ],
                             )
-                          : Center(
+                          : const Center(
                               child: Text(
                                 'Select an Order from the left panel',
                                 style: TextStyle(fontSize: 18),
@@ -931,7 +935,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                 ],
               );
             }
-            return CircularProgressIndicator();
+            return const CircularProgressIndicator();
           }),
     );
   }
