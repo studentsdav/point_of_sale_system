@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/backend/OrderApiService.dart';
 import 'package:point_of_sale_system/backend/items_api_service.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'dart:io';
 
 class ModifyOrderList extends StatefulWidget {
+  final propertyid;
+  final outletname;
   final orders;
-  const ModifyOrderList({super.key, required this.orders});
+  const ModifyOrderList(
+      {super.key,
+      required this.orders,
+      required this.propertyid,
+      required this.outletname});
   @override
   _ModifyOrderListState createState() => _ModifyOrderListState();
 }
@@ -55,7 +58,6 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
   bool isLoadingOrders = true;
   bool isLoadingItems = false;
   String _selectedCategory = "Main Course";
-  final Map<String, int> _orderItems = {};
   Map<String, Map<String, dynamic>> itemMap = {};
   String ordernumber = "";
 
@@ -195,15 +197,130 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
     }
   }
 
+  void _saveOrder(String orderId) async {
+    try {
+      double totalAmount = 0;
+      double totaltax = 0;
+      double totalamt = 0;
+      List<Map<String, dynamic>> items = [];
+
+      // Helper function to find category from _menuItems
+      String _findCategory(String itemName) {
+        for (var category in _menuItems.keys) {
+          if (_menuItems[category]?.any((item) => item['name'] == itemName) ??
+              false) {
+            return category;
+          }
+        }
+        return 'Uncategorized'; // Default if no category is found
+      }
+
+      // Iterate over orderItems
+      for (var item in orderItems) {
+        final String itemName = item['item_name'] ?? 'Unknown';
+
+        // Get the category for the current item
+        final String category = _findCategory(itemName);
+
+        // Parse item details
+        final int quantity =
+            int.tryParse(item['quantity']?.toString() ?? '0') ?? 0;
+        final double rate =
+            double.tryParse(item['price']?.toString() ?? '0.0') ?? 0.0;
+        final double taxRate =
+            double.tryParse(item['tax']?.toString() ?? '0.0') ?? 0.0;
+        final bool discountable = _getDiscountable(itemName);
+        final double amount = rate * quantity;
+        final double tax = (amount * taxRate) / 100;
+
+        // Prepare item data
+        items.add({
+          'item_name': itemName,
+          'item_category': category,
+          'item_quantity': quantity,
+          'item_rate': rate,
+          'item_amount': amount,
+          'taxRate': taxRate,
+          'item_tax': tax,
+          'total_item_value': amount + tax,
+          'discountable': discountable,
+        });
+
+        // Calculate total amount (including tax)
+        totalAmount += (amount + tax);
+        totaltax += tax;
+        totalamt += amount;
+      }
+
+      // Prepare the main order data
+      final orderData = {
+        'property_id': widget.propertyid,
+        'tax_percentage': 0,
+        'tax_value': totaltax,
+        'total_amount': totalAmount,
+        'discount_percentage': 0,
+        'total_discount_value': 0,
+        'service_charge_per': 0,
+        'total_service_charge': 0,
+        'total_happy_hour_discount': 0,
+        'subtotal': totalamt,
+        'total': totalAmount,
+        'staff_id': 0,
+        'order_cancelled_by': 0,
+        'cancellation_reason': '',
+        'updated_by': 0,
+        'modified_case': true,
+        'modified_by': 0,
+        'modify_reason': '',
+        'outlet_name': widget.outletname,
+        'items': items,
+        // Add other order details as needed
+      };
+
+      // Save the order to the API
+      await orderApiService.updateOrder(orderId, orderData);
+
+      setState(() {
+        orderItems.clear();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Order saved successfully!')),
+      );
+      //  Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving order: $e')),
+      );
+    }
+  }
+
+  bool _getDiscountable(String itemName) {
+    for (var category in _menuItems.keys) {
+      final List<Map<String, String>>? categoryItems = _menuItems[category];
+      if (categoryItems != null) {
+        // Check if the item exists in the current category
+        final item = categoryItems.firstWhere(
+          (menuItem) => menuItem['name'] == itemName,
+          orElse: () => <String, String>{}, // Return an empty map if not found
+        );
+        if (item.isNotEmpty) {
+          return item['discountable'] == 'true'; // Convert string to boolean
+        }
+      }
+    }
+    return false; // Default to false if item is not found
+  }
+
   void _showModifyDialog() {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Modify Order Items'),
+          title: Text('Modify Order Items'),
           content: StatefulBuilder(
             builder: (context, setState) {
-              return SizedBox(
+              return Container(
                 width: double.maxFinite,
                 child: ListView.builder(
                   shrinkWrap: true,
@@ -215,7 +332,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                       children: [
                         Expanded(child: Text(item['item_name'])),
                         IconButton(
-                          icon: const Icon(Icons.remove),
+                          icon: Icon(Icons.remove),
                           onPressed: () {
                             setState(() {
                               if (item['quantity'] > 1) {
@@ -228,7 +345,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                         ),
                         Text('${item['quantity']}'),
                         IconButton(
-                          icon: const Icon(Icons.add),
+                          icon: Icon(Icons.add),
                           onPressed: () {
                             setState(() {
                               item['quantity'] += 1;
@@ -236,7 +353,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                             });
                           },
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Text('₹${item['total']}'),
                       ],
                     );
@@ -250,14 +367,14 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Close'),
+              child: Text('Close'),
             ),
             ElevatedButton(
               onPressed: () {
                 setState(() {}); // Save changes to the main state
                 Navigator.of(context).pop();
               },
-              child: const Text('Save'),
+              child: Text('Save'),
             ),
           ],
         );
@@ -279,18 +396,18 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
         }
 
         return AlertDialog(
-          title: const Text('Add New Item'),
+          title: Text('Add New Item'),
           content: StatefulBuilder(builder: (context, setState) {
             return SingleChildScrollView(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 400),
-                child: SizedBox(
+                constraints: BoxConstraints(maxHeight: 400),
+                child: Container(
                   height: 400,
                   width: double.maxFinite,
                   child: ListView(
                     children: [
                       TextField(
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Search Items',
                           prefixIcon: Icon(Icons.search),
                         ),
@@ -306,9 +423,9 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                           });
                         },
                       ),
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10),
                       if (searchResults.isNotEmpty)
-                        SizedBox(
+                        Container(
                           height: 400,
                           width: double.maxFinite,
                           child: ListView.builder(
@@ -327,7 +444,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.remove),
+                                      icon: Icon(Icons.remove),
                                       onPressed: () {
                                         setState(() {
                                           if (itemQty > 1) {
@@ -346,7 +463,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                     ),
                                     Text(itemQty.toString()),
                                     IconButton(
-                                      icon: const Icon(Icons.add),
+                                      icon: Icon(Icons.add),
                                       onPressed: () {
                                         setState(() {
                                           itemQty++;
@@ -392,7 +509,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                           ),
                         ),
                       if (searchResults.isEmpty)
-                        SizedBox(
+                        Container(
                           height: 400,
                           width: double.maxFinite,
                           child: ListView.builder(
@@ -411,7 +528,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.remove),
+                                      icon: Icon(Icons.remove),
                                       onPressed: () {
                                         setState(() {
                                           if (itemQty > 1) {
@@ -429,7 +546,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                     ),
                                     Text(itemQty.toString()),
                                     IconButton(
-                                      icon: const Icon(Icons.add),
+                                      icon: Icon(Icons.add),
                                       onPressed: () {
                                         setState(() {
                                           itemQty++;
@@ -482,7 +599,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -492,7 +609,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                 });
                 Navigator.of(context).pop();
               },
-              child: const Text('Save'),
+              child: Text('Save'),
             ),
           ],
         );
@@ -500,242 +617,16 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
     );
   }
 
-  // void _showAddItemDialog() {
-  //   String? selectedCategory;
-  //   String? selectedItem;
-  //   int quantity = 1;
-  //   double rate = 0.0;
-  //   double tax = 0.0;
-  //   double amount = 0.0;
-  //   bool discountable = false;
-  //   List<String> itemNames = [];
-  //   List<Map<String, dynamic>> topItems = [];
-  //   List<Map<String, dynamic>> searchResults = [];
-
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return StatefulBuilder(
-  //         builder:
-  //             (BuildContext context, void Function(void Function()) setState) {
-  //           void _updateAmount() {
-  //             amount = (rate * quantity) + ((rate * quantity) * (tax / 100));
-  //           }
-
-  //           // Initialize the top 10 items
-  //           if (topItems.isEmpty) {
-  //             topItems =
-  //                 _menuItems.values.expand((items) => items).take(10).toList();
-  //           }
-
-  //           return AlertDialog(
-  //             title: Column(
-  //               children: [
-  //                 TextField(
-  //                   decoration: InputDecoration(
-  //                     hintText: 'Search Items',
-  //                     prefixIcon: Icon(Icons.search),
-  //                   ),
-  //                   onChanged: (value) {
-  //                     setState(() {
-  //                       searchResults = _menuItems.values
-  //                           .expand((items) => items)
-  //                           .where((item) => item['name']
-  //                               .toString()
-  //                               .toLowerCase()
-  //                               .contains(value.toLowerCase()))
-  //                           .toList();
-  //                     });
-  //                   },
-  //                 ),
-  //                 SizedBox(height: 10),
-  //                 Text('Add New Item'),
-  //               ],
-  //             ),
-  //             content: SingleChildScrollView(
-  //               child: ConstrainedBox(
-  //                 constraints:
-  //                     BoxConstraints(maxHeight: 400), // Set a max height
-  //                 child: Column(
-  //                   mainAxisSize: MainAxisSize.min,
-  //                   children: [
-  //                     // Search results list
-  //                     if (searchResults.isNotEmpty)
-  //                       Container(
-  //                         height: 400,
-  //                         width: double.maxFinite,
-  //                         child: ListView.builder(
-  //                           shrinkWrap: true, // Prevents infinite height
-  //                           physics: NeverScrollableScrollPhysics(),
-  //                           itemCount: searchResults.length,
-  //                           itemBuilder: (context, index) {
-  //                             var item = searchResults[index];
-  //                             int itemQty = itemMap.containsKey(item['name'])
-  //                                 ? itemMap[item['name']]!['quantity']
-  //                                 : 0;
-
-  //                             return ListTile(
-  //                               title: Text(item['name']),
-  //                               subtitle: Text(
-  //                                   'Rate: ₹${item['rate']} | Tax: ${item['tax']}%'),
-  //                               trailing: Row(
-  //                                 mainAxisSize: MainAxisSize.min,
-  //                                 children: [
-  //                                   IconButton(
-  //                                     icon: Icon(Icons.remove),
-  //                                     onPressed: () {
-  //                                       setState(() {
-  //                                         if (itemQty > 0) {
-  //                                           itemQty--;
-  //                                           itemMap[item['name']]!['quantity'] =
-  //                                               itemQty;
-  //                                           _updateAmount();
-  //                                         }
-  //                                       });
-  //                                     },
-  //                                   ),
-  //                                   Text(itemQty.toString()),
-  //                                   IconButton(
-  //                                     icon: Icon(Icons.add),
-  //                                     onPressed: () {
-  //                                       setState(() {
-  //                                         itemQty++;
-  //                                         itemMap[item['name']]!['quantity'] =
-  //                                             itemQty;
-  //                                         _updateAmount();
-  //                                       });
-  //                                     },
-  //                                   ),
-  //                                 ],
-  //                               ),
-  //                               onTap: () {
-  //                                 setState(() {
-  //                                   selectedItem = item['name'];
-  //                                   rate = double.tryParse(
-  //                                           item['rate'] ?? '0.0') ??
-  //                                       0.0;
-  //                                   tax =
-  //                                       double.tryParse(item['tax'] ?? '0.0') ??
-  //                                           0.0;
-  //                                   discountable =
-  //                                       item['discountable'] == 'true';
-  //                                   _updateAmount();
-  //                                 });
-  //                               },
-  //                             );
-  //                           },
-  //                         ),
-  //                       ),
-  //                     // Top items list
-  //                     if (searchResults.isEmpty)
-  //                       Container(
-  //                         height: 400,
-  //                         width: double.maxFinite,
-  //                         child: ListView.builder(
-  //                           shrinkWrap: true,
-  //                           physics: NeverScrollableScrollPhysics(),
-  //                           itemCount: topItems.length,
-  //                           itemBuilder: (context, index) {
-  //                             var item = topItems[index];
-  //                             int itemQty = itemMap.containsKey(item['name'])
-  //                                 ? itemMap[item['name']]!['quantity']
-  //                                 : 0;
-
-  //                             return ListTile(
-  //                               title: Text(item['name']),
-  //                               subtitle: Text(
-  //                                   'Rate: ₹${item['rate']} | Tax: ${item['tax']}%'),
-  //                               trailing: Row(
-  //                                 mainAxisSize: MainAxisSize.min,
-  //                                 children: [
-  //                                   IconButton(
-  //                                     icon: Icon(Icons.remove),
-  //                                     onPressed: () {
-  //                                       setState(() {
-  //                                         if (itemQty > 0) {
-  //                                           itemQty--;
-  //                                           itemMap[item['name']]!['quantity'] =
-  //                                               itemQty;
-  //                                           _updateAmount();
-  //                                         }
-  //                                       });
-  //                                     },
-  //                                   ),
-  //                                   Text(itemQty.toString()),
-  //                                   IconButton(
-  //                                     icon: Icon(Icons.add),
-  //                                     onPressed: () {
-  //                                       setState(() {
-  //                                         itemQty++;
-  //                                         itemMap[item['name']]!['quantity'] =
-  //                                             itemQty;
-  //                                         _updateAmount();
-  //                                       });
-  //                                     },
-  //                                   ),
-  //                                 ],
-  //                               ),
-  //                             );
-  //                           },
-  //                         ),
-  //                       ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ),
-  //             actions: [
-  //               TextButton(
-  //                 onPressed: () {
-  //                   Navigator.of(context).pop();
-  //                 },
-  //                 child: Text('Cancel'),
-  //               ),
-  //               ElevatedButton(
-  //                 onPressed: selectedItem != null
-  //                     ? () {
-  //                         setState(() {
-  //                           if (itemMap.containsKey(selectedItem)) {
-  //                             itemMap[selectedItem]!['quantity'] += quantity;
-  //                             itemMap[selectedItem]!['total'] =
-  //                                 itemMap[selectedItem]!['quantity'] * rate +
-  //                                     (itemMap[selectedItem]!['quantity'] *
-  //                                         rate *
-  //                                         (tax / 100));
-  //                           } else {
-  //                             itemMap[selectedItem!] = {
-  //                               'sno': itemMap.length + 1,
-  //                               'item_name': selectedItem,
-  //                               'quantity': quantity,
-  //                               'price': rate,
-  //                               'tax': tax,
-  //                               'total': amount,
-  //                               'discountable': discountable,
-  //                             };
-  //                           }
-  //                         });
-  //                         Navigator.of(context).pop();
-  //                       }
-  //                     : null,
-  //                 child: Text('Add Item'),
-  //               ),
-  //             ],
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Order List')),
+      appBar: AppBar(title: Text('Order List')),
       body: FutureBuilder<Map<String, List<Map<String, String>>>>(
           future: _menuItemsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               // Show a loading indicator while waiting for data
-              return const Center(child: CircularProgressIndicator());
+              return Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               // Handle error
               return Center(
@@ -776,21 +667,21 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                   Expanded(
                     flex: 2,
                     child: Container(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: EdgeInsets.all(16.0),
                       color: Colors.white,
                       child: selectedOrderId != null
                           ? Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Order Details',
                                   style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold),
                                 ),
-                                const SizedBox(height: 8),
-                                Text('Order No: $ordernumber'),
-                                const Divider(),
+                                SizedBox(height: 8),
+                                Text('Order No: ${ordernumber}'),
+                                Divider(),
                                 Expanded(
                                   child: ListView.builder(
                                     itemCount: itemMap.length,
@@ -806,7 +697,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                           children: [
                                             Text('₹${item["total"]}'),
                                             IconButton(
-                                              icon: const Icon(Icons.delete,
+                                              icon: Icon(Icons.delete,
                                                   color: Colors.red),
                                               onPressed: () {
                                                 // Confirm deletion with the user
@@ -815,8 +706,8 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                                   builder:
                                                       (BuildContext context) {
                                                     return AlertDialog(
-                                                      title: const Text(
-                                                          'Delete Item'),
+                                                      title:
+                                                          Text('Delete Item'),
                                                       content: Text(
                                                           'Are you sure you want to delete "${item["item_name"]}" from the order?'),
                                                       actions: [
@@ -826,8 +717,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                                                     context)
                                                                 .pop();
                                                           },
-                                                          child: const Text(
-                                                              'Cancel'),
+                                                          child: Text('Cancel'),
                                                         ),
                                                         TextButton(
                                                           onPressed: () {
@@ -835,13 +725,19 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                                             setState(() {
                                                               itemMap.remove(item[
                                                                   "item_name"]);
+                                                              orderItems.removeWhere((orderItem) =>
+                                                                  orderItem[
+                                                                          "item_name"]
+                                                                      .toString() ==
+                                                                  item["item_name"]
+                                                                      .toString());
                                                             });
-
+                                                            // _saveOrder(
+                                                            //     selectedOrderId
+                                                            //         .toString());
                                                             // Close the dialog
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-
+                                                            Navigator.pop(
+                                                                context);
                                                             // Show a confirmation message
                                                             ScaffoldMessenger
                                                                     .of(context)
@@ -852,7 +748,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                                               ),
                                                             );
                                                           },
-                                                          child: const Text(
+                                                          child: Text(
                                                             'Delete',
                                                             style: TextStyle(
                                                                 color:
@@ -871,20 +767,20 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                     },
                                   ),
                                 ),
-                                const Divider(),
+                                Divider(),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     ElevatedButton.icon(
                                       onPressed: _showModifyDialog,
-                                      icon: const Icon(Icons.edit),
-                                      label: const Text('Modify'),
+                                      icon: Icon(Icons.edit),
+                                      label: Text('Modify'),
                                     ),
                                     ElevatedButton.icon(
                                       onPressed: _showAddItemDialog,
-                                      icon: const Icon(Icons.add),
-                                      label: const Text('Add Item'),
+                                      icon: Icon(Icons.add),
+                                      label: Text('Add Item'),
                                     ),
                                     ElevatedButton.icon(
                                       onPressed: () {
@@ -893,22 +789,25 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                               order['order_id'].toString() ==
                                               selectedOrderId.toString());
                                           itemMap.remove(selectedOrderId);
+                                          orderApiService.deleteOrder(
+                                              selectedOrderId.toString());
                                           selectedOrderId = null;
                                         });
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
-                                          const SnackBar(
+                                          SnackBar(
                                             content: Text('Order deleted'),
                                           ),
                                         );
                                       },
-                                      icon: const Icon(Icons.delete),
-                                      label: const Text('Delete'),
+                                      icon: Icon(Icons.delete),
+                                      label: Text('Delete'),
                                       style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.red),
                                     ),
                                     ElevatedButton.icon(
                                       onPressed: () {
+                                        _saveOrder(selectedOrderId.toString());
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           SnackBar(
@@ -917,14 +816,14 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                           ),
                                         );
                                       },
-                                      icon: const Icon(Icons.print),
-                                      label: const Text('Print'),
+                                      icon: Icon(Icons.print),
+                                      label: Text('Save'),
                                     ),
                                   ],
                                 ),
                               ],
                             )
-                          : const Center(
+                          : Center(
                               child: Text(
                                 'Select an Order from the left panel',
                                 style: TextStyle(fontSize: 18),
@@ -935,7 +834,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                 ],
               );
             }
-            return const CircularProgressIndicator();
+            return CircularProgressIndicator();
           }),
     );
   }

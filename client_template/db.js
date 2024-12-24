@@ -1,15 +1,24 @@
 const { Pool } = require('pg');
-require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_DATABASE,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-});
+// Path to the configuration file
+const configPath = path.join(__dirname, '../global_server/config.json');
 
-module.exports = pool;
+// Function to dynamically load the client database configuration
+const getClientDbConfig = (subdomain) => {
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+  if (!config.clients[subdomain]) {
+    throw new Error(`No configuration found for subdomain: ${subdomain}`);
+  }
+
+  return new Pool(config.clients[subdomain]);
+};
+
+module.exports = getClientDbConfig;
+
+
 
 
 //start server//
@@ -22,18 +31,6 @@ module.exports = pool;
 // git push origin v1.0.0
 //npm install express
 //npm install -g nodemon
-//for new packages
-//npm install dotenv
-//for latest version
-//npx npm-check-updates -u
-//latest version
-//npm install
-//list
-//npm list
-//single packages
-//npm install express@latest
-
-
 
 
 
@@ -51,14 +48,6 @@ module.exports = pool;
 // git add .
 // git commit -m "order modify/bill modify"
 // git push origin main //
-
-// //global
-// git config --global user.email "your-email@example.com"
-// git config --global user.name "Your Name"
-
-// //this repository only
-// git config user.email "your-email@example.com"
-// git config user.name "Your Name"
 
 
 

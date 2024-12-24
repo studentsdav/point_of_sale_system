@@ -575,6 +575,9 @@
 // ADD COLUMN full_name VARCHAR(255);
 
 
+// -- Alter properties  table
+// ALTER TABLE properties 
+// ADD COLUMN status VARCHAR(50);
 // To build the trigger for the table_configurations table specifically, you can simplify the code to target just that table. Here's the PL/pgSQL script to create a trigger for the table_configurations table:
 
 // PL/pgSQL Script for table_configurations

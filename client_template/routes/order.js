@@ -196,72 +196,124 @@ router.post('/', async (req, res) => {
 
 
 // Update Order
-router.put('/:id', async (req, res) => {
-  const orderId = req.params.id;
+router.put('/:orderId', async (req, res) => {
+  const { orderId } = req.params;
   const {
-    order_number,
-    table_number,
-    waiter_name,
-    person_count,
-    remarks,
-    total_discount_value,
+    property_id,
+    tax_percentage,
+    tax_value,
     total_amount,
-    subtotal,
+    discount_percentage,
+    total_discount_value,
+    service_charge_per,
     total_service_charge,
     total_happy_hour_discount,
-    net_receivable,
-    cashier,
-    status,
-    order_type,
-    order_notes,
-    is_priority_order,
-    customer_feedback,
+    subtotal,
+    total,
     staff_id,
     order_cancelled_by,
     cancellation_reason,
+    updated_by,
+    modified_case,
     modified_by,
     modify_reason,
-    bill_payment_status,
-    partial_payment,
-    final_payment,
-    order_type_change,
-    refund_status,
-    refund_amount,
-    refund_date,
-    refund_processed_by,
-    refund_reason,
-    outlet_name
+    outlet_name,
+    items // Updated items array from request
   } = req.body;
 
+  const client = await pool.connect();
   try {
-    const result = await pool.query(
-      `UPDATE orders SET
-        order_number = $1, table_number = $2, waiter_name = $3, person_count = $4,
-        remarks = $5, total_discount_value = $6, total_amount = $7,
-        subtotal = $8, total_service_charge = $9, total_happy_hour_discount = $10,
-        net_receivable = $11, cashier = $12, status = $13, order_type = $14, order_notes = $15,
-        is_priority_order = $16, customer_feedback = $17, staff_id = $18, order_cancelled_by = $19,
-        cancellation_reason = $20, modified_by = $21, modify_reason = $22, bill_payment_status = $23,
-        partial_payment = $24, final_payment = $25, order_type_change = $26, refund_status = $27,
-        refund_amount = $28, refund_date = $29, refund_processed_by = $30, refund_reason = $31,
-        outlet_name = $32, updated_at = CURRENT_TIMESTAMP
-      WHERE order_id = $33 RETURNING order_id`,
-      [
-        order_number, table_number, waiter_name, person_count, remarks, total_discount_value, total_amount,
-        subtotal, total_service_charge, total_happy_hour_discount, net_receivable, cashier, status,
-        order_type, order_notes, is_priority_order, customer_feedback, staff_id, order_cancelled_by, cancellation_reason,
-        modified_by, modify_reason, bill_payment_status, partial_payment, final_payment, order_type_change, refund_status,
-        refund_amount, refund_date, refund_processed_by, refund_reason, outlet_name, orderId
-      ]
-    );
+    await client.query('BEGIN');
 
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Order not found' });
+    // Update the orders table with partial fields
+    const updateOrderQuery = `
+      UPDATE orders
+      SET 
+        property_id = $1,
+        tax_percentage = $2,
+        tax_value = $3,
+        total_amount = $4,
+        discount_percentage = $5,
+        total_discount_value = $6,
+        service_charge_per = $7,
+        total_service_charge = $8,
+        total_happy_hour_discount = $9,
+        subtotal = $10,
+        total = $11,
+        staff_id = $12,
+        order_cancelled_by = $13,
+        cancellation_reason = $14,
+        updated_by = $15,
+        modified_case = $16,
+        modified_by = $17,
+        modify_reason = $18,
+        outlet_name = $19
+      WHERE order_id = $20
+    `;
+
+    const orderUpdateParams = [
+      property_id,
+      tax_percentage,
+      tax_value,
+      total_amount,
+      discount_percentage,
+      total_discount_value,
+      service_charge_per,
+      total_service_charge,
+      total_happy_hour_discount,
+      subtotal,
+      total,
+      staff_id,
+      order_cancelled_by,
+      cancellation_reason,
+      updated_by,
+      modified_case,
+      modified_by,
+      modify_reason,
+      outlet_name,
+      orderId
+    ];
+
+    await client.query(updateOrderQuery, orderUpdateParams);
+
+    // Delete existing items for the order
+    await client.query('DELETE FROM order_items WHERE order_id = $1', [orderId]);
+
+    // Insert updated items for the order
+    if (items && Array.isArray(items)) {
+      for (let item of items) {
+        await client.query(
+          `INSERT INTO order_items (
+            order_id, item_name, item_category, item_quantity, item_rate, item_amount, item_tax,
+            total_item_value, outlet_name, property_id, taxRate, discountable
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+          )`,
+          [
+            orderId,
+            item.item_name,
+            item.item_category,
+            item.item_quantity,
+            item.item_rate,
+            item.item_amount,
+            item.item_tax,
+            item.total_item_value,
+            outlet_name,
+            property_id,
+            item.taxRate,
+            item.discountable
+          ]
+        );
+      }
     }
 
-    res.status(200).json({ message: 'Order updated successfully' });
+    await client.query('COMMIT');
+    res.status(200).json({ message: 'Order updated successfully', orderId });
   } catch (error) {
+    await client.query('ROLLBACK');
     res.status(500).json({ error: 'Failed to update order', details: error.message });
+  } finally {
+    client.release();
   }
 });
 
