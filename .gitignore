@@ -56,5 +56,7 @@ build/
 .vscode/
 .idea/
 .env
+client_template/.env
+global_server/.env
 /lib/posloginoff.dart
 /lib/posmainoff.dart

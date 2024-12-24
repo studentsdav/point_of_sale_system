@@ -1,5 +1,5 @@
 const express = require('express');
-const pool = require('./db'); // Database connection module
+const getClientDbConfig = require('./db'); // Dynamic database loader
 const http = require('http');
 const socketIo = require('socket.io');
 const userLoginRoute = require('./routes/userLogin');
@@ -27,7 +27,7 @@ const waitersRoutes = require('./routes/waiterMaster');
 const app = express();
 const server = http.createServer(app);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Initialize Socket.io with CORS configuration
 const io = socketIo(server, {
@@ -40,8 +40,25 @@ const io = socketIo(server, {
 // Middleware for JSON parsing
 app.use(express.json());
 
+// Middleware to dynamically configure the database
+app.use((req, res, next) => {
+  const subdomain = req.hostname.split('.')[0]; // Extract subdomain
+  try {
+    const pool = getClientDbConfig(subdomain); // Load database pool dynamically
+    req.db = pool;
+
+    // Initialize notifications for the client's database
+    listenForNotifications(pool);
+
+    next();
+  } catch (err) {
+    console.error(`Error loading database for subdomain: ${subdomain}`);
+    res.status(500).json({ success: false, message: 'Subdomain configuration not found.' });
+  }
+});
+
 // Listen for PostgreSQL notifications
-async function listenForNotifications() {
+async function listenForNotifications(pool) {
   try {
     const client = await pool.connect();
     await client.query('LISTEN table_update');
@@ -52,10 +69,9 @@ async function listenForNotifications() {
       io.emit('table_update', msg.payload);
     });
   } catch (err) {
-    console.error('Error listening for notifications:', err);
+    console.error('Error listening for notifications:', err.message);
   }
 }
-listenForNotifications();
 
 // Socket.io connection to handle real-time notifications
 io.on('connection', (socket) => {
@@ -92,7 +108,7 @@ app.use('/api/waiters', waitersRoutes);
 
 // Root route
 app.get('/', (req, res) => {
-  res.send('Welcome to the Point of Sale System API!');
+  res.send('Welcome to the Client Point of Sale System API!');
 });
 
 // Error handling middleware
@@ -102,6 +118,11 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
+// Start the server
 server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  const address = server.address();
+  const hostname = require('os').hostname();
+  const protocol = "http";
+
+  console.log(`Client server running at ${protocol}://${hostname}:${address.port}`);
 });

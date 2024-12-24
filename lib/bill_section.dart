@@ -4,6 +4,10 @@ import 'package:point_of_sale_system/backend/bill_service.dart';
 import 'package:point_of_sale_system/modifyOrder.dart';
 
 class BillPage extends StatefulWidget {
+  final propertyid;
+  final outletname;
+  const BillPage(
+      {super.key, required this.propertyid, required this.outletname});
   @override
   _BillPageState createState() => _BillPageState();
 }
@@ -51,6 +55,7 @@ class _BillPageState extends State<BillPage> {
           'outlet_name': bill['outlet_name'].toString(),
           'status': bill['status'].toString(),
           'bill_generated_at': bill['bill_generated_at'].toString(),
+          'country': 'India'
         };
       }).toList();
 
@@ -221,8 +226,6 @@ class _BillPageState extends State<BillPage> {
                       ),
                     ),
                   ),
-
-                  // Right Side: Bill Details
                   Expanded(
                     flex: 3,
                     child: _selectedBill == null
@@ -238,8 +241,9 @@ class _BillPageState extends State<BillPage> {
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     border: Border(
-                                        bottom: BorderSide(
-                                            width: 1, color: Colors.grey)),
+                                      bottom: BorderSide(
+                                          width: 1, color: Colors.grey),
+                                    ),
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
@@ -248,31 +252,41 @@ class _BillPageState extends State<BillPage> {
                                       Text(
                                         'Bill Number: ${_selectedBill!['bill_number']}',
                                         style: TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold),
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        'Guest Name: ${_selectedBill?['guest_name'] ?? 'N/A'}',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                       SizedBox(height: 8),
                                       Text(
                                         'Date & Time: ${_formatDate(_selectedBill!['bill_generated_at'])}',
                                         style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold),
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                       SizedBox(height: 8),
                                       Text(
                                         'Status: ${_selectedBill!['status']}',
                                         style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold),
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                      SizedBox(height: 8),
                                     ],
                                   ),
                                 ),
 
                                 SizedBox(height: 16),
-                                // Center: Items List
-                                // Center: Items List
+
+                                // Items List
                                 Expanded(
                                   child: isLoadingItems
                                       ? Center(
@@ -295,9 +309,10 @@ class _BillPageState extends State<BillPage> {
                                                     title: Text(
                                                         '${item['item_name']}'),
                                                     subtitle: Text(
-                                                        'Qty: ${item['quantity']} | Price: ${item['price'].toStringAsFixed(2)}'),
+                                                      'Qty: ${item['quantity']} | Price: ₹${item['price'].toStringAsFixed(2)}',
+                                                    ),
                                                     trailing: Text(
-                                                      'Total: ${item['total'].toStringAsFixed(2)}',
+                                                      'Total: ₹${item['total'].toStringAsFixed(2)}',
                                                       style: TextStyle(
                                                         fontWeight:
                                                             FontWeight.bold,
@@ -315,42 +330,142 @@ class _BillPageState extends State<BillPage> {
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     border: Border(
-                                        top: BorderSide(
-                                            width: 1, color: Colors.grey)),
+                                      top: BorderSide(
+                                          width: 1, color: Colors.grey),
+                                    ),
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text('Charges:',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
                                       Text(
-                                          'Total Amount: ${_selectedBill!['total_amount']}'),
-                                      Text(
-                                          'Tax Value: ${_selectedBill!['tax_value']}'),
-                                      Text(
-                                          'Discount Value: ${_selectedBill!['discount_value']}'),
-                                      // Text(
-                                      //     'Service Charge: ${_selectedBill!['service_charge_value']}'),
-                                      // Text(
-                                      //     'Packing Charge: ${_selectedBill!['packing_charge']}'),
-                                      // Text(
-                                      //     'Delivery Charge: ${_selectedBill!['delivery_charge']}'),
-                                      // Text(
-                                      //     'Other Charge: ${_selectedBill!['other_charge']}'),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        'Grand Total: ${_selectedBill!['amount']}',
+                                        'Charges:',
                                         style: TextStyle(
-                                            fontSize: 18,
                                             fontWeight: FontWeight.bold),
                                       ),
+                                      SizedBox(height: 8),
+
+                                      // Tax Details
+                                      if (_selectedBill?['country'] ==
+                                          'India') ...[
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('Tax (GST):'),
+                                            Text(
+                                              '${_selectedBill?['tax_percentage'] ?? '0'}% | ₹${_selectedBill?['tax_value'] ?? '0.00'}',
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 8),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('CGST:'),
+                                            Text(
+                                              '${_selectedBill?['cgst_percentage'] ?? '0'}% | ₹${_selectedBill?['cgst_value'] ?? '0.00'}',
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 8),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('SGST:'),
+                                            Text(
+                                              '${_selectedBill?['sgst_percentage'] ?? '0'}% | ₹${_selectedBill?['sgst_value'] ?? '0.00'}',
+                                            ),
+                                          ],
+                                        ),
+                                      ] else ...[
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('Tax:'),
+                                            Text(
+                                              '${_selectedBill?['tax_percentage'] ?? '0'}% | ₹${_selectedBill?['tax_value'] ?? '0.00'}',
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                      SizedBox(height: 8),
+
+                                      // Discount
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Discount:'),
+                                          Text(
+                                            '${_selectedBill?['discount_percentage'] ?? '0'}% | ₹${_selectedBill?['discount_value'] ?? '0.00'}',
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 8),
+
+                                      // Service Charge
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Service Charge:'),
+                                          Text(
+                                            '${_selectedBill?['service_charge_percentage'] ?? '0'}% | ₹${_selectedBill?['service_charge'] ?? '0.00'}',
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 8),
+
+                                      // Packing Charge
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Packing Charge:'),
+                                          Text(
+                                            '${_selectedBill?['packing_charge_percentage'] ?? '0'}% | ₹${_selectedBill?['packing_charge'] ?? '0.00'}',
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 8),
+
+                                      // Delivery Charge
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Delivery Charge:'),
+                                          Text(
+                                            '${_selectedBill?['delivery_charge_percentage'] ?? '0'}% | ₹${_selectedBill?['delivery_charge'] ?? '0.00'}',
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 8),
+
+                                      // Grand Total
+                                      Text(
+                                        'Grand Total: ₹${_selectedBill?['amount'] ?? '0.00'}',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                       SizedBox(height: 16),
+
+                                      // Action Buttons
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceEvenly,
                                         children: [
+                                          ElevatedButton(
+                                            onPressed: () =>
+                                                _modifyBillDialog(),
+                                            child: Text('Edit'),
+                                          ),
                                           ElevatedButton(
                                             onPressed: () => _editBill(),
                                             child: Text('Print'),
@@ -358,11 +473,6 @@ class _BillPageState extends State<BillPage> {
                                           ElevatedButton(
                                             onPressed: () => _cancelBill(),
                                             child: Text('Cancel'),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () =>
-                                                _modifyBill(orders),
-                                            child: Text('Modify'),
                                           ),
                                         ],
                                       ),
@@ -377,6 +487,118 @@ class _BillPageState extends State<BillPage> {
               }
               return CircularProgressIndicator();
             }));
+  }
+
+  void _modifyBillDialog() {
+    // Controllers for text fields
+    final TextEditingController guestNameController = TextEditingController();
+    final TextEditingController discountController = TextEditingController();
+    final TextEditingController serviceChargeController =
+        TextEditingController();
+    final TextEditingController packingChargeController =
+        TextEditingController();
+    final TextEditingController deliveryChargeController =
+        TextEditingController();
+
+    // Pre-fill the fields with current values
+    guestNameController.text = _selectedBill?['guest_name'] ?? '';
+    discountController.text = _selectedBill?['discount_value'] ?? '0';
+    serviceChargeController.text = _selectedBill?['service_charge'] ?? '0';
+    packingChargeController.text = _selectedBill?['packing_charge'] ?? '0';
+    deliveryChargeController.text = _selectedBill?['delivery_charge'] ?? '0';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Modify Bill'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: guestNameController,
+                  decoration: InputDecoration(labelText: 'Guest Name'),
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: discountController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: 'Discount Amount'),
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: serviceChargeController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: 'Service Charge'),
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: packingChargeController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: 'Packing Charge'),
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: deliveryChargeController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: 'Delivery Charge'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _saveModifiedBill(
+                  guestNameController.text,
+                  double.tryParse(discountController.text) ?? 0,
+                  double.tryParse(serviceChargeController.text) ?? 0,
+                  double.tryParse(packingChargeController.text) ?? 0,
+                  double.tryParse(deliveryChargeController.text) ?? 0,
+                );
+                Navigator.of(context).pop();
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _saveModifiedBill(String guestName, double discount,
+      double serviceCharge, double packingCharge, double deliveryCharge) {
+    setState(() {
+      // Update the selected bill fields
+      _selectedBill?['guest_name'] = guestName;
+      _selectedBill?['discount_value'] = discount.toStringAsFixed(2);
+      _selectedBill?['service_charge'] = serviceCharge.toStringAsFixed(2);
+      _selectedBill?['packing_charge'] = packingCharge.toStringAsFixed(2);
+      _selectedBill?['delivery_charge'] = deliveryCharge.toStringAsFixed(2);
+
+      // Recalculate the total
+      double subtotal = double.tryParse(_selectedBill?['subtotal'] ?? '0') ?? 0;
+      double taxValue =
+          double.tryParse(_selectedBill?['tax_value'] ?? '0') ?? 0;
+      double grandTotal = subtotal +
+          taxValue +
+          serviceCharge +
+          packingCharge +
+          deliveryCharge -
+          discount;
+      _selectedBill?['amount'] = grandTotal.toStringAsFixed(2);
+    });
+
+    // Optionally, save changes to the backend
+    // Example:
+    // billApiService.updateBill(_selectedBill!['bill_id'], _selectedBill!);
   }
 
   // Method to select a bill
@@ -404,6 +626,8 @@ class _BillPageState extends State<BillPage> {
         context,
         MaterialPageRoute(
             builder: (context) => ModifyOrderList(
+                  outletname: widget.outletname,
+                  propertyid: widget.propertyid,
                   orders: orders,
                 )));
   }

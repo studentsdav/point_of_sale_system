@@ -3,8 +3,14 @@ import 'package:point_of_sale_system/backend/OrderApiService.dart';
 import 'package:point_of_sale_system/backend/items_api_service.dart';
 
 class ModifyOrderList extends StatefulWidget {
+  final propertyid;
+  final outletname;
   final orders;
-  const ModifyOrderList({super.key, required this.orders});
+  const ModifyOrderList(
+      {super.key,
+      required this.orders,
+      required this.propertyid,
+      required this.outletname});
   @override
   _ModifyOrderListState createState() => _ModifyOrderListState();
 }
@@ -52,7 +58,6 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
   bool isLoadingOrders = true;
   bool isLoadingItems = false;
   String _selectedCategory = "Main Course";
-  Map<String, int> _orderItems = {};
   Map<String, Map<String, dynamic>> itemMap = {};
   String ordernumber = "";
 
@@ -190,6 +195,121 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
     } catch (e) {
       throw Exception("Error fetching items: $e");
     }
+  }
+
+  void _saveOrder(String orderId) async {
+    try {
+      double totalAmount = 0;
+      double totaltax = 0;
+      double totalamt = 0;
+      List<Map<String, dynamic>> items = [];
+
+      // Helper function to find category from _menuItems
+      String _findCategory(String itemName) {
+        for (var category in _menuItems.keys) {
+          if (_menuItems[category]?.any((item) => item['name'] == itemName) ??
+              false) {
+            return category;
+          }
+        }
+        return 'Uncategorized'; // Default if no category is found
+      }
+
+      // Iterate over orderItems
+      for (var item in orderItems) {
+        final String itemName = item['item_name'] ?? 'Unknown';
+
+        // Get the category for the current item
+        final String category = _findCategory(itemName);
+
+        // Parse item details
+        final int quantity =
+            int.tryParse(item['quantity']?.toString() ?? '0') ?? 0;
+        final double rate =
+            double.tryParse(item['price']?.toString() ?? '0.0') ?? 0.0;
+        final double taxRate =
+            double.tryParse(item['tax']?.toString() ?? '0.0') ?? 0.0;
+        final bool discountable = _getDiscountable(itemName);
+        final double amount = rate * quantity;
+        final double tax = (amount * taxRate) / 100;
+
+        // Prepare item data
+        items.add({
+          'item_name': itemName,
+          'item_category': category,
+          'item_quantity': quantity,
+          'item_rate': rate,
+          'item_amount': amount,
+          'taxRate': taxRate,
+          'item_tax': tax,
+          'total_item_value': amount + tax,
+          'discountable': discountable,
+        });
+
+        // Calculate total amount (including tax)
+        totalAmount += (amount + tax);
+        totaltax += tax;
+        totalamt += amount;
+      }
+
+      // Prepare the main order data
+      final orderData = {
+        'property_id': widget.propertyid,
+        'tax_percentage': 0,
+        'tax_value': totaltax,
+        'total_amount': totalAmount,
+        'discount_percentage': 0,
+        'total_discount_value': 0,
+        'service_charge_per': 0,
+        'total_service_charge': 0,
+        'total_happy_hour_discount': 0,
+        'subtotal': totalamt,
+        'total': totalAmount,
+        'staff_id': 0,
+        'order_cancelled_by': 0,
+        'cancellation_reason': '',
+        'updated_by': 0,
+        'modified_case': true,
+        'modified_by': 0,
+        'modify_reason': '',
+        'outlet_name': widget.outletname,
+        'items': items,
+        // Add other order details as needed
+      };
+
+      // Save the order to the API
+      await orderApiService.updateOrder(orderId, orderData);
+
+      setState(() {
+        orderItems.clear();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Order saved successfully!')),
+      );
+      //  Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving order: $e')),
+      );
+    }
+  }
+
+  bool _getDiscountable(String itemName) {
+    for (var category in _menuItems.keys) {
+      final List<Map<String, String>>? categoryItems = _menuItems[category];
+      if (categoryItems != null) {
+        // Check if the item exists in the current category
+        final item = categoryItems.firstWhere(
+          (menuItem) => menuItem['name'] == itemName,
+          orElse: () => <String, String>{}, // Return an empty map if not found
+        );
+        if (item.isNotEmpty) {
+          return item['discountable'] == 'true'; // Convert string to boolean
+        }
+      }
+    }
+    return false; // Default to false if item is not found
   }
 
   void _showModifyDialog() {
@@ -497,232 +617,6 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
     );
   }
 
-  // void _showAddItemDialog() {
-  //   String? selectedCategory;
-  //   String? selectedItem;
-  //   int quantity = 1;
-  //   double rate = 0.0;
-  //   double tax = 0.0;
-  //   double amount = 0.0;
-  //   bool discountable = false;
-  //   List<String> itemNames = [];
-  //   List<Map<String, dynamic>> topItems = [];
-  //   List<Map<String, dynamic>> searchResults = [];
-
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return StatefulBuilder(
-  //         builder:
-  //             (BuildContext context, void Function(void Function()) setState) {
-  //           void _updateAmount() {
-  //             amount = (rate * quantity) + ((rate * quantity) * (tax / 100));
-  //           }
-
-  //           // Initialize the top 10 items
-  //           if (topItems.isEmpty) {
-  //             topItems =
-  //                 _menuItems.values.expand((items) => items).take(10).toList();
-  //           }
-
-  //           return AlertDialog(
-  //             title: Column(
-  //               children: [
-  //                 TextField(
-  //                   decoration: InputDecoration(
-  //                     hintText: 'Search Items',
-  //                     prefixIcon: Icon(Icons.search),
-  //                   ),
-  //                   onChanged: (value) {
-  //                     setState(() {
-  //                       searchResults = _menuItems.values
-  //                           .expand((items) => items)
-  //                           .where((item) => item['name']
-  //                               .toString()
-  //                               .toLowerCase()
-  //                               .contains(value.toLowerCase()))
-  //                           .toList();
-  //                     });
-  //                   },
-  //                 ),
-  //                 SizedBox(height: 10),
-  //                 Text('Add New Item'),
-  //               ],
-  //             ),
-  //             content: SingleChildScrollView(
-  //               child: ConstrainedBox(
-  //                 constraints:
-  //                     BoxConstraints(maxHeight: 400), // Set a max height
-  //                 child: Column(
-  //                   mainAxisSize: MainAxisSize.min,
-  //                   children: [
-  //                     // Search results list
-  //                     if (searchResults.isNotEmpty)
-  //                       Container(
-  //                         height: 400,
-  //                         width: double.maxFinite,
-  //                         child: ListView.builder(
-  //                           shrinkWrap: true, // Prevents infinite height
-  //                           physics: NeverScrollableScrollPhysics(),
-  //                           itemCount: searchResults.length,
-  //                           itemBuilder: (context, index) {
-  //                             var item = searchResults[index];
-  //                             int itemQty = itemMap.containsKey(item['name'])
-  //                                 ? itemMap[item['name']]!['quantity']
-  //                                 : 0;
-
-  //                             return ListTile(
-  //                               title: Text(item['name']),
-  //                               subtitle: Text(
-  //                                   'Rate: ₹${item['rate']} | Tax: ${item['tax']}%'),
-  //                               trailing: Row(
-  //                                 mainAxisSize: MainAxisSize.min,
-  //                                 children: [
-  //                                   IconButton(
-  //                                     icon: Icon(Icons.remove),
-  //                                     onPressed: () {
-  //                                       setState(() {
-  //                                         if (itemQty > 0) {
-  //                                           itemQty--;
-  //                                           itemMap[item['name']]!['quantity'] =
-  //                                               itemQty;
-  //                                           _updateAmount();
-  //                                         }
-  //                                       });
-  //                                     },
-  //                                   ),
-  //                                   Text(itemQty.toString()),
-  //                                   IconButton(
-  //                                     icon: Icon(Icons.add),
-  //                                     onPressed: () {
-  //                                       setState(() {
-  //                                         itemQty++;
-  //                                         itemMap[item['name']]!['quantity'] =
-  //                                             itemQty;
-  //                                         _updateAmount();
-  //                                       });
-  //                                     },
-  //                                   ),
-  //                                 ],
-  //                               ),
-  //                               onTap: () {
-  //                                 setState(() {
-  //                                   selectedItem = item['name'];
-  //                                   rate = double.tryParse(
-  //                                           item['rate'] ?? '0.0') ??
-  //                                       0.0;
-  //                                   tax =
-  //                                       double.tryParse(item['tax'] ?? '0.0') ??
-  //                                           0.0;
-  //                                   discountable =
-  //                                       item['discountable'] == 'true';
-  //                                   _updateAmount();
-  //                                 });
-  //                               },
-  //                             );
-  //                           },
-  //                         ),
-  //                       ),
-  //                     // Top items list
-  //                     if (searchResults.isEmpty)
-  //                       Container(
-  //                         height: 400,
-  //                         width: double.maxFinite,
-  //                         child: ListView.builder(
-  //                           shrinkWrap: true,
-  //                           physics: NeverScrollableScrollPhysics(),
-  //                           itemCount: topItems.length,
-  //                           itemBuilder: (context, index) {
-  //                             var item = topItems[index];
-  //                             int itemQty = itemMap.containsKey(item['name'])
-  //                                 ? itemMap[item['name']]!['quantity']
-  //                                 : 0;
-
-  //                             return ListTile(
-  //                               title: Text(item['name']),
-  //                               subtitle: Text(
-  //                                   'Rate: ₹${item['rate']} | Tax: ${item['tax']}%'),
-  //                               trailing: Row(
-  //                                 mainAxisSize: MainAxisSize.min,
-  //                                 children: [
-  //                                   IconButton(
-  //                                     icon: Icon(Icons.remove),
-  //                                     onPressed: () {
-  //                                       setState(() {
-  //                                         if (itemQty > 0) {
-  //                                           itemQty--;
-  //                                           itemMap[item['name']]!['quantity'] =
-  //                                               itemQty;
-  //                                           _updateAmount();
-  //                                         }
-  //                                       });
-  //                                     },
-  //                                   ),
-  //                                   Text(itemQty.toString()),
-  //                                   IconButton(
-  //                                     icon: Icon(Icons.add),
-  //                                     onPressed: () {
-  //                                       setState(() {
-  //                                         itemQty++;
-  //                                         itemMap[item['name']]!['quantity'] =
-  //                                             itemQty;
-  //                                         _updateAmount();
-  //                                       });
-  //                                     },
-  //                                   ),
-  //                                 ],
-  //                               ),
-  //                             );
-  //                           },
-  //                         ),
-  //                       ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ),
-  //             actions: [
-  //               TextButton(
-  //                 onPressed: () {
-  //                   Navigator.of(context).pop();
-  //                 },
-  //                 child: Text('Cancel'),
-  //               ),
-  //               ElevatedButton(
-  //                 onPressed: selectedItem != null
-  //                     ? () {
-  //                         setState(() {
-  //                           if (itemMap.containsKey(selectedItem)) {
-  //                             itemMap[selectedItem]!['quantity'] += quantity;
-  //                             itemMap[selectedItem]!['total'] =
-  //                                 itemMap[selectedItem]!['quantity'] * rate +
-  //                                     (itemMap[selectedItem]!['quantity'] *
-  //                                         rate *
-  //                                         (tax / 100));
-  //                           } else {
-  //                             itemMap[selectedItem!] = {
-  //                               'sno': itemMap.length + 1,
-  //                               'item_name': selectedItem,
-  //                               'quantity': quantity,
-  //                               'price': rate,
-  //                               'tax': tax,
-  //                               'total': amount,
-  //                               'discountable': discountable,
-  //                             };
-  //                           }
-  //                         });
-  //                         Navigator.of(context).pop();
-  //                       }
-  //                     : null,
-  //                 child: Text('Add Item'),
-  //               ),
-  //             ],
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -831,13 +725,19 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                                             setState(() {
                                                               itemMap.remove(item[
                                                                   "item_name"]);
+                                                              orderItems.removeWhere((orderItem) =>
+                                                                  orderItem[
+                                                                          "item_name"]
+                                                                      .toString() ==
+                                                                  item["item_name"]
+                                                                      .toString());
                                                             });
-
+                                                            // _saveOrder(
+                                                            //     selectedOrderId
+                                                            //         .toString());
                                                             // Close the dialog
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-
+                                                            Navigator.pop(
+                                                                context);
                                                             // Show a confirmation message
                                                             ScaffoldMessenger
                                                                     .of(context)
@@ -889,6 +789,8 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                               order['order_id'].toString() ==
                                               selectedOrderId.toString());
                                           itemMap.remove(selectedOrderId);
+                                          orderApiService.deleteOrder(
+                                              selectedOrderId.toString());
                                           selectedOrderId = null;
                                         });
                                         ScaffoldMessenger.of(context)
@@ -905,6 +807,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                     ),
                                     ElevatedButton.icon(
                                       onPressed: () {
+                                        _saveOrder(selectedOrderId.toString());
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           SnackBar(
@@ -914,7 +817,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                         );
                                       },
                                       icon: Icon(Icons.print),
-                                      label: Text('Print'),
+                                      label: Text('Save'),
                                     ),
                                   ],
                                 ),

@@ -3,6 +3,10 @@ import 'package:point_of_sale_system/backend/OrderApiService.dart';
 import 'package:point_of_sale_system/modifyOrder.dart';
 
 class OrderList extends StatefulWidget {
+  final propertyid;
+  final outletname;
+  const OrderList(
+      {super.key, required this.propertyid, required this.outletname});
   @override
   _OrderListState createState() => _OrderListState();
 }
@@ -245,58 +249,58 @@ class _OrderListState extends State<OrderList> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text('₹${item["total"]}'),
-                                    IconButton(
-                                      icon:
-                                          Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () {
-                                        // Confirm deletion with the user
-                                        showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title: Text('Delete Item'),
-                                              content: Text(
-                                                  'Are you sure you want to delete "${item["item_name"]}" from the order?'),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: Text('Cancel'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    // Remove the item from the map
-                                                    setState(() {
-                                                      itemMap.remove(
-                                                          item["item_name"]);
-                                                    });
+                                    // IconButton(
+                                    //   icon:
+                                    //       Icon(Icons.delete, color: Colors.red),
+                                    //   onPressed: () {
+                                    //     // Confirm deletion with the user
+                                    //     showDialog(
+                                    //       context: context,
+                                    //       builder: (BuildContext context) {
+                                    //         return AlertDialog(
+                                    //           title: Text('Delete Item'),
+                                    //           content: Text(
+                                    //               'Are you sure you want to delete "${item["item_name"]}" from the order?'),
+                                    //           actions: [
+                                    //             TextButton(
+                                    //               onPressed: () {
+                                    //                 Navigator.of(context).pop();
+                                    //               },
+                                    //               child: Text('Cancel'),
+                                    //             ),
+                                    //             TextButton(
+                                    //               onPressed: () {
+                                    //                 // Remove the item from the map
+                                    //                 setState(() {
+                                    //                   itemMap.remove(
+                                    //                       item["item_name"]);
+                                    //                 });
 
-                                                    // Close the dialog
-                                                    Navigator.of(context).pop();
+                                    //                 // Close the dialog
+                                    //                 Navigator.of(context).pop();
 
-                                                    // Show a confirmation message
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .showSnackBar(
-                                                      SnackBar(
-                                                        content: Text(
-                                                            '"${item["item_name"]}" has been removed from the order.'),
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Text(
-                                                    'Delete',
-                                                    style: TextStyle(
-                                                        color: Colors.red),
-                                                  ),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
+                                    //                 // Show a confirmation message
+                                    //                 ScaffoldMessenger.of(
+                                    //                         context)
+                                    //                     .showSnackBar(
+                                    //                   SnackBar(
+                                    //                     content: Text(
+                                    //                         '"${item["item_name"]}" has been removed from the order.'),
+                                    //                   ),
+                                    //                 );
+                                    //               },
+                                    //               child: Text(
+                                    //                 'Delete',
+                                    //                 style: TextStyle(
+                                    //                     color: Colors.red),
+                                    //               ),
+                                    //             ),
+                                    //           ],
+                                    //         );
+                                    //       },
+                                    //     );
+                                    //   },
+                                    // ),
                                   ],
                                 ),
                               );
@@ -365,6 +369,8 @@ class _OrderListState extends State<OrderList> {
         context,
         MaterialPageRoute(
             builder: (context) => ModifyOrderList(
+                  outletname: widget.outletname,
+                  propertyid: widget.propertyid,
                   orders: orders,
                 )));
   }
