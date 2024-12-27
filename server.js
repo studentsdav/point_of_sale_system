@@ -27,7 +27,7 @@ const waitersRoutes = require('./routes/waiterMaster');
 const app = express();
 const server = http.createServer(app);
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Initialize Socket.io with CORS configuration
 const io = socketIo(server, {
@@ -40,38 +40,18 @@ const io = socketIo(server, {
 // Middleware for JSON parsing
 app.use(express.json());
 
-// Middleware to dynamically configure the database
-app.use((req, res, next) => {
-  const subdomain = req.hostname.split('.')[0]; // Extract subdomain
-  try {
-    const pool = getClientDbConfig(subdomain); // Load database pool dynamically
-    req.db = pool;
-
-    // Initialize notifications for the client's database
-    listenForNotifications(pool);
-
-    next();
-  } catch (err) {
-    console.error(`Error loading database for subdomain: ${subdomain}`);
-    res.status(500).json({ success: false, message: 'Subdomain configuration not found.' });
-  }
-});
-
 // Listen for PostgreSQL notifications
-async function listenForNotifications(pool) {
+async function listenForNotifications() {
   try {
     const client = await pool.connect();
     await client.query('LISTEN table_update');
-    console.log('Listening for table updates...');
-
-    client.on('notification', (msg) => {
-      console.log('Notification received:', msg);
-      io.emit('table_update', msg.payload);
-    });
+    io.emit('table_update', msg.payload);
   } catch (err) {
     console.error('Error listening for notifications:', err.message);
   }
 }
+
+listenForNotifications();
 
 // Socket.io connection to handle real-time notifications
 io.on('connection', (socket) => {

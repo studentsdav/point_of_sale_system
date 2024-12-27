@@ -22,7 +22,6 @@ class OutletApiService {
     }
   }
 
-
   Future<List<dynamic>> fetchOutletConfigurations() async {
     final response = await http.get(Uri.parse('$baseUrl/outlets'));
     if (response.statusCode == 200) {
@@ -45,7 +44,8 @@ class OutletApiService {
     }
   }
 
-  Future<void> updateOutletConfiguration(String id, Map<String, dynamic> data) async {
+  Future<void> updateOutletConfiguration(
+      String id, Map<String, dynamic> data) async {
     final response = await http.put(
       Uri.parse('$baseUrl/outlet/$id'),
       headers: {'Content-Type': 'application/json'},

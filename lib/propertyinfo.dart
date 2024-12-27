@@ -41,33 +41,56 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
 
   Future<void> _loadData() async {
     try {
-      final fetchedProperties = await apiService.getAllProperties();
-      final fetchedOutletConfigurations =
-          await apiService.fetchOutletConfigurations();
+      // Fetch properties
+      List<Map<String, dynamic>> propertiesList = [];
+      try {
+        final fetchedProperties = await apiService.getAllProperties();
+        if (fetchedProperties.isNotEmpty) {
+          propertiesList = List<Map<String, dynamic>>.from(fetchedProperties);
+          await _saveDataToHiveproperty(propertiesList);
+          print('Properties saved successfully.');
+        }
+      } catch (error) {
+        print('Error fetching properties: $error');
+      }
 
-      // If your data is in JSON format, you should decode it first:
-      // List<dynamic> jsonData = json.decode(fetchedProperties);
-      List<Map<String, dynamic>> propertiesList =
-          List<Map<String, dynamic>>.from(fetchedProperties);
-      List<Map<String, dynamic>> outletConfigurationsList =
-          List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
+      // Fetch outlet configurations
+      List<Map<String, dynamic>> outletConfigurationsList = [];
+      try {
+        final fetchedOutletConfigurations =
+            await apiService.fetchOutletConfigurations();
+        if (fetchedOutletConfigurations.isNotEmpty) {
+          outletConfigurationsList =
+              List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
+          await _saveDataToHiveoutlet(outletConfigurationsList);
+          print('Outlet configurations saved successfully.');
+        }
+      } catch (error) {
+        print('Error fetching outlet configurations: $error');
+      }
 
-      // Save data to SharedPreferences
-      await _saveDataToHive(propertiesList, outletConfigurationsList);
-
-      setState(() {
-        properties = propertiesList;
-        outletConfigurations = outletConfigurationsList;
-        isLoading = false;
-      });
+      // Log final status
+      if (propertiesList.isEmpty && outletConfigurationsList.isEmpty) {
+        print('No data fetched for both properties and outlet configurations.');
+      }
     } catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load data: $error')),
-      );
+      print('Unexpected error: $error');
     }
+  }
+
+  Future<void> _saveDataToHiveproperty(
+    List<Map<String, dynamic>> properties,
+  ) async {
+    var box = await Hive.openBox('appData');
+    // Store the data in a Hive box
+    await box.put('properties', properties);
+  }
+
+  Future<void> _saveDataToHiveoutlet(
+      List<Map<String, dynamic>> outletConfigurations) async {
+    var box = await Hive.openBox('appData');
+
+    await box.put('outletConfigurations', outletConfigurations);
   }
 
   // Method to save fetched data into SharedPreferences
@@ -76,14 +99,14 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
     Hive.init(appDocumentDir.path);
   }
 
-  Future<void> _saveDataToHive(List<Map<String, dynamic>> properties,
-      List<Map<String, dynamic>> outletConfigurations) async {
-    var box = await Hive.openBox('appData');
+  // Future<void> _saveDataToHive(List<Map<String, dynamic>> properties,
+  //     List<Map<String, dynamic>> outletConfigurations) async {
+  //   var box = await Hive.openBox('appData');
 
-    // Store the data in a Hive box
-    await box.put('properties', properties);
-    await box.put('outletConfigurations', outletConfigurations);
-  }
+  //   // Store the data in a Hive box
+  //   await box.put('properties', properties);
+  //   await box.put('outletConfigurations', outletConfigurations);
+  // }
 
   // Fetch properties from the service
   Future<void> _fetchProperties() async {

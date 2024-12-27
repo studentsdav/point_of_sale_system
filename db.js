@@ -1,22 +1,16 @@
 const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
+require('dotenv').config();
 
-// Path to the configuration file
-const configPath = path.join(__dirname, '../global_server/config.json');
+const pool = new Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_DATABASE,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+});
 
-// Function to dynamically load the client database configuration
-const getClientDbConfig = (subdomain) => {
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+module.exports = pool;
 
-  if (!config.clients[subdomain]) {
-    throw new Error(`No configuration found for subdomain: ${subdomain}`);
-  }
-
-  return new Pool(config.clients[subdomain]);
-};
-
-module.exports = getClientDbConfig;
 
 
 

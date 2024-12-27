@@ -71,7 +71,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
       });
     } catch (e) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to load tables')));
+          .showSnackBar(const SnackBar(content: Text('Failed to load tables')));
     }
   }
 
@@ -226,13 +226,13 @@ class _POSMainScreenState extends State<POSMainScreen> {
       drawer: Drawer(
         child: Column(
           children: [
-            UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(color: Colors.teal),
+            const UserAccountsDrawerHeader(
+              decoration: BoxDecoration(color: Colors.teal),
               accountName:
-                  const Text('User A', style: TextStyle(color: Colors.white)),
-              accountEmail: const Text('Session Started: 4h ago',
+                  Text('User A', style: TextStyle(color: Colors.white)),
+              accountEmail: Text('Session Started: 4h ago',
                   style: TextStyle(color: Colors.white70)),
-              currentAccountPicture: const CircleAvatar(
+              currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
                 child: Icon(Icons.person, color: Colors.teal),
               ),
@@ -240,9 +240,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
             Expanded(
               child: ListView(
                 children: [
-                  _buildDrawerItem(Icons.home, 'Home', () {
-                    _propertyService.approve(widget.propertyid.toString());
-                  }),
+                  _buildDrawerItem(Icons.home, 'Home', () {}),
                   _buildDrawerItem(Icons.book, 'Reservation', () {
                     Navigator.push(
                         context,
@@ -284,7 +282,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => ItemMasterScreen()));
+                            builder: (context) => const ItemMasterScreen()));
                   }),
                   _buildDrawerItem(Icons.person_add, 'Add Guest', () {
                     Navigator.push(
@@ -550,7 +548,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                                                 OutlineInputBorder(),
                                                           ),
                                                           items: [
-                                                            selectedFromTable!
+                                                            selectedFromTable
                                                           ] // Current table
                                                               .map((table) =>
                                                                   DropdownMenuItem(
@@ -613,7 +611,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                                               null) {
                                                             tableapiService
                                                                 .tableshift(
-                                                              selectedFromTable!,
+                                                              selectedFromTable,
                                                               selectedToTable!,
                                                               'Pending',
                                                             );
@@ -622,7 +620,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                                             ScaffoldMessenger
                                                                     .of(context)
                                                                 .showSnackBar(
-                                                              SnackBar(
+                                                              const SnackBar(
                                                                   content: Text(
                                                                       'Table shifted successfully!')),
                                                             );
@@ -630,7 +628,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                                             ScaffoldMessenger
                                                                     .of(context)
                                                                 .showSnackBar(
-                                                              SnackBar(
+                                                              const SnackBar(
                                                                   content: Text(
                                                                       'Please select a valid table to shift to')),
                                                             );

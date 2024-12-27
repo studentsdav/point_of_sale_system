@@ -568,7 +568,7 @@
 // ALTER TABLE outlet_configurations
 // ALTER COLUMN property_id SET DATA TYPE VARCHAR(50),
 // ALTER COLUMN property_id SET NOT NULL,
-// --ADD CONSTRAINT unique_property_id UNIQUE (property_id);
+// add FOREIGN KEY (property_id) REFERENCES properties(property_id) ON DELETE CASCADE  
 
 // -- Alter user_login table
 // ALTER TABLE user_login

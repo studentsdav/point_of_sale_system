@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class PropertyService {
-  final String _baseUrl = "http://192.168.137.175:3000/api";
+  final String _baseUrl = "http://localhost:3000/api";
 
   Future<Map<String, dynamic>> createProperty({
     required int propertyId,
@@ -63,22 +63,6 @@ class PropertyService {
       }
     } catch (error) {
       throw Exception("Error fetching properties: $error");
-    }
-  }
-
-  Future<Map<String, dynamic>> approve(String propertyId) async {
-    final url = Uri.parse("$_baseUrl/review/approve/$propertyId");
-
-    try {
-      final response = await http.post(url);
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception("Failed to approve property: ${response.body}");
-      }
-    } catch (error) {
-      throw Exception("Error during property approval: $error");
     }
   }
 

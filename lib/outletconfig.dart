@@ -4,6 +4,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:point_of_sale_system/backend/outlet_service.dart';
 
 class OutletConfigurationForm extends StatefulWidget {
+  const OutletConfigurationForm({super.key});
+
   @override
   _OutletConfigurationFormState createState() =>
       _OutletConfigurationFormState();
@@ -33,31 +35,72 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
 
   Future<void> _loadDatanew() async {
     try {
-      final fetchedProperties = await apiService.getAllProperties();
-      final fetchedOutletConfigurations =
-          await apiService.fetchOutletConfigurations();
+      List<Map<String, dynamic>> propertiesList = [];
+      List<Map<String, dynamic>> outletConfigurationsList = [];
 
-      // If your data is in JSON format, you should decode it first:
-      // List<dynamic> jsonData = json.decode(fetchedProperties);
-      List<Map<String, dynamic>> propertiesList =
-          List<Map<String, dynamic>>.from(fetchedProperties);
-      List<Map<String, dynamic>> outletConfigurationsList =
-          List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
+      // Fetch properties
+      try {
+        final fetchedProperties = await apiService.getAllProperties();
+        if (fetchedProperties.isNotEmpty) {
+          propertiesList = List<Map<String, dynamic>>.from(fetchedProperties);
+          print('Properties fetched successfully.');
+        } else {
+          print('No properties found.');
+        }
+      } catch (error) {
+        print('Failed to fetch properties: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch properties: $error')),
+        );
+      }
 
-      // Save data to SharedPreferences
-      await _saveDataToHive(propertiesList, outletConfigurationsList);
+      // Fetch outlet configurations
+      try {
+        final fetchedOutletConfigurations =
+            await apiService.fetchOutletConfigurations();
+        if (fetchedOutletConfigurations.isNotEmpty) {
+          outletConfigurationsList =
+              List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
+          print('Outlet configurations fetched successfully.');
+        } else {
+          print('No outlet configurations found.');
+        }
+      } catch (error) {
+        print('Failed to fetch outlet configurations: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to fetch outlet configurations: $error')),
+        );
+      }
 
+      // Save data if available
+      try {
+        if (propertiesList.isNotEmpty || outletConfigurationsList.isNotEmpty) {
+          await _saveDataToHive(propertiesList, outletConfigurationsList);
+          print('Data saved successfully.');
+        } else {
+          print('No data to save.');
+        }
+      } catch (error) {
+        print('Failed to save data: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save data: $error')),
+        );
+      }
+
+      // Update state
       setState(() {
         properties = propertiesList;
         outletConfigurations = outletConfigurationsList;
         isLoading = false;
       });
     } catch (error) {
+      // Handle unexpected errors
       setState(() {
         isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load data: $error')),
+        SnackBar(content: Text('Unexpected error: $error')),
       );
     }
   }
@@ -79,22 +122,65 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
 
   Future<void> _loadData() async {
     try {
-      final fetchedProperties = await apiService.getAllProperties();
-      final fetchedOutletConfigurations =
-          await apiService.fetchOutletConfigurations();
-      setState(() {
-        properties = fetchedProperties;
-        outletConfigurations = fetchedOutletConfigurations;
-        isLoading = false;
-      });
+      // Fetch properties
+      List<Map<String, dynamic>> propertiesList = [];
+      try {
+        final fetchedProperties = await apiService.getAllProperties();
+        if (fetchedProperties.isNotEmpty) {
+          propertiesList = List<Map<String, dynamic>>.from(fetchedProperties);
+          setState(() {
+            properties = propertiesList;
+            isLoading = false;
+          });
+          await _saveDataToHiveproperty(propertiesList);
+          print('Properties saved successfully.');
+        }
+      } catch (error) {
+        print('Error fetching properties: $error');
+      }
+
+      // Fetch outlet configurations
+      List<Map<String, dynamic>> outletConfigurationsList = [];
+      try {
+        final fetchedOutletConfigurations =
+            await apiService.fetchOutletConfigurations();
+        if (fetchedOutletConfigurations.isNotEmpty) {
+          outletConfigurationsList =
+              List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
+          setState(() {
+            outletConfigurations = outletConfigurationsList;
+            isLoading = false;
+          });
+
+          await _saveDataToHiveoutlet(outletConfigurationsList);
+          print('Outlet configurations saved successfully.');
+        }
+      } catch (error) {
+        print('Error fetching outlet configurations: $error');
+      }
+
+      // Log final status
+      if (propertiesList.isEmpty && outletConfigurationsList.isEmpty) {
+        print('No data fetched for both properties and outlet configurations.');
+      }
     } catch (error) {
-      setState(() {
-        isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load data: $error')),
-      );
+      print('Unexpected error: $error');
     }
+  }
+
+  Future<void> _saveDataToHiveproperty(
+    List<Map<String, dynamic>> properties,
+  ) async {
+    var box = await Hive.openBox('appData');
+    // Store the data in a Hive box
+    await box.put('properties', properties);
+  }
+
+  Future<void> _saveDataToHiveoutlet(
+      List<Map<String, dynamic>> outletConfigurations) async {
+    var box = await Hive.openBox('appData');
+
+    await box.put('outletConfigurations', outletConfigurations);
   }
 
   void _saveOutletConfiguration() async {
@@ -121,7 +207,8 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
           _loadData();
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Outlet configuration saved successfully!')),
+          const SnackBar(
+              content: Text('Outlet configuration saved successfully!')),
         );
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -131,7 +218,7 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill all required fields.')),
+        const SnackBar(content: Text('Please fill all required fields.')),
       );
     }
   }
@@ -146,7 +233,7 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
     try {
       await apiService.deleteOutletConfiguration(id);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Outlet deleted successfully!')),
+        const SnackBar(content: Text('Outlet deleted successfully!')),
       );
       _loadData();
     } catch (e) {
@@ -159,17 +246,17 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Outlet Configuration')),
+      appBar: AppBar(title: const Text('Outlet Configuration')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Property Selection (Mandatory First)
-            Text('Select Property',
+            const Text('Select Property',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             DropdownButtonFormField<String>(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Select Property',
                 icon: Icon(Icons.home),
               ),
@@ -186,14 +273,14 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
             const SizedBox(height: 20),
 
             // Outlet Configuration Form
-            Text('Enter Outlet Details',
+            const Text('Enter Outlet Details',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Form(
               key: _formKey,
               child: Column(
                 children: [
                   TextFormField(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Outlet Name',
                       icon: Icon(Icons.store),
                     ),
@@ -202,7 +289,7 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                     onSaved: (value) => outletName = value!,
                   ),
                   TextFormField(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Address',
                       icon: Icon(Icons.location_on),
                     ),
@@ -211,7 +298,7 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                     onSaved: (value) => address = value!,
                   ),
                   TextFormField(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Contact Number',
                       icon: Icon(Icons.phone),
                     ),
@@ -221,7 +308,7 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                     onSaved: (value) => contactNumber = value!,
                   ),
                   TextFormField(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Manager Name',
                       icon: Icon(Icons.person),
                     ),
@@ -230,7 +317,7 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                     onSaved: (value) => managerName = value!,
                   ),
                   TextFormField(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Opening Hours',
                       icon: Icon(Icons.access_time),
                     ),
@@ -241,7 +328,7 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: _saveOutletConfiguration,
-                    child: Text('Save Outlet Configuration'),
+                    child: const Text('Save Outlet Configuration'),
                   ),
                 ],
               ),
@@ -250,13 +337,13 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
 
             // Show Outlet Profile (if saved)
             isLoading
-                ? Center(child: CircularProgressIndicator())
+                ? const Center(child: CircularProgressIndicator())
                 : SingleChildScrollView(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Outlet Profiles',
                           style: TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold),
@@ -278,22 +365,22 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                                   children: [
                                     Text(
                                       'Outlet Profile: ${config['property_id']}',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold),
                                     ),
-                                    Spacer(),
+                                    const Spacer(),
                                     IconButton(
-                                      icon:
-                                          Icon(Icons.edit, color: Colors.green),
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.green),
                                       onPressed: () {
                                         // Implement edit functionality here
                                         _editOutletConfiguration();
                                       },
                                     ),
                                     IconButton(
-                                      icon:
-                                          Icon(Icons.delete, color: Colors.red),
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
                                       onPressed: () {
                                         // Implement delete functionality here
                                         deleteOutletConfiguration(
@@ -305,11 +392,11 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                                 const SizedBox(height: 10),
                                 Row(
                                   children: [
-                                    Icon(Icons.store,
+                                    const Icon(Icons.store,
                                         size: 30, color: Colors.blue),
                                     const SizedBox(width: 10),
                                     Text(config['outlet_name'],
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold)),
                                   ],
@@ -317,49 +404,49 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
                                 const SizedBox(height: 10),
                                 Row(
                                   children: [
-                                    Icon(Icons.location_on,
+                                    const Icon(Icons.location_on,
                                         size: 30, color: Colors.blue),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(config['address'],
-                                          style: TextStyle(fontSize: 14)),
+                                          style: const TextStyle(fontSize: 14)),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 10),
                                 Row(
                                   children: [
-                                    Icon(Icons.phone,
+                                    const Icon(Icons.phone,
                                         size: 30, color: Colors.blue),
                                     const SizedBox(width: 10),
                                     Text(config['contact_number'],
-                                        style: TextStyle(fontSize: 14)),
+                                        style: const TextStyle(fontSize: 14)),
                                   ],
                                 ),
                                 const SizedBox(height: 10),
                                 Row(
                                   children: [
-                                    Icon(Icons.person,
+                                    const Icon(Icons.person,
                                         size: 30, color: Colors.blue),
                                     const SizedBox(width: 10),
                                     Text(config['manager_name'],
-                                        style: TextStyle(fontSize: 14)),
+                                        style: const TextStyle(fontSize: 14)),
                                   ],
                                 ),
                                 const SizedBox(height: 10),
                                 Row(
                                   children: [
-                                    Icon(Icons.access_time,
+                                    const Icon(Icons.access_time,
                                         size: 30, color: Colors.blue),
                                     const SizedBox(width: 10),
                                     Text(config['opening_hours'],
-                                        style: TextStyle(fontSize: 14)),
+                                        style: const TextStyle(fontSize: 14)),
                                   ],
                                 ),
                               ],
                             ),
                           );
-                        }).toList(),
+                        }),
                       ],
                     ),
                   ),
@@ -371,5 +458,5 @@ class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
 }
 
 void main() {
-  runApp(MaterialApp(home: OutletConfigurationForm()));
+  runApp(const MaterialApp(home: OutletConfigurationForm()));
 }

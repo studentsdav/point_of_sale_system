@@ -20,30 +20,55 @@ Future<void> _initializeHive() async {
 
 Future<void> _loadData() async {
   try {
-    final fetchedProperties = await apiService.getAllProperties();
-    final fetchedOutletConfigurations =
-        await apiService.fetchOutletConfigurations();
+    // Fetch properties
+    List<Map<String, dynamic>> propertiesList = [];
+    try {
+      final fetchedProperties = await apiService.getAllProperties();
+      if (fetchedProperties.isNotEmpty) {
+        propertiesList = List<Map<String, dynamic>>.from(fetchedProperties);
+        await _saveDataToHiveproperty(propertiesList);
+        print('Properties saved successfully.');
+      }
+    } catch (error) {
+      print('Error fetching properties: $error');
+    }
 
-    // If your data is in JSON format, you should decode it first:
-    // List<dynamic> jsonData = json.decode(fetchedProperties);
-    List<Map<String, dynamic>> propertiesList =
-        List<Map<String, dynamic>>.from(fetchedProperties);
-    List<Map<String, dynamic>> outletConfigurationsList =
-        List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
+    // Fetch outlet configurations
+    List<Map<String, dynamic>> outletConfigurationsList = [];
+    try {
+      final fetchedOutletConfigurations =
+          await apiService.fetchOutletConfigurations();
+      if (fetchedOutletConfigurations.isNotEmpty) {
+        outletConfigurationsList =
+            List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
+        await _saveDataToHiveoutlet(outletConfigurationsList);
+        print('Outlet configurations saved successfully.');
+      }
+    } catch (error) {
+      print('Error fetching outlet configurations: $error');
+    }
 
-    // Save data to SharedPreferences
-    await _saveDataToHive(propertiesList, outletConfigurationsList);
+    // Log final status
+    if (propertiesList.isEmpty && outletConfigurationsList.isEmpty) {
+      print('No data fetched for both properties and outlet configurations.');
+    }
   } catch (error) {
-    print(error);
+    print('Unexpected error: $error');
   }
 }
 
-Future<void> _saveDataToHive(List<Map<String, dynamic>> properties,
+Future<void> _saveDataToHiveproperty(
+  List<Map<String, dynamic>> properties,
+) async {
+  var box = await Hive.openBox('appData');
+  // Store the data in a Hive box
+  await box.put('properties', properties);
+}
+
+Future<void> _saveDataToHiveoutlet(
     List<Map<String, dynamic>> outletConfigurations) async {
   var box = await Hive.openBox('appData');
 
-  // Store the data in a Hive box
-  await box.put('properties', properties);
   await box.put('outletConfigurations', outletConfigurations);
 }
 
@@ -65,27 +90,34 @@ class _MyAppState extends State {
 
   // Load data from Hive
   Future<void> _loadDataFromHive() async {
-    var box = await Hive.openBox('appData');
+    try {
+      var box = await Hive.openBox('appData');
 
-    // Retrieve the data
-    var properties = box.get('properties');
-    var outletConfigurations = box.get('outletConfigurations');
+      // Retrieve the data
+      var properties = box.get('properties');
+      var outletConfigurations = box.get('outletConfigurations');
 
-    // Check if outletConfigurations is not null
-    if (outletConfigurations != null) {
-      // Extract the outlet names into the outlets list
+      // Check for null in both properties and outletConfigurations
+      properties ??= [];
+      outletConfigurations ??= [];
+
+      // Extract outlet names (with null checks)
       List<String> outletslist = [];
-      for (var outlet in outletConfigurations) {
-        if (outlet['outlet_name'] != null) {
-          outletslist.add(outlet['outlet_name'].toString());
+      if (outletConfigurations != null) {
+        for (var outlet in outletConfigurations) {
+          if (outlet['outlet_name'] != null) {
+            outletslist.add(outlet['outlet_name'].toString());
+          }
         }
       }
 
       setState(() {
-        this.properties = properties ?? [];
-        this.outletConfigurations = outletConfigurations ?? [];
+        this.properties = properties;
+        this.outletConfigurations = outletConfigurations;
         outlets = outletslist; // Set the outlets list
       });
+    } catch (error) {
+      print(error);
     }
   }
 
