@@ -40,7 +40,7 @@ module.exports = pool;
 // for update///
 // git pull origin main
 // git add .
-// git commit -m "order modify/bill modify"
+// git commit -m "notification issue resolved"
 // git push origin main //
 
 

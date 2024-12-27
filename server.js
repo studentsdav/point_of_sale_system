@@ -1,5 +1,5 @@
 const express = require('express');
-const getClientDbConfig = require('./db'); // Dynamic database loader
+const pool = require('./db'); // Dynamic database loader
 const http = require('http');
 const socketIo = require('socket.io');
 const userLoginRoute = require('./routes/userLogin');
@@ -25,7 +25,7 @@ const taxconfigRoutes = require('./routes/tax_config');
 const userpermissionsRoutes = require('./routes/user_permissions');
 const waitersRoutes = require('./routes/waiterMaster');
 const app = express();
-const server = http.createServer(app);
+const server = require('http').createServer(app);
 
 const PORT = process.env.PORT || 3000;
 
@@ -37,6 +37,7 @@ const io = socketIo(server, {
   },
 });
 
+
 // Middleware for JSON parsing
 app.use(express.json());
 
@@ -44,8 +45,18 @@ app.use(express.json());
 async function listenForNotifications() {
   try {
     const client = await pool.connect();
-    await client.query('LISTEN table_update');
-    io.emit('table_update', msg.payload);
+    await client.query('LISTEN table_update'); // Ensure this matches your DB trigger name
+
+    // Handle PostgreSQL notifications
+    client.on('notification', (msg) => {
+      const payload = msg.payload;
+      console.log('Received notification:', payload);
+
+      // Emit the notification to all connected clients
+      io.emit('table_update', payload);
+    });
+
+    console.log('Listening for PostgreSQL notifications...');
   } catch (err) {
     console.error('Error listening for notifications:', err.message);
   }
@@ -56,10 +67,12 @@ listenForNotifications();
 // Socket.io connection to handle real-time notifications
 io.on('connection', (socket) => {
   console.log('A client connected');
+
   socket.on('disconnect', () => {
     console.log('Client disconnected');
   });
 });
+
 
 // Use the routes
 app.use('/api/users', userLoginRoute);
