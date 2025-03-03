@@ -51,6 +51,34 @@ class BillingApiService {
     }
   }
 
+  Future<Map<String, dynamic>> getDashboardStatus() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/bill/dashboard/today-stats'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 404) {
+      throw Exception('No bill found for the specified table and status');
+    } else {
+      throw Exception('Failed to fetch bill: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getAdminDashboardStatus() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/bill/dashboard/summary'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 404) {
+      throw Exception('No bill found for the specified table and status');
+    } else {
+      throw Exception('Failed to fetch bill: ${response.body}');
+    }
+  }
+
   // 2. PUT: Edit Bill (Update Bill Details)
   Future<Map<String, dynamic>> editBill(
       String orderId, Map<String, dynamic> billData) async {

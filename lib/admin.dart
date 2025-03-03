@@ -1,8 +1,9 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/ItemMaster.dart';
+import 'package:point_of_sale_system/backend/bill_service.dart';
 import 'package:point_of_sale_system/billconfig.dart';
 import 'package:point_of_sale_system/category.dart';
 import 'package:point_of_sale_system/dateconfig.dart';
@@ -25,6 +26,8 @@ import 'package:point_of_sale_system/waiters.dart';
 enum ChartType { line, bar, pie }
 
 class AdminDashboard extends StatefulWidget {
+  const AdminDashboard({super.key});
+
   @override
   _AdminDashboard createState() => _AdminDashboard();
 }
@@ -33,24 +36,52 @@ class _AdminDashboard extends State {
   String selectedOutlet = 'Restaurant';
   final List<String> outlets = ['BISTRO', 'SUNSET'];
   ChartType chartType = ChartType.line;
-
+  final BillingApiService billingApiService =
+      BillingApiService(baseUrl: 'http://localhost:3000/api');
+  String today_growth = "0";
+  String today_sales = "0";
+  String this_week_sales = "0";
+  String weekly_growth = "0";
+  String this_month_sales = "0";
+  String monthly_growth = "0";
+  String this_year_sales = "0";
+  String yearly_growth = "0";
+  List categoriesData = [
+    {"item_category": "Electronics", "total_sales": 500000},
+  ];
   @override
   void initState() {
-    ;
     super.initState();
+    getTodayStatus();
+  }
+
+  Future<void> getTodayStatus() async {
+    final todayDashboard = await billingApiService.getAdminDashboardStatus();
+
+    today_sales = todayDashboard['sales']['today_sales'].toString();
+    today_growth = todayDashboard['sales']['today_growth'].toString();
+    this_week_sales = todayDashboard['sales']['this_week_sales'].toString();
+    weekly_growth = todayDashboard['sales']['weekly_growth'].toString();
+    this_month_sales = todayDashboard['sales']['this_month_sales'].toString();
+    monthly_growth = todayDashboard['sales']['monthly_growth'].toString();
+    this_year_sales = todayDashboard['sales']['this_year_sales'].toString();
+    yearly_growth = todayDashboard['sales']['yearly_growth'].toString();
+    categoriesData = todayDashboard['top_categories'];
+
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Admin Dashboard'),
+        title: const Text('Admin Dashboard'),
         actions: [
           IconButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              icon: Icon(Icons.arrow_forward_ios))
+              icon: const Icon(Icons.arrow_forward_ios))
         ],
       ),
       drawer: buildDrawer(context),
@@ -58,8 +89,8 @@ class _AdminDashboard extends State {
         onPressed: () {
           // Action for floating button
         },
-        child: Icon(Icons.add),
         tooltip: 'Add New Item',
+        child: const Icon(Icons.add),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -97,23 +128,23 @@ class _AdminDashboard extends State {
                 ),
 
                 buildUserProfileSection(),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 buildActiveTimeSection(),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 buildSalesCards(),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 buildTopCategorySales(),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
                   child: buildChartTypeSelection(),
                 ),
                 buildGrowthSection('Daily Sales Growth',
                     generateDailySalesData(7), 'Day'), // Added Daily Graph
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 buildGrowthSection('Weekly Sales Growth',
                     generateWeeklySalesData(4), 'Week'), // Added Weekly Graph
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 // Chart type selection
 
                 buildGrowthSection(
@@ -132,7 +163,7 @@ class _AdminDashboard extends State {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Select Chart Type:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
@@ -149,7 +180,7 @@ class _AdminDashboard extends State {
                   });
                 },
               ),
-              Text('Line Chart'),
+              const Text('Line Chart'),
               Radio<ChartType>(
                 value: ChartType.bar,
                 groupValue: chartType,
@@ -159,7 +190,7 @@ class _AdminDashboard extends State {
                   });
                 },
               ),
-              Text('Bar Chart'),
+              const Text('Bar Chart'),
               Radio<ChartType>(
                 value: ChartType.pie,
                 groupValue: chartType,
@@ -169,7 +200,7 @@ class _AdminDashboard extends State {
                   });
                 },
               ),
-              Text('Pie Chart'),
+              const Text('Pie Chart'),
             ],
           ),
         ),
@@ -182,7 +213,7 @@ class _AdminDashboard extends State {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          UserAccountsDrawerHeader(
+          const UserAccountsDrawerHeader(
             accountName: Text('Admin Name'),
             accountEmail: Text('admin@example.com'),
             currentAccountPicture: CircleAvatar(
@@ -235,8 +266,10 @@ class _AdminDashboard extends State {
               MaterialPageRoute(
                   builder: (context) => SoftwareDateConfigForm()));
         } else if (title == 'Password Reset') {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => ForgotPasswordScreen()));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const ForgotPasswordScreen()));
         } else if (title == 'Happy Hour Config') {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => HappyHourConfigForm()));
@@ -244,8 +277,10 @@ class _AdminDashboard extends State {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => StockEntryForm()));
         } else if (title == 'Item Master') {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => ItemMasterScreen()));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const ItemMasterScreen()));
         } else if (title == 'KOT Config') {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => KOTConfigForm()));
@@ -253,7 +288,7 @@ class _AdminDashboard extends State {
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => OutletConfigurationForm()));
+                  builder: (context) => const OutletConfigurationForm()));
         } else if (title == 'Printer Config') {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => PrinterConfigForm()));
@@ -261,10 +296,12 @@ class _AdminDashboard extends State {
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => PropertyConfigurationForm()));
+                  builder: (context) => const PropertyConfigurationForm()));
         } else if (title == 'Reservation') {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => ReservationFormScreen()));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const ReservationFormScreen()));
         } else if (title == 'Service Charge Config') {
           Navigator.push(
               context,
@@ -290,8 +327,10 @@ class _AdminDashboard extends State {
               MaterialPageRoute(
                   builder: (context) => GuestRegistrationScreen()));
         } else if (title == 'Reservation') {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => ReservationFormScreen()));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const ReservationFormScreen()));
         }
       },
     );
@@ -301,8 +340,8 @@ class _AdminDashboard extends State {
     return Card(
       elevation: 0,
       color: Colors.blueAccent.withOpacity(0.1),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
+      child: const Padding(
+        padding: EdgeInsets.all(12.0),
         child: Row(
           children: [
             CircleAvatar(
@@ -337,24 +376,24 @@ class _AdminDashboard extends State {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Active Time Details',
+          const Text('Active Time Details',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Table(
-            columnWidths: {
+            columnWidths: const {
               0: FlexColumnWidth(2),
               1: FlexColumnWidth(3),
             },
-            children: [
+            children: const [
               TableRow(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: EdgeInsets.all(8.0),
                     child: Text('User',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: EdgeInsets.all(8.0),
                     child: Text('Active Time'),
                   ),
                 ],
@@ -362,11 +401,11 @@ class _AdminDashboard extends State {
               TableRow(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: EdgeInsets.all(8.0),
                     child: Text('Admin'),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: EdgeInsets.all(8.0),
                     child: Text('2 hours ago'),
                   ),
                 ],
@@ -385,33 +424,37 @@ class _AdminDashboard extends State {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-                child: buildSalesCard('Today\'s Sale', Icons.today, '₹ 12,000',
-                    Colors.green, '15%')),
-            SizedBox(width: 16),
+                child: buildSalesCard('Today\'s Sale', Icons.today,
+                    '₹ $today_sales', Colors.green, today_growth)),
+            const SizedBox(width: 16),
             Expanded(
                 child: buildSalesCard('Weekly Sale', Icons.date_range,
-                    '₹ 50,000', Colors.blue, '10%')),
-            SizedBox(width: 16),
+                    '₹ $this_week_sales', Colors.blue, weekly_growth)),
+            const SizedBox(width: 16),
             Expanded(
                 child: buildSalesCard('Monthly Sale', Icons.calendar_today,
-                    '₹ 1,20,000', Colors.orange, '8%')),
+                    '₹ $this_month_sales', Colors.orange, monthly_growth)),
           ],
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
                 child: buildSalesCard('Yearly Sale', Icons.assessment,
-                    '₹ 5,00,000', Colors.teal, '20%')),
-            SizedBox(width: 16),
+                    '₹ $this_year_sales', Colors.teal, yearly_growth)),
+            const SizedBox(width: 16),
+            Expanded(
+                child: buildSalesCard('YoY Growth', Icons.trending_up,
+                    yearly_growth, Colors.green, yearly_growth)),
+            const SizedBox(width: 16),
             Expanded(
                 child: buildSalesCard(
-                    'YoY Growth', Icons.trending_up, '15%', Colors.red, '10%')),
-            SizedBox(width: 16),
-            Expanded(
-                child: buildSalesCard('Top 5 Categories', Icons.category,
-                    'Electronics, Groceries, etc.', Colors.teal, '')),
+                    'Top 5 Categories',
+                    Icons.category,
+                    '${categoriesData[0]['item_category']}, etc.',
+                    Colors.teal,
+                    '')),
           ],
         ),
       ],
@@ -430,17 +473,18 @@ class _AdminDashboard extends State {
       child: Row(
         children: [
           Icon(icon, size: 40, color: color),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              SizedBox(height: 4),
-              Text(value, style: TextStyle(fontSize: 14)),
-              if (growthPercentage.isNotEmpty) SizedBox(height: 4),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text(value, style: const TextStyle(fontSize: 14)),
+              if (growthPercentage.isNotEmpty) const SizedBox(height: 4),
               Text('Growth: $growthPercentage',
-                  style: TextStyle(fontSize: 12, color: Colors.black45)),
+                  style: const TextStyle(fontSize: 12, color: Colors.black)),
             ],
           ),
         ],
@@ -452,18 +496,19 @@ class _AdminDashboard extends State {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Top Category Sales for This Month',
+        const Text('Top Category Sales for This Month',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         SizedBox(
           height: 200,
           child: ListView.builder(
-            itemCount: 5,
+            itemCount: categoriesData.length,
             itemBuilder: (context, index) {
               return ListTile(
-                title: Text('Category $index'),
-                subtitle: Text('Sales: ₹ 25,000'),
-                trailing: Icon(Icons.trending_up),
+                title: Text('${categoriesData[index]['item_category']}'),
+                subtitle:
+                    Text('Sales: ₹ ${categoriesData[index]['total_sales']}'),
+                trailing: const Icon(Icons.trending_up),
               );
             },
           ),
@@ -477,12 +522,12 @@ class _AdminDashboard extends State {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        SizedBox(height: 8),
-        Container(
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        SizedBox(
           height: 250,
           child: AnimatedSwitcher(
-            duration: Duration(seconds: 1),
+            duration: const Duration(seconds: 1),
             child: _buildChart(
                 data, period), // Pass data to the respective chart renderer
           ),
@@ -496,8 +541,8 @@ class _AdminDashboard extends State {
       case ChartType.line:
         return LineChart(
           LineChartData(
-            gridData: FlGridData(show: true),
-            titlesData: FlTitlesData(
+            gridData: const FlGridData(show: true),
+            titlesData: const FlTitlesData(
               leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
               topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
               bottomTitles:
@@ -517,8 +562,8 @@ class _AdminDashboard extends State {
       case ChartType.bar:
         return BarChart(
           BarChartData(
-            gridData: FlGridData(show: true),
-            titlesData: FlTitlesData(
+            gridData: const FlGridData(show: true),
+            titlesData: const FlTitlesData(
               leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
               topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
               bottomTitles: AxisTitles(
@@ -547,7 +592,7 @@ class _AdminDashboard extends State {
               return PieChartSectionData(
                 value: spot.y,
                 color: Colors.blue,
-                title: '${spot.y.toStringAsFixed(0)}',
+                title: spot.y.toStringAsFixed(0),
               );
             }).toList(),
           ),
