@@ -48,6 +48,7 @@ dependencies:
   pdf_image_renderer: ^0.7.0
   csv: ^6.0.0
   printing: ^5.14.2
+  syncfusion_flutter_charts: ^28.2.7
 
 dev_dependencies:
   flutter_test:
