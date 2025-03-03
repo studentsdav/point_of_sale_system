@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 class BillingApiService {
@@ -22,6 +23,16 @@ class BillingApiService {
     }
   }
 
+  Future<Map<String, dynamic>> getMaxBillNo(outlet) async {
+    final response =
+        await http.get(Uri.parse('$baseUrl/bill/next-bill-number/$outlet'));
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch configurations');
+    }
+  }
+
   // Fetch orders by table number and status
   Future<List<Map<String, dynamic>>> getbillByStatus(String status) async {
     final response = await http.get(
@@ -33,6 +44,34 @@ class BillingApiService {
           json.decode(response.body); // Assuming response is an array
       return List<Map<String, dynamic>>.from(
           billJson); // Convert to List<Map<String, dynamic>>
+    } else if (response.statusCode == 404) {
+      throw Exception('No bill found for the specified table and status');
+    } else {
+      throw Exception('Failed to fetch bill: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getDashboardStatus() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/bill/dashboard/today-stats'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 404) {
+      throw Exception('No bill found for the specified table and status');
+    } else {
+      throw Exception('Failed to fetch bill: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getAdminDashboardStatus() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/bill/dashboard/summary'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
     } else if (response.statusCode == 404) {
       throw Exception('No bill found for the specified table and status');
     } else {

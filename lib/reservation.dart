@@ -4,6 +4,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:point_of_sale_system/backend/reservationApiService.dart';
 
 class ReservationFormScreen extends StatefulWidget {
+  const ReservationFormScreen({super.key});
+
   @override
   _ReservationFormScreenState createState() => _ReservationFormScreenState();
 }
@@ -62,7 +64,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
       setState(() {
         this.properties = properties ?? [];
         this.outletConfigurations = outletConfigurations ?? [];
-        this.outlets = outletslist; // Set the outlets list
+        outlets = outletslist; // Set the outlets list
       });
     }
   }
@@ -71,7 +73,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
     var box = await Hive.openBox('appData');
     var tables = box.get('tables');
     // Check if the tables and outletConfigurations are not null
-    if (tables != null && outletConfigurations != null) {
+    if (tables != null) {
       List<String> filteredTables = [];
 
       // Loop through the tables and find those matching the selected outlet
@@ -135,7 +137,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
 
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reservation successfully made!')),
+          const SnackBar(content: Text('Reservation successfully made!')),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -178,7 +180,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
 
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reservation updated successfully!')),
+          const SnackBar(content: Text('Reservation updated successfully!')),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -188,9 +190,9 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
     }
   }
 
-  Future<void> _deleteReservation(String reservationId) async {
+  Future<void> _deleteReservation(String reservationId, String tableno) async {
     try {
-      await reservationApiService.deleteReservation(reservationId);
+      await reservationApiService.deleteReservation(reservationId, tableno);
 
       // Remove the reservation from the local list
       setState(() {
@@ -199,7 +201,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
 
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Reservation deleted successfully!')),
+        const SnackBar(content: Text('Reservation deleted successfully!')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -253,7 +255,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
 
     // Show cancel message
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Reservation Cancelled')),
+      const SnackBar(content: Text('Reservation Cancelled')),
     );
   }
 
@@ -261,7 +263,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Reservation Form'),
+        title: const Text('Reservation Form'),
       ),
       body: Row(
         children: [
@@ -272,11 +274,13 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Container(
                 width: double.infinity,
-                constraints: BoxConstraints(maxWidth: 600),
+                constraints: const BoxConstraints(maxWidth: 600),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 10)],
+                  boxShadow: const [
+                    BoxShadow(color: Colors.grey, blurRadius: 10)
+                  ],
                 ),
                 child: Form(
                   key: _formKey,
@@ -286,7 +290,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: DropdownButtonFormField<String>(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             prefixIcon: Icon(Icons.store),
                             border: OutlineInputBorder(),
                             labelText: 'Select Outlet',
@@ -323,7 +327,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Guest Name',
                             border: OutlineInputBorder(),
                             prefixIcon: Icon(Icons.person), // Icon added here
@@ -345,7 +349,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Address',
                             border: OutlineInputBorder(),
                             prefixIcon:
@@ -373,7 +377,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                             FilteringTextInputFormatter
                                 .digitsOnly, // Restricts input to digits only
                           ],
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Mobile Number',
                             border: OutlineInputBorder(),
                             prefixIcon: Icon(Icons.phone), // Icon added here
@@ -395,7 +399,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Email',
                             border: OutlineInputBorder(),
                             prefixIcon: Icon(Icons.email), // Icon added here
@@ -421,14 +425,14 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                           children: [
                             Text(
                               'Reservation Date: ${_formatDate(_reservationDate)}',
-                              style: TextStyle(fontSize: 16),
+                              style: const TextStyle(fontSize: 16),
                             ),
                             ElevatedButton(
                               onPressed: () => _selectReservationDate(context),
-                              child: Text('Pick Date'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue,
                               ),
+                              child: const Text('Pick Date'),
                             ),
                           ],
                         ),
@@ -441,14 +445,14 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                           children: [
                             Text(
                               'Reservation Time: ${_reservationTime.format(context)}',
-                              style: TextStyle(fontSize: 16),
+                              style: const TextStyle(fontSize: 16),
                             ),
                             ElevatedButton(
                               onPressed: () => _selectReservationTime(context),
-                              child: Text('Pick Time'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue,
                               ),
+                              child: const Text('Pick Time'),
                             ),
                           ],
                         ),
@@ -458,7 +462,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                         padding: const EdgeInsets.all(8.0),
                         child: DropdownButtonFormField<String>(
                           value: _selectedTable, // Currently selected table
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Select Table',
                             border: OutlineInputBorder(),
                             prefixIcon:
@@ -482,14 +486,14 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Remark',
                             border: OutlineInputBorder(),
                             prefixIcon: Icon(Icons.message), // Icon added here
                           ),
                           onChanged: (value) {
                             setState(() {
-                              if (value == null || value.isEmpty) {
+                              if (value.isEmpty) {
                                 _remark = "";
                               } else {
                                 _remark = value;
@@ -507,7 +511,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                           children: [
                             ElevatedButton(
                               onPressed: _submitReservation,
-                              child: Text('Submit Reservation'),
+                              child: const Text('Submit Reservation'),
                             ),
                             // ElevatedButton(
                             //   onPressed: _cancelReservation,
@@ -533,11 +537,13 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Container(
                 width: double.infinity,
-                constraints: BoxConstraints(maxWidth: 600),
+                constraints: const BoxConstraints(maxWidth: 600),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 10)],
+                  boxShadow: const [
+                    BoxShadow(color: Colors.grey, blurRadius: 10)
+                  ],
                 ),
                 child: ListView.builder(
                   itemCount: _reservations.length,
@@ -552,10 +558,10 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: ListTile(
-                          contentPadding: EdgeInsets.all(12),
+                          contentPadding: const EdgeInsets.all(12),
                           title: Text(
                             reservation['guest_name'] ?? '',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Wrap(
                             spacing: 8,
@@ -593,19 +599,22 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: Icon(Icons.edit, color: Colors.blue),
+                                icon:
+                                    const Icon(Icons.edit, color: Colors.blue),
                                 onPressed: () {
                                   // Handle edit logic
                                 },
                               ),
                               IconButton(
-                                icon: Icon(Icons.delete, color: Colors.red),
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () {
                                   setState(() {
                                     _reservations.removeAt(index);
                                   });
                                   _deleteReservation(
                                     reservation['id'].toString(),
+                                    reservation['table_no'].toString(),
                                   );
                                 },
                               ),
@@ -629,7 +638,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Reservation Details'),
+          title: const Text('Reservation Details'),
           content: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -637,49 +646,51 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 10)],
+                  boxShadow: const [
+                    BoxShadow(color: Colors.grey, blurRadius: 10)
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ListTile(
-                      title: Text('Guest Name:'),
+                      title: const Text('Guest Name:'),
                       subtitle: Text(_selectedReservation!['guest_name'] ?? ''),
                     ),
                     ListTile(
-                      title: Text('Contact Info:'),
+                      title: const Text('Contact Info:'),
                       subtitle:
                           Text(_selectedReservation!['contact_info'] ?? ''),
                     ),
                     ListTile(
-                      title: Text('Address:'),
+                      title: const Text('Address:'),
                       subtitle: Text(_selectedReservation!['address'] ?? ''),
                     ),
                     ListTile(
-                      title: Text('Email:'),
+                      title: const Text('Email:'),
                       subtitle: Text(_selectedReservation!['email'] ?? ''),
                     ),
                     ListTile(
-                      title: Text('Reservation Date:'),
+                      title: const Text('Reservation Date:'),
                       subtitle: Text(_formatDate(
                           _selectedReservation!['reservation_date'])),
                     ),
                     ListTile(
-                      title: Text('Reservation Time:'),
+                      title: const Text('Reservation Time:'),
                       subtitle:
                           Text(_selectedReservation!['reservation_time'] ?? ''),
                     ),
                     ListTile(
-                      title: Text('Table No:'),
+                      title: const Text('Table No:'),
                       subtitle: Text(_selectedReservation!['table_no'] ?? ''),
                     ),
                     ListTile(
-                      title: Text('Outlet:'),
+                      title: const Text('Outlet:'),
                       subtitle:
                           Text(_selectedReservation!['outlet_name'] ?? ''),
                     ),
                     ListTile(
-                      title: Text('Remark:'),
+                      title: const Text('Remark:'),
                       subtitle: Text(_selectedReservation!['remark'] ?? ''),
                     ),
                   ],
@@ -689,7 +700,7 @@ class _ReservationFormScreenState extends State<ReservationFormScreen> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Close'),
+              child: const Text('Close'),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },

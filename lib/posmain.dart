@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/ItemMaster.dart';
 import 'package:point_of_sale_system/admin.dart';
-import 'package:point_of_sale_system/backend/OrderApiService.dart';
-import 'package:point_of_sale_system/backend/property_service.dart';
+import 'package:point_of_sale_system/backend/bill_service.dart';
 import 'package:point_of_sale_system/backend/table_api_service.dart';
 import 'package:point_of_sale_system/bill_section.dart';
 import 'package:point_of_sale_system/billing.dart';
@@ -11,6 +10,7 @@ import 'package:point_of_sale_system/kotform.dart';
 import 'package:point_of_sale_system/orderlist.dart';
 import 'package:point_of_sale_system/payments.dart';
 import 'package:point_of_sale_system/poslogin.dart';
+import 'package:point_of_sale_system/reports.dart';
 import 'package:point_of_sale_system/reservation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
@@ -26,8 +26,14 @@ class POSMainScreen extends StatefulWidget {
 
 class _POSMainScreenState extends State<POSMainScreen> {
   final tableapiService = TableApiService(apiUrl: 'http://localhost:3000/api');
-
-  final PropertyService _propertyService = PropertyService();
+  final BillingApiService billingApiService =
+      BillingApiService(baseUrl: 'http://localhost:3000/api');
+  String today_reservations = "0";
+  String today_sales = "0";
+  String running_orders = "0";
+  String pending_payments = "0";
+  String total_packing = "0";
+  String today_collection = "0";
   late IO.Socket socket;
 
   String selectedOutlet = 'Restaurant';
@@ -75,12 +81,26 @@ class _POSMainScreenState extends State<POSMainScreen> {
     }
   }
 
+  Future<void> getTodayStatus() async {
+    final todayDashboard = await billingApiService.getDashboardStatus();
+
+    today_reservations = todayDashboard['today_reservations'].toString();
+    today_sales = todayDashboard['today_sales'].toString();
+    running_orders = todayDashboard['running_orders'].toString();
+    pending_payments = todayDashboard['pending_payments'].toString();
+    total_packing = todayDashboard['total_packing'].toString();
+    today_collection = todayDashboard['today_collection'].toString();
+    setState(() {});
+  }
+
   @override
   void initState() {
     outlets = widget.outlet;
+    selectedOutlet = widget.outlet[0];
     // Load table configurations initially
     loadtables();
     _fetchTableConfigs();
+    getTodayStatus();
     _initializeWebSocket();
     super.initState();
   }
@@ -108,6 +128,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
         // If you want to refresh UI, you can call _fetchTableConfigs()
         //   loadtables();
         _fetchTableConfigs(); // Optionally refresh the UI
+        getTodayStatus();
       } catch (error) {
         print('Error during table update handling: $error');
         // Optionally, throw error if necessary
@@ -245,7 +266,8 @@ class _POSMainScreenState extends State<POSMainScreen> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => ReservationFormScreen()));
+                            builder: (context) =>
+                                const ReservationFormScreen()));
                   }),
                   //  _buildDrawerItem(Icons.swap_horiz, 'Table Shift', () {}),
                   _buildDrawerItem(Icons.receipt, 'Orders', () {
@@ -277,7 +299,12 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                   outletname: selectedOutlet,
                                 )));
                   }),
-                  _buildDrawerItem(Icons.report, 'Reports', () {}),
+                  _buildDrawerItem(Icons.report, 'Reports', () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const ReportScreen()));
+                  }),
                   _buildDrawerItem(Icons.add_box, 'Item Add', () {
                     Navigator.push(
                         context,
@@ -305,7 +332,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => AdminDashboard()));
+                            builder: (context) => const AdminDashboard()));
                   }),
                 ],
               ),
@@ -391,6 +418,8 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                 break;
                               case 'Dirty':
                                 tableColor = Colors.grey;
+                              case 'Booked':
+                                tableColor = Colors.blue.shade100;
                                 break;
                               case 'Vacant':
                               default:
@@ -399,7 +428,8 @@ class _POSMainScreenState extends State<POSMainScreen> {
                             }
                             return GestureDetector(
                               onTap: () {
-                                if (tableState == 'Occupied') {
+                                if (tableState == 'Occupied' ||
+                                    tableState == 'Booked') {
                                   // Navigate to billing screen
                                   Navigator.push(
                                     context,
@@ -708,6 +738,39 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                           );
                                         },
                                       ),
+                                    ] else if (tableState == 'Booked') ...[
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(
+                                                Icons.family_restroom,
+                                                color: Colors.blue),
+                                            onPressed: () {},
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(
+                                                Icons.restaurant_menu,
+                                                color: Colors.teal),
+                                            onPressed: () {
+                                              // Navigate to add item screen
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      KOTFormScreen(
+                                                    tableno: tableNo,
+                                                    propertyid:
+                                                        widget.propertyid,
+                                                    outlet: selectedOutlet,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ],
                                 ),
@@ -731,12 +794,15 @@ class _POSMainScreenState extends State<POSMainScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatBox('Today Reservation', '12', Colors.red),
-                _buildStatBox('Today Sale', '₹120', Colors.green),
-                _buildStatBox('Running Order', '₹120', Colors.blue),
-                _buildStatBox('Pending Payment', '₹120', Colors.orange),
-                _buildStatBox('Total Packing', '₹120', Colors.teal),
-                _buildStatBox('Today Collection', '₹120', Colors.yellow),
+                _buildStatBox(
+                    'Today Reservation', today_reservations, Colors.red),
+                _buildStatBox('Today Sale', '₹$today_sales', Colors.green),
+                _buildStatBox('Running Order', running_orders, Colors.blue),
+                _buildStatBox(
+                    'Pending Payment', '₹$pending_payments', Colors.orange),
+                _buildStatBox('Total Packing', total_packing, Colors.teal),
+                _buildStatBox(
+                    'Today Collection', '₹$today_collection', Colors.grey),
               ],
             ),
           ),

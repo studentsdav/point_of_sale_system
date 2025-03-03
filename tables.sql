@@ -379,6 +379,8 @@ CREATE TABLE order_items (
     item_amount DECIMAL(10, 2),
     item_tax DECIMAL(10, 2),
     total_item_value DECIMAL(10, 2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp for record creation
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- Timestamp for record updates
     property_id VARCHAR(255) NOT NULL,
     outlet_name VARCHAR(255) NOT NULL
   );
@@ -421,6 +423,9 @@ CREATE TABLE bills (
     other_charge NUMERIC(10, 2), -- Other charges
     grand_total NUMERIC(10, 2), -- Grand total (calculated as Total - Discounts + All Charges)
     bill_generated_at TIMESTAMP, -- Bill generation timestamp
+    guestName varchar (100),
+    pax int,
+    guestId varchar (50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Record creation timestamp
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last update timestamp
 );

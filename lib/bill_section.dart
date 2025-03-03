@@ -55,6 +55,7 @@ class _BillPageState extends State<BillPage> {
           'outlet_name': bill['outlet_name'].toString(),
           'status': bill['status'].toString(),
           'bill_generated_at': bill['bill_generated_at'].toString(),
+          'guest_name': bill['guestname'].toString(),
           'country': 'India'
         };
       }).toList();
@@ -186,14 +187,14 @@ class _BillPageState extends State<BillPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('Billing System'),
+          title: const Text('Billing System'),
         ),
         body: FutureBuilder<List<Map<String, String>>>(
             future: _billingFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 // Show a loading indicator while waiting for data
-                return Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator());
               } else if (snapshot.hasError) {
                 // Handle error
                 return Center(
@@ -204,7 +205,7 @@ class _BillPageState extends State<BillPage> {
                   Expanded(
                     flex: 2,
                     child: Container(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       color: Colors.grey[200],
                       child: ListView.builder(
                         itemCount: _bills.length,
@@ -213,7 +214,7 @@ class _BillPageState extends State<BillPage> {
                           bool isSelected = _selectedBill == bill;
                           return Card(
                             color: isSelected ? Colors.blue[100] : Colors.white,
-                            margin: EdgeInsets.symmetric(vertical: 8.0),
+                            margin: const EdgeInsets.symmetric(vertical: 8.0),
                             child: ListTile(
                                 title: Text('Bill ID: ${bill['bill_number']}'),
                                 subtitle: Text('Amount: ${bill['amount']}'),
@@ -229,17 +230,18 @@ class _BillPageState extends State<BillPage> {
                   Expanded(
                     flex: 3,
                     child: _selectedBill == null
-                        ? Center(child: Text('Select a bill to view details'))
+                        ? const Center(
+                            child: Text('Select a bill to view details'))
                         : Container(
-                            padding: EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(16),
                             color: Colors.white,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Header: Bill Details
                                 Container(
-                                  padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: const BoxDecoration(
                                     border: Border(
                                       bottom: BorderSide(
                                           width: 1, color: Colors.grey),
@@ -251,31 +253,31 @@ class _BillPageState extends State<BillPage> {
                                     children: [
                                       Text(
                                         'Bill Number: ${_selectedBill!['bill_number']}',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 22,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
                                       Text(
                                         'Guest Name: ${_selectedBill?['guest_name'] ?? 'N/A'}',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
                                       Text(
                                         'Date & Time: ${_formatDate(_selectedBill!['bill_generated_at'])}',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
                                       Text(
                                         'Status: ${_selectedBill!['status']}',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -284,15 +286,15 @@ class _BillPageState extends State<BillPage> {
                                   ),
                                 ),
 
-                                SizedBox(height: 16),
+                                const SizedBox(height: 16),
 
                                 // Items List
                                 Expanded(
                                   child: isLoadingItems
-                                      ? Center(
+                                      ? const Center(
                                           child: CircularProgressIndicator())
                                       : orderItems.isEmpty
-                                          ? Center(
+                                          ? const Center(
                                               child: Text(
                                                 'No items available',
                                                 style: TextStyle(fontSize: 16),
@@ -303,8 +305,8 @@ class _BillPageState extends State<BillPage> {
                                               itemBuilder: (context, index) {
                                                 final item = orderItems[index];
                                                 return Card(
-                                                  margin: EdgeInsets.symmetric(
-                                                      vertical: 8.0),
+                                                  margin: const EdgeInsets
+                                                      .symmetric(vertical: 8.0),
                                                   child: ListTile(
                                                     title: Text(
                                                         '${item['item_name']}'),
@@ -313,7 +315,7 @@ class _BillPageState extends State<BillPage> {
                                                     ),
                                                     trailing: Text(
                                                       'Total: ₹${item['total'].toStringAsFixed(2)}',
-                                                      style: TextStyle(
+                                                      style: const TextStyle(
                                                         fontWeight:
                                                             FontWeight.bold,
                                                         color: Colors.green,
@@ -327,8 +329,8 @@ class _BillPageState extends State<BillPage> {
 
                                 // Footer: Charges
                                 Container(
-                                  padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: const BoxDecoration(
                                     border: Border(
                                       top: BorderSide(
                                           width: 1, color: Colors.grey),
@@ -338,12 +340,12 @@ class _BillPageState extends State<BillPage> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
+                                      const Text(
                                         'Charges:',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold),
                                       ),
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
 
                                       // Tax Details
                                       if (_selectedBill?['country'] ==
@@ -352,29 +354,29 @@ class _BillPageState extends State<BillPage> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text('Tax (GST):'),
+                                            const Text('Tax (GST):'),
                                             Text(
                                               '${_selectedBill?['tax_percentage'] ?? '0'}% | ₹${_selectedBill?['tax_value'] ?? '0.00'}',
                                             ),
                                           ],
                                         ),
-                                        SizedBox(height: 8),
+                                        const SizedBox(height: 8),
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text('CGST:'),
+                                            const Text('CGST:'),
                                             Text(
                                               '${_selectedBill?['cgst_percentage'] ?? '0'}% | ₹${_selectedBill?['cgst_value'] ?? '0.00'}',
                                             ),
                                           ],
                                         ),
-                                        SizedBox(height: 8),
+                                        const SizedBox(height: 8),
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text('SGST:'),
+                                            const Text('SGST:'),
                                             Text(
                                               '${_selectedBill?['sgst_percentage'] ?? '0'}% | ₹${_selectedBill?['sgst_value'] ?? '0.00'}',
                                             ),
@@ -385,76 +387,76 @@ class _BillPageState extends State<BillPage> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text('Tax:'),
+                                            const Text('Tax:'),
                                             Text(
                                               '${_selectedBill?['tax_percentage'] ?? '0'}% | ₹${_selectedBill?['tax_value'] ?? '0.00'}',
                                             ),
                                           ],
                                         ),
                                       ],
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
 
                                       // Discount
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text('Discount:'),
+                                          const Text('Discount:'),
                                           Text(
                                             '${_selectedBill?['discount_percentage'] ?? '0'}% | ₹${_selectedBill?['discount_value'] ?? '0.00'}',
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
 
                                       // Service Charge
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text('Service Charge:'),
+                                          const Text('Service Charge:'),
                                           Text(
                                             '${_selectedBill?['service_charge_percentage'] ?? '0'}% | ₹${_selectedBill?['service_charge'] ?? '0.00'}',
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
 
                                       // Packing Charge
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text('Packing Charge:'),
+                                          const Text('Packing Charge:'),
                                           Text(
                                             '${_selectedBill?['packing_charge_percentage'] ?? '0'}% | ₹${_selectedBill?['packing_charge'] ?? '0.00'}',
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
 
                                       // Delivery Charge
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text('Delivery Charge:'),
+                                          const Text('Delivery Charge:'),
                                           Text(
                                             '${_selectedBill?['delivery_charge_percentage'] ?? '0'}% | ₹${_selectedBill?['delivery_charge'] ?? '0.00'}',
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
 
                                       // Grand Total
                                       Text(
                                         'Grand Total: ₹${_selectedBill?['amount'] ?? '0.00'}',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      SizedBox(height: 16),
+                                      const SizedBox(height: 16),
 
                                       // Action Buttons
                                       Row(
@@ -464,15 +466,16 @@ class _BillPageState extends State<BillPage> {
                                           ElevatedButton(
                                             onPressed: () =>
                                                 _modifyBillDialog(),
-                                            child: Text('Edit'),
+                                            child: const Text('Edit'),
                                           ),
                                           ElevatedButton(
-                                            onPressed: () => _editBill(),
-                                            child: Text('Print'),
+                                            onPressed: () =>
+                                                _modifyBill(orders),
+                                            child: const Text('Print'),
                                           ),
                                           ElevatedButton(
                                             onPressed: () => _cancelBill(),
-                                            child: Text('Cancel'),
+                                            child: const Text('Cancel'),
                                           ),
                                         ],
                                       ),
@@ -485,7 +488,7 @@ class _BillPageState extends State<BillPage> {
                   ),
                 ]);
               }
-              return CircularProgressIndicator();
+              return const CircularProgressIndicator();
             }));
   }
 
@@ -511,38 +514,42 @@ class _BillPageState extends State<BillPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Modify Bill'),
+          title: const Text('Modify Bill'),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextField(
                   controller: guestNameController,
-                  decoration: InputDecoration(labelText: 'Guest Name'),
+                  decoration: const InputDecoration(labelText: 'Guest Name'),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 TextField(
                   controller: discountController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: 'Discount Amount'),
+                  decoration:
+                      const InputDecoration(labelText: 'Discount Amount'),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 TextField(
                   controller: serviceChargeController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: 'Service Charge'),
+                  decoration:
+                      const InputDecoration(labelText: 'Service Charge'),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 TextField(
                   controller: packingChargeController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: 'Packing Charge'),
+                  decoration:
+                      const InputDecoration(labelText: 'Packing Charge'),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 TextField(
                   controller: deliveryChargeController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: 'Delivery Charge'),
+                  decoration:
+                      const InputDecoration(labelText: 'Delivery Charge'),
                 ),
               ],
             ),
@@ -552,7 +559,7 @@ class _BillPageState extends State<BillPage> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -565,7 +572,7 @@ class _BillPageState extends State<BillPage> {
                 );
                 Navigator.of(context).pop();
               },
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -611,7 +618,6 @@ class _BillPageState extends State<BillPage> {
   // Method to handle Edit
   void _editBill() {
     print('Editing bill: ${_selectedBill!['bill_number']}');
-    // Add your edit functionality here
   }
 
   // Method to handle Cancel

@@ -194,6 +194,48 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.get('/max-order-number/:outletId', async (req, res) => {
+  try {
+    const { outletId } = req.params;
+
+    // Get the latest KOT configuration for the given outlet
+    const kotConfigResult = await pool.query(
+      `SELECT kot_starting_number, created_at 
+       FROM kot_configs 
+       WHERE selected_outlet = $1 
+       ORDER BY created_at DESC 
+       LIMIT 1`,
+      [outletId]
+    );
+
+    if (kotConfigResult.rows.length === 0) {
+      return res.status(404).json({ error: 'No KOT configuration found for this outlet' });
+    }
+
+    const { kot_starting_number, created_at } = kotConfigResult.rows[0];
+
+    // Get the max numeric part from order_number
+    const maxOrderResult = await pool.query(
+      `SELECT MAX(CAST(REGEXP_REPLACE(order_number, '^.*-(\\d+)$', '\\1', 'g') AS INTEGER)) AS max_order_number
+       FROM orders 
+       WHERE created_at >= $1 AND outlet_name = $2`,
+      [created_at, outletId]
+    );
+
+    let maxOrderNumber = maxOrderResult.rows[0].max_order_number;
+
+    // Determine the next order number
+    const nextOrderNumber = maxOrderNumber ? maxOrderNumber + 1 : kot_starting_number;
+
+    res.json({ nextOrderNumber, kot_starting_number, maxOrderNumber });
+  } catch (err) {
+    console.error('Error fetching max order number:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 
 // Update Order
 router.put('/:orderId', async (req, res) => {

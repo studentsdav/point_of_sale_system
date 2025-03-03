@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 class OrderApiService {
@@ -23,8 +24,18 @@ class OrderApiService {
     }
   }
 
+  Future<Map<String, dynamic>> getMaxOrderNo(outlet) async {
+    final response =
+        await http.get(Uri.parse('$baseUrl/orders/max-order-number/$outlet'));
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch configurations');
+    }
+  }
+
   // 2. Update Order
-  Future<Map<String, dynamic>> updateOrder(
+  Future<Map<dynamic, dynamic>> updateOrder(
       String orderId, Map<String, dynamic> orderData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/orders/$orderId'),

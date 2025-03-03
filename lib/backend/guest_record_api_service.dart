@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 class GuestRecordApiService {
@@ -36,6 +37,32 @@ class GuestRecordApiService {
           data); // Returning all guest records as a list
     } else {
       throw Exception('Failed to fetch guest records: ${response.body}');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> searchRecords(String query) async {
+    if (query.trim().isEmpty) {
+      print("Search query is empty, skipping API call.");
+      return [];
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/guest_record/search'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'query': query}),
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        return List<Map<String, dynamic>>.from(data);
+      } else {
+        print("Error: ${response.body}");
+        throw Exception('Failed to fetch guest records: ${response.body}');
+      }
+    } catch (e) {
+      print("Exception: $e");
+      return [];
     }
   }
 

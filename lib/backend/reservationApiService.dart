@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 class ReservationApiService {
@@ -38,7 +39,8 @@ class ReservationApiService {
   }
 
   // 3. Create a new reservation
-  Future<Map<String, dynamic>> createReservation(Map<String, dynamic> reservationData) async {
+  Future<Map<String, dynamic>> createReservation(
+      Map<String, dynamic> reservationData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/reservation'),
       headers: {'Content-Type': 'application/json'},
@@ -46,14 +48,16 @@ class ReservationApiService {
     );
 
     if (response.statusCode == 201) {
-      return json.decode(response.body); // Returning the response with reservation ID
+      return json
+          .decode(response.body); // Returning the response with reservation ID
     } else {
       throw Exception('Failed to create reservation: ${response.body}');
     }
   }
 
   // 4. Update reservation by ID
-  Future<Map<String, dynamic>> updateReservation(String reservationId, Map<String, dynamic> reservationData) async {
+  Future<Map<String, dynamic>> updateReservation(
+      String reservationId, Map<String, dynamic> reservationData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/reservation/$reservationId'),
       headers: {'Content-Type': 'application/json'},
@@ -70,11 +74,11 @@ class ReservationApiService {
   }
 
   // 5. Delete reservation by ID
-  Future<void> deleteReservation(String reservationId) async {
+  Future<void> deleteReservation(String reservationId, String tableNo) async {
     final response = await http.delete(
-      Uri.parse('$baseUrl/reservation/$reservationId'),
-      headers: {'Content-Type': 'application/json'},
-    );
+        Uri.parse('$baseUrl/reservation/$reservationId'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'tableNo': tableNo}));
 
     if (response.statusCode == 200) {
       // Successfully deleted

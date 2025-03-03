@@ -35,6 +35,14 @@ router.post('/', async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
       [guest_name, contact_info, address, email, reservation_date, reservation_time, table_no, status, remark, property_id, outlet_name]
     );
+
+    await pool.query(
+      `UPDATE table_configurations SET status = 'Booked' WHERE table_no = $1 AND status != 'Occupied'`,
+      [table_no]
+    );
+    // Notify PostgreSQL trigger to send notification
+    await pool.query("NOTIFY table_update, 'Table configuration updated'");
+
     res.status(201).json({ message: 'Reservation created successfully', reservationId: result.rows[0].id });
   } catch (error) {
     res.status(500).json({ error: 'Failed to create reservation', details: error.message });
@@ -67,11 +75,18 @@ router.put('/:id', async (req, res) => {
 // DELETE reservation by ID
 router.delete('/:id', async (req, res) => {
   const reservationId = req.params.id;
+  const { tableNo } = req.body;
   try {
     const result = await pool.query('DELETE FROM reservation WHERE id = $1 RETURNING id', [reservationId]);
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
+    await pool.query(
+      `UPDATE table_configurations SET status = 'Vacant' WHERE table_no = $1`,
+      [tableNo]
+    );
+    // Notify PostgreSQL trigger to send notification
+    await pool.query("NOTIFY table_update, 'Table configuration updated'");
     res.status(200).json({ message: 'Reservation deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete reservation', details: error.message });

@@ -27,6 +27,37 @@ router.post('/', async (req, res) => {
     }
 });
 
+
+router.post("/search", async (req, res) => {
+    try {
+        const { query } = req.body; // Get search term from request query
+
+        if (!query) {
+            return res.status(400).json({ error: "Search query is required" });
+        }
+
+        const searchQuery = `
+        SELECT * FROM guest_record
+        WHERE LOWER(guest_name) LIKE LOWER($1) OR phone_number LIKE $2
+        ORDER BY date_joined DESC
+        LIMIT 10
+      `;
+
+        const result = await pool.query(searchQuery, [`%${query}%`, `%${query}%`]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "No guests found" });
+        }
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error searching guests:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+
 // Get all guest records
 router.get('/', async (req, res) => {
     try {

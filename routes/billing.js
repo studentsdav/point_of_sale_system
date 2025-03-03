@@ -150,6 +150,9 @@ const pool = require('../db'); // Database connection
 const router = express.Router();
 
 
+
+
+
 router.get('/:status', async (req, res) => {
   try {
     // Get the 'status' parameter from the URL (not query string)
@@ -172,7 +175,10 @@ router.get('/:status', async (req, res) => {
         outlet_name, 
         status, 
         bill_generated_at, 
-        table_no
+        table_no,
+        guestName, 
+        guestId,
+        pax
       FROM bills 
       WHERE status = $1
     `;
@@ -193,11 +199,162 @@ router.get('/:status', async (req, res) => {
   }
 });
 
+
+router.get("/dashboard/today-stats", async (req, res) => {
+  try {
+    // Get today's date (YYYY-MM-DD)
+    const today = new Date().toISOString().split("T")[0];
+
+    // 1. Get today's reservations count
+    const reservationQuery = `
+          SELECT COUNT(*) AS today_reservations 
+          FROM reservation 
+          WHERE reservation_date = $1`;
+    const reservationResult = await pool.query(reservationQuery, [today]);
+
+    // 2. Get today's total sales
+    const salesQuery = `
+          SELECT COALESCE(SUM(total), 0) AS today_sales 
+          FROM orders 
+          WHERE DATE(created_at) = $1`;
+    const salesResult = await pool.query(salesQuery, [today]);
+
+    // 3. Get running orders count
+    const runningOrdersQuery = `
+          SELECT COUNT(*) AS running_orders 
+          FROM orders 
+          WHERE status = 'Pending' AND DATE(created_at) = $1`;
+    const runningOrdersResult = await pool.query(runningOrdersQuery, [today]);
+
+    // 4. Get pending payments count
+    const pendingPaymentsQuery = `
+            SELECT COALESCE(SUM(grand_total), 0) AS pending_payments 
+           FROM bills 
+          WHERE status = 'UnPaid' AND DATE(created_at) = $1`;
+    const pendingPaymentsResult = await pool.query(pendingPaymentsQuery, [today]);
+
+    // 5. Get total packing orders count
+    const packingOrdersQuery = `
+          SELECT COUNT(*) AS total_packing 
+          FROM orders 
+          WHERE packing_case = TRUE AND DATE(created_at) = $1`;
+    const packingOrdersResult = await pool.query(packingOrdersQuery, [today]);
+
+    // 6. Get today's total collection (final payments received)
+    const collectionQuery = `
+          SELECT COALESCE(SUM(grand_total), 0) AS today_collection 
+          FROM bills 
+          WHERE status = 'Paid' AND DATE(created_at) = $1`;
+    const collectionResult = await pool.query(collectionQuery, [today]);
+
+    // Sending JSON response
+    res.json({
+      today_reservations: parseInt(reservationResult.rows[0].today_reservations),
+      today_sales: parseFloat(salesResult.rows[0].today_sales),
+      running_orders: parseInt(runningOrdersResult.rows[0].running_orders),
+      pending_payments: parseInt(pendingPaymentsResult.rows[0].pending_payments),
+      total_packing: parseInt(packingOrdersResult.rows[0].total_packing),
+      today_collection: parseFloat(collectionResult.rows[0].today_collection),
+    });
+
+  } catch (error) {
+    console.error("Error fetching dashboard stats:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+
+router.get('/next-bill-number/:outletId', async (req, res) => {
+  try {
+    const { outletId } = req.params;
+    console.log(`[LOG] Request received for outletId: ${outletId}`);
+
+    // Get latest bill configuration
+    const billConfigResult = await pool.query(
+      `SELECT bill_prefix, bill_suffix, starting_bill_number, created_at 
+       FROM bill_config 
+       WHERE selected_outlet = $1 
+       ORDER BY created_at DESC 
+       LIMIT 1`,
+      [outletId]
+    );
+
+    console.log(`[LOG] Bill configuration fetched:`, billConfigResult.rows);
+
+    if (billConfigResult.rows.length === 0) {
+      console.log(`[ERROR] No bill configuration found for outlet: ${outletId}`);
+      return res.status(404).json({ error: 'No bill configuration found for this outlet' });
+    }
+
+    let { bill_prefix, bill_suffix, starting_bill_number, created_at } = billConfigResult.rows[0];
+
+    console.log(`[LOG] Extracted bill config: prefix=${bill_prefix}, suffix=${bill_suffix}, starting_number=${starting_bill_number}, created_at=${created_at}`);
+
+    // Convert created_at to a valid ISO Date string (if needed)
+    if (typeof created_at === 'string') {
+      created_at = new Date(created_at).toISOString().split('T')[0]; // Convert to YYYY-MM-DD
+    } else {
+      created_at = created_at.toISOString().split('T')[0]; // Convert to YYYY-MM-DD
+    }
+
+    console.log(`[LOG] Converted created_at: ${created_at}`);
+
+    // Fetch the latest generated bill number with properly formatted date matching
+    const maxBillResult = await pool.query(
+      `SELECT bill_number 
+       FROM bills 
+       WHERE bill_generated_at::DATE >= $1::DATE
+         AND outlet_name = $2
+       ORDER BY bill_generated_at DESC 
+       LIMIT 1`,
+      [created_at, outletId]
+    );
+
+    console.log(`[LOG] Latest bill fetched:`, maxBillResult.rows);
+
+    let nextBillNumber;
+
+    if (maxBillResult.rows.length === 0 || !maxBillResult.rows[0].bill_number) {
+      console.log(`[LOG] No previous bill found. Using starting bill number: ${starting_bill_number}`);
+      nextBillNumber = starting_bill_number;
+    } else {
+      const lastBillNumber = maxBillResult.rows[0].bill_number;
+      console.log(`[LOG] Last bill number retrieved: ${lastBillNumber}`);
+
+      const numericPart = lastBillNumber.match(/\d+/g)?.[0]; // Extract first numeric sequence
+      console.log(`[LOG] Extracted numeric part: ${numericPart}`);
+
+      const lastNumeric = parseInt(numericPart, 10);
+      console.log(`[LOG] Parsed last numeric bill number: ${lastNumeric}`);
+
+      nextBillNumber = isNaN(lastNumeric) ? starting_bill_number : lastNumeric + 1;
+      console.log(`[LOG] Next bill number determined: ${nextBillNumber}`);
+    }
+
+    // Format the new bill number
+    const formattedBillNumber = `${bill_prefix}${nextBillNumber}${bill_suffix}`;
+    console.log(`[LOG] Final formatted bill number: ${formattedBillNumber}`);
+
+    res.json({
+      nextBillNumber: formattedBillNumber,
+      lastGeneratedBillNumber: maxBillResult.rows.length ? maxBillResult.rows[0].bill_number : null,
+      bill_prefix,
+      bill_suffix
+    });
+
+  } catch (err) {
+    console.error('[ERROR] Fetching next bill number failed:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 router.post('/', async (req, res) => {
   const {
     table_no, tax_value, discount_percentage, service_charge_percentage,
     packing_charge_percentage, delivery_charge_percentage, other_charge,
-    property_id, outletname, billstatus, items
+    property_id, outletname, billstatus, items, bill_number, pax, guestId, guestName
   } = req.body;
 
   try {
@@ -236,11 +393,11 @@ router.post('/', async (req, res) => {
       `INSERT INTO bills (bill_number, total_amount, tax_value, discount_value, service_charge_value, 
                           packing_charge, delivery_charge, other_charge, grand_total, property_id, outlet_name, 
                           packing_charge_percentage, delivery_charge_percentage, discount_percentage, service_charge_percentage, 
-                          status, table_no, bill_generated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP) 
+                          status, table_no, bill_generated_at, pax, guestId, guestName)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP, $18, $19, $20) 
        RETURNING id`,
       [
-        `BILL-${Date.now()}`, // Generate a unique bill number
+        bill_number, // Generate a unique bill number
         total_amount,
         tax_value,
         discount_value,
@@ -256,7 +413,7 @@ router.post('/', async (req, res) => {
         discount_percentage,
         service_charge_percentage,
         billstatus,
-        table_no
+        table_no, pax, guestId, guestName
       ]
     );
 
@@ -304,6 +461,224 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate bill', details: error.message });
   }
 });
+
+
+
+async function fetchSalesData() {
+  const salesQuery = `
+ WITH daily_sales AS (
+  SELECT DATE_TRUNC('day', created_at) AS period, COALESCE(SUM(total), 0) AS sales
+  FROM orders
+  WHERE created_at >= NOW() - INTERVAL '2 years'
+  GROUP BY period
+),
+weekly_sales AS (
+  SELECT DATE_TRUNC('week', created_at) AS period, COALESCE(SUM(total), 0) AS sales
+  FROM orders
+  WHERE created_at >= NOW() - INTERVAL '2 years'
+  GROUP BY period
+),
+monthly_sales AS (
+  SELECT DATE_TRUNC('month', created_at) AS period, COALESCE(SUM(total), 0) AS sales
+  FROM orders
+  WHERE created_at >= NOW() - INTERVAL '2 years'
+  GROUP BY period
+),
+yearly_sales AS (
+  SELECT DATE_TRUNC('year', created_at) AS period, COALESCE(SUM(total), 0) AS sales
+  FROM orders
+  WHERE created_at >= NOW() - INTERVAL '2 years'
+  GROUP BY period
+)
+SELECT 
+  (SELECT sales FROM daily_sales WHERE period = CURRENT_DATE) AS today_sales,
+  (SELECT sales FROM daily_sales WHERE period = CURRENT_DATE - INTERVAL '1 day') AS yesterday_sales,
+  (SELECT sales FROM weekly_sales WHERE period = DATE_TRUNC('week', CURRENT_DATE)) AS this_week_sales,
+  (SELECT sales FROM weekly_sales WHERE period = DATE_TRUNC('week', CURRENT_DATE - INTERVAL '1 week')) AS last_week_sales,
+  (SELECT sales FROM monthly_sales WHERE period = DATE_TRUNC('month', CURRENT_DATE)) AS this_month_sales,
+  (SELECT sales FROM monthly_sales WHERE period = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')) AS last_month_sales,
+  (SELECT sales FROM yearly_sales WHERE period = DATE_TRUNC('year', CURRENT_DATE)) AS this_year_sales,
+  (SELECT sales FROM yearly_sales WHERE period = DATE_TRUNC('year', CURRENT_DATE - INTERVAL '1 year')) AS last_year_sales;
+  `;
+
+  const result = await pool.query(salesQuery);
+  const sales = result.rows[0];
+
+  return {
+    today_sales: sales.today_sales || 0,
+    yesterday_sales: sales.yesterday_sales || 0,
+    today_growth: sales.yesterday_sales > 0
+      ? (((sales.today_sales - sales.yesterday_sales) / sales.yesterday_sales) * 100).toFixed(2) + '%'
+      : '100%',
+
+    this_week_sales: sales.this_week_sales || 0,
+    last_week_sales: sales.last_week_sales || 0,
+    weekly_growth: sales.last_week_sales > 0
+      ? (((sales.this_week_sales - sales.last_week_sales) / sales.last_week_sales) * 100).toFixed(2) + '%'
+      : '100%',
+
+    this_month_sales: sales.this_month_sales || 0,
+    last_month_sales: sales.last_month_sales || 0,
+    monthly_growth: sales.last_month_sales > 0
+      ? (((sales.this_month_sales - sales.last_month_sales) / sales.last_month_sales) * 100).toFixed(2) + '%'
+      : '100%',
+
+    this_year_sales: sales.this_year_sales || 0,
+    last_year_sales: sales.last_year_sales || 0,
+    yearly_growth: sales.last_year_sales > 0
+      ? (((sales.this_year_sales - sales.last_year_sales) / sales.last_year_sales) * 100).toFixed(2) + '%'
+      : '100%',
+
+    yoy_growth: sales.last_year_sales > 0
+      ? (((sales.this_year_sales - sales.last_year_sales) / sales.last_year_sales) * 100).toFixed(2) + '%'
+      : '100%',
+  };
+}
+
+
+async function fetchTopCategories() {
+  const categoryQuery = `
+    SELECT 
+      item_category, 
+      COALESCE(SUM(total_item_value), 0) AS total_sales
+    FROM order_items
+    WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE)
+    GROUP BY item_category
+    ORDER BY total_sales DESC
+    LIMIT 5;
+  `;
+
+  const result = await pool.query(categoryQuery);
+  return result.rows;
+}
+
+/**
+ * GET Dashboard Summary (Sales + Top Categories)
+ */
+router.get('/dashboard/summary', async (req, res) => {
+  try {
+    const [salesData, topCategories] = await Promise.all([
+      fetchSalesData(),
+      fetchTopCategories()
+    ]);
+
+    res.json({
+      sales: salesData,
+      top_categories: topCategories
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error fetching dashboard summary');
+  }
+});
+
+
+// 🟢 1️⃣ Daily Sales Summary
+router.get('/reports/daily-sales', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+          (SELECT COUNT(order_id) FROM orders WHERE DATE(created_at) = CURRENT_DATE) AS total_orders,
+          COALESCE(SUM(b.total_amount), 0) AS total_sales,
+          COALESCE(SUM(b.discount_value), 0) AS total_discounts,
+          COALESCE(SUM(b.tax_value), 0) AS total_taxes,
+          COALESCE(SUM(b.service_charge_value), 0) AS total_service_charges,
+          COALESCE(SUM(b.packing_charge), 0) AS total_packing_charges,
+          COALESCE(SUM(b.delivery_charge), 0) AS total_delivery_charges,
+          COALESCE(SUM(b.other_charge), 0) AS total_other_charges,
+          COALESCE(SUM(b.grand_total), 0) AS total_revenue
+      FROM bills b
+      WHERE DATE(b.bill_generated_at) = CURRENT_DATE;
+    `;
+    const { rows } = await pool.query(query);
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 🟢 2️⃣ Hourly Sales Report
+router.get('/reports/hourly-sales', async (req, res) => {
+  try {
+    const query = `
+     SELECT 
+    TO_CHAR(DATE_TRUNC('hour', created_at), 'HH12 AM') || 
+    ' - ' || 
+    TO_CHAR(DATE_TRUNC('hour', created_at) + INTERVAL '1 hour', 'HH12 AM') AS hour_range,
+    COUNT(order_id) AS total_orders,
+    COALESCE(SUM(total), 0) AS total_sales
+FROM orders
+WHERE DATE(created_at) = CURRENT_DATE
+GROUP BY hour_range
+ORDER BY MIN(created_at);
+    `;
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 🟢 3️⃣ Item-Wise Sales Report
+router.get('/reports/item-wise-sales', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+          item_name,
+          SUM(item_quantity) AS total_sold,
+          SUM(total_item_value) AS total_revenue
+      FROM order_items
+      GROUP BY item_name
+      ORDER BY total_sold DESC;
+    `;
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 🟢 4️⃣ Category-Wise Sales Report
+router.get('/reports/category-wise-sales', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+          item_category,
+          SUM(item_quantity) AS total_sold,
+          SUM(total_item_value) AS total_revenue
+      FROM order_items
+      GROUP BY item_category
+      ORDER BY total_revenue DESC;
+    `;
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 🟢 5️⃣ Payment Method Breakdown
+router.get('/reports/payment-breakdown', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+          payment_method,
+          COUNT(id) AS total_transactions,
+          SUM(payment_amount) AS total_collected
+      FROM payments
+      WHERE DATE(payment_date) = CURRENT_DATE
+      GROUP BY payment_method;
+    `;
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+
 
 
 module.exports = router;
