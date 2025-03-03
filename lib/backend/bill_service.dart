@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 class BillingApiService {
@@ -19,6 +20,16 @@ class BillingApiService {
       throw Exception('Order not found');
     } else {
       throw Exception('Failed to fetch bill: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getMaxBillNo(outlet) async {
+    final response =
+        await http.get(Uri.parse('$baseUrl/bill/next-bill-number/$outlet'));
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch configurations');
     }
   }
 

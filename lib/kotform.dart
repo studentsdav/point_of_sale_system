@@ -1,11 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'dart:math'; // For generating random order numbers
-import 'dart:convert';
-import 'package:point_of_sale_system/backend/OrderApiService.dart';
-import 'package:point_of_sale_system/backend/items_api_service.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'dart:io';
+import 'package:point_of_sale_system/backend/OrderApiService.dart';
+import 'package:point_of_sale_system/backend/items_api_service.dart';
+import 'package:point_of_sale_system/backend/waiterApiService.dart';
 
 class KOTFormScreen extends StatefulWidget {
   final tableno;
@@ -26,6 +26,8 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
       OrderApiService(baseUrl: 'http://localhost:3000/api');
   ItemsApiService itemsApiService =
       ItemsApiService(baseUrl: 'http://localhost:3000/api');
+  WaiterApiService waiterApiService =
+      WaiterApiService(baseUrl: 'http://localhost:3000/api');
   final List<String> _categories = ['Starters', 'Main Course', 'Desserts'];
   late Future<Map<String, List<Map<String, String>>>> _menuItemsFuture;
   // Menu items with their tags (Veg/Non-Veg) and rate
@@ -67,10 +69,11 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
   String _tableNumber = "";
   String _waiterName = '';
   int _personCount = 1;
+  List<Map<String, dynamic>> _waiters = []; // Store waiter list
   // final double taxRate = 0.1; // 10% tax rate, adjust as needed
 
   // Generating a random order number using the current time and random component
-  late String _orderNumber;
+  String _orderNumber = "";
   List<Map<String, String>> searchResults = [];
 
   @override
@@ -80,9 +83,16 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
     _searchController.addListener(() {
       _updateSearchResults();
     });
+    fetchWaiters();
     super.initState();
-    _orderNumber =
-        'ORD-${DateTime.now().millisecondsSinceEpoch % 10000}-${Random().nextInt(1000)}';
+    getOrderNumber();
+  }
+
+  Future<void> getOrderNumber() async {
+    final ordernumber = await orderApiService.getMaxOrderNo(widget.outlet);
+    setState(() {
+      _orderNumber = ordernumber['nextOrderNumber'].toString();
+    });
   }
 
   void _addItem(String item) {
@@ -395,6 +405,21 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
     });
   }
 
+  Future<void> fetchWaiters() async {
+    try {
+      final responseData = await waiterApiService.getAllWaiters();
+
+      setState(() {
+        _waiters = List<Map<String, dynamic>>.from(responseData);
+        if (_waiters.isNotEmpty) {
+          _waiterName = _waiters.first['waiter_name'];
+        }
+      });
+    } catch (error) {
+      print('Error fetching waiters: $error');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, List<Map<String, String>>>>(
@@ -513,14 +538,33 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          TextFormField(
-                            initialValue: _waiterName,
-                            onChanged: (value) =>
-                                setState(() => _waiterName = value),
+                          DropdownButtonFormField<String>(
+                            value: _waiters.isNotEmpty
+                                ? _waiters.any((waiter) =>
+                                        waiter['waiter_id'].toString() ==
+                                        _waiterName)
+                                    ? _waiterName
+                                    : null
+                                : null, // Ensure value is valid or null
                             decoration: const InputDecoration(
-                              labelText: 'Waiter Name',
+                              labelText: 'Select Waiter',
                               prefixIcon: Icon(Icons.person),
+                              border: OutlineInputBorder(),
                             ),
+                            items: _waiters.map((waiter) {
+                              return DropdownMenuItem<String>(
+                                value:
+                                    waiter['waiter_id'].toString(), // Store ID
+                                child:
+                                    Text(waiter['waiter_name']), // Display Name
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _waiterName = value!;
+                              });
+                              print('Selected Waiter ID: $value');
+                            },
                           ),
                           const SizedBox(height: 10),
                           TextFormField(

@@ -150,6 +150,9 @@ const pool = require('../db'); // Database connection
 const router = express.Router();
 
 
+
+
+
 router.get('/:status', async (req, res) => {
   try {
     // Get the 'status' parameter from the URL (not query string)
@@ -172,7 +175,10 @@ router.get('/:status', async (req, res) => {
         outlet_name, 
         status, 
         bill_generated_at, 
-        table_no
+        table_no,
+        guestName, 
+        guestId,
+        pax
       FROM bills 
       WHERE status = $1
     `;
@@ -193,11 +199,97 @@ router.get('/:status', async (req, res) => {
   }
 });
 
+
+router.get('/next-bill-number/:outletId', async (req, res) => {
+  try {
+    const { outletId } = req.params;
+    console.log(`[LOG] Request received for outletId: ${outletId}`);
+
+    // Get latest bill configuration
+    const billConfigResult = await pool.query(
+      `SELECT bill_prefix, bill_suffix, starting_bill_number, created_at 
+       FROM bill_config 
+       WHERE selected_outlet = $1 
+       ORDER BY created_at DESC 
+       LIMIT 1`,
+      [outletId]
+    );
+
+    console.log(`[LOG] Bill configuration fetched:`, billConfigResult.rows);
+
+    if (billConfigResult.rows.length === 0) {
+      console.log(`[ERROR] No bill configuration found for outlet: ${outletId}`);
+      return res.status(404).json({ error: 'No bill configuration found for this outlet' });
+    }
+
+    let { bill_prefix, bill_suffix, starting_bill_number, created_at } = billConfigResult.rows[0];
+
+    console.log(`[LOG] Extracted bill config: prefix=${bill_prefix}, suffix=${bill_suffix}, starting_number=${starting_bill_number}, created_at=${created_at}`);
+
+    // Convert created_at to a valid ISO Date string (if needed)
+    if (typeof created_at === 'string') {
+      created_at = new Date(created_at).toISOString().split('T')[0]; // Convert to YYYY-MM-DD
+    } else {
+      created_at = created_at.toISOString().split('T')[0]; // Convert to YYYY-MM-DD
+    }
+
+    console.log(`[LOG] Converted created_at: ${created_at}`);
+
+    // Fetch the latest generated bill number with properly formatted date matching
+    const maxBillResult = await pool.query(
+      `SELECT bill_number 
+       FROM bills 
+       WHERE bill_generated_at::DATE >= $1::DATE
+         AND outlet_name = $2
+       ORDER BY bill_generated_at DESC 
+       LIMIT 1`,
+      [created_at, outletId]
+    );
+
+    console.log(`[LOG] Latest bill fetched:`, maxBillResult.rows);
+
+    let nextBillNumber;
+
+    if (maxBillResult.rows.length === 0 || !maxBillResult.rows[0].bill_number) {
+      console.log(`[LOG] No previous bill found. Using starting bill number: ${starting_bill_number}`);
+      nextBillNumber = starting_bill_number;
+    } else {
+      const lastBillNumber = maxBillResult.rows[0].bill_number;
+      console.log(`[LOG] Last bill number retrieved: ${lastBillNumber}`);
+
+      const numericPart = lastBillNumber.match(/\d+/g)?.[0]; // Extract first numeric sequence
+      console.log(`[LOG] Extracted numeric part: ${numericPart}`);
+
+      const lastNumeric = parseInt(numericPart, 10);
+      console.log(`[LOG] Parsed last numeric bill number: ${lastNumeric}`);
+
+      nextBillNumber = isNaN(lastNumeric) ? starting_bill_number : lastNumeric + 1;
+      console.log(`[LOG] Next bill number determined: ${nextBillNumber}`);
+    }
+
+    // Format the new bill number
+    const formattedBillNumber = `${bill_prefix}${nextBillNumber}${bill_suffix}`;
+    console.log(`[LOG] Final formatted bill number: ${formattedBillNumber}`);
+
+    res.json({
+      nextBillNumber: formattedBillNumber,
+      lastGeneratedBillNumber: maxBillResult.rows.length ? maxBillResult.rows[0].bill_number : null,
+      bill_prefix,
+      bill_suffix
+    });
+
+  } catch (err) {
+    console.error('[ERROR] Fetching next bill number failed:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 router.post('/', async (req, res) => {
   const {
     table_no, tax_value, discount_percentage, service_charge_percentage,
     packing_charge_percentage, delivery_charge_percentage, other_charge,
-    property_id, outletname, billstatus, items
+    property_id, outletname, billstatus, items, bill_number, pax, guestId, guestName
   } = req.body;
 
   try {
@@ -236,11 +328,11 @@ router.post('/', async (req, res) => {
       `INSERT INTO bills (bill_number, total_amount, tax_value, discount_value, service_charge_value, 
                           packing_charge, delivery_charge, other_charge, grand_total, property_id, outlet_name, 
                           packing_charge_percentage, delivery_charge_percentage, discount_percentage, service_charge_percentage, 
-                          status, table_no, bill_generated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP) 
+                          status, table_no, bill_generated_at, pax, guestId, guestName)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP, $18, $19, $20) 
        RETURNING id`,
       [
-        `BILL-${Date.now()}`, // Generate a unique bill number
+        bill_number, // Generate a unique bill number
         total_amount,
         tax_value,
         discount_value,
@@ -256,7 +348,7 @@ router.post('/', async (req, res) => {
         discount_percentage,
         service_charge_percentage,
         billstatus,
-        table_no
+        table_no, pax, guestId, guestName
       ]
     );
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/ItemMaster.dart';
 import 'package:point_of_sale_system/admin.dart';
-import 'package:point_of_sale_system/backend/OrderApiService.dart';
 import 'package:point_of_sale_system/backend/property_service.dart';
 import 'package:point_of_sale_system/backend/table_api_service.dart';
 import 'package:point_of_sale_system/bill_section.dart';
@@ -78,6 +77,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
   @override
   void initState() {
     outlets = widget.outlet;
+    selectedOutlet = widget.outlet[0];
     // Load table configurations initially
     loadtables();
     _fetchTableConfigs();
@@ -245,7 +245,8 @@ class _POSMainScreenState extends State<POSMainScreen> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => ReservationFormScreen()));
+                            builder: (context) =>
+                                const ReservationFormScreen()));
                   }),
                   //  _buildDrawerItem(Icons.swap_horiz, 'Table Shift', () {}),
                   _buildDrawerItem(Icons.receipt, 'Orders', () {
@@ -391,6 +392,8 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                 break;
                               case 'Dirty':
                                 tableColor = Colors.grey;
+                              case 'Booked':
+                                tableColor = Colors.blue.shade100;
                                 break;
                               case 'Vacant':
                               default:
@@ -399,7 +402,8 @@ class _POSMainScreenState extends State<POSMainScreen> {
                             }
                             return GestureDetector(
                               onTap: () {
-                                if (tableState == 'Occupied') {
+                                if (tableState == 'Occupied' ||
+                                    tableState == 'Booked') {
                                   // Navigate to billing screen
                                   Navigator.push(
                                     context,
@@ -707,6 +711,39 @@ class _POSMainScreenState extends State<POSMainScreen> {
                                             ),
                                           );
                                         },
+                                      ),
+                                    ] else if (tableState == 'Booked') ...[
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(
+                                                Icons.family_restroom,
+                                                color: Colors.blue),
+                                            onPressed: () {},
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(
+                                                Icons.restaurant_menu,
+                                                color: Colors.teal),
+                                            onPressed: () {
+                                              // Navigate to add item screen
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      KOTFormScreen(
+                                                    tableno: tableNo,
+                                                    propertyid:
+                                                        widget.propertyid,
+                                                    outlet: selectedOutlet,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ],

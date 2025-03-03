@@ -1,13 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:point_of_sale_system/backend/OrderApiService.dart';
-import 'package:point_of_sale_system/backend/bill_service.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'dart:io';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:point_of_sale_system/backend/OrderApiService.dart';
+import 'package:point_of_sale_system/backend/bill_service.dart';
+import 'package:point_of_sale_system/backend/guest_record_api_service.dart';
 
 class BillingFormScreen extends StatefulWidget {
   final tableno;
@@ -28,6 +27,8 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       BillingApiService(baseUrl: 'http://localhost:3000/api');
   OrderApiService orderApiService =
       OrderApiService(baseUrl: 'http://localhost:3000/api');
+  GuestRecordApiService guestRecordApiService =
+      GuestRecordApiService(baseUrl: 'http://localhost:3000/api');
   final TextEditingController _billNoController = TextEditingController();
   final TextEditingController _orderNoController =
       TextEditingController(text: 'ORD67890');
@@ -65,12 +66,13 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
   //   };
   // });
   Map<String, Map<String, dynamic>> itemMap = {};
+  List<Map<String, dynamic>> _guestRecords = [];
 
   @override
   void initState() {
-    _billNoController.text = generateBillId();
     _tableNoController.text = widget.tableno;
     _fetchOrders();
+    generateBillId();
     super.initState();
   }
 
@@ -280,11 +282,9 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     }).toList();
   }
 
-  String generateBillId() {
-    final now = DateTime.now();
-    final formatter = DateFormat('yyyyMMddHHmm');
-    final formattedDate = formatter.format(now);
-    return 'BILL-$formattedDate';
+  Future<void> generateBillId() async {
+    final maxBillNo = await billingApiService.getMaxBillNo(widget.outlet);
+    _billNoController.text = maxBillNo['nextBillNumber'];
   }
 
   @override
@@ -297,10 +297,22 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     }
   }
 
-  void _searchGuest() {
-    setState(() {
-      _guestIdController.text = 'GUEST001';
-    });
+  Future<void> _searchGuest(query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _guestRecords = [];
+      });
+      return;
+    }
+
+    try {
+      final result = await guestRecordApiService.searchRecords(query);
+      setState(() {
+        _guestRecords = result;
+      });
+    } catch (error) {
+      print('Error searching guests: $error');
+    }
   }
 
   Future<void> _saveBill() async {
@@ -366,6 +378,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
 
       // Step 2: Prepare bill data with updated items and totals
       Map<String, dynamic> billData = {
+        "bill_number": _billNoController.text,
         "table_no": widget.tableno,
         "tax_value": totals['cgst']! + totals['sgst']!, // Total tax from totals
         "discount_percentage": totals['discountPercentage'],
@@ -375,6 +388,9 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
         "other_charge": 50.0,
         "property_id": widget.propertyid,
         "outletname": widget.outlet,
+        "pax": _paxController.text,
+        "guestName": _guestSearchController.text,
+        "guestId": _guestIdController.text,
         "items":
             updatedItems, // Send updated items with tax, total, and discount
       };
@@ -964,13 +980,64 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                             controller: _guestSearchController,
                             decoration: InputDecoration(
                               labelText: 'Search Guest',
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.search),
-                                onPressed: _searchGuest,
-                              ),
+                              suffixIcon: _guestSearchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear),
+                                      onPressed: () {
+                                        setState(() {
+                                          _guestSearchController.clear();
+                                          _guestRecords =
+                                              []; // Hide suggestions
+                                        });
+                                      },
+                                    )
+                                  : IconButton(
+                                      icon: const Icon(Icons.search),
+                                      onPressed: () {
+                                        if (_guestSearchController
+                                            .text.isNotEmpty) {
+                                          _searchGuest(
+                                              _guestSearchController.text);
+                                        }
+                                      },
+                                    ),
                             ),
+                            onChanged:
+                                _searchGuest, // Call search function on text change
                           ),
                           const SizedBox(height: 10),
+                          _guestRecords.isNotEmpty
+                              ? Container(
+                                  height: 200, // Adjust height as needed
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(color: Colors.grey),
+                                  ),
+                                  child: ListView.builder(
+                                    itemCount: _guestRecords.length,
+                                    itemBuilder: (context, index) {
+                                      final guest = _guestRecords[index];
+                                      return ListTile(
+                                        title: Text(guest['guest_name']),
+                                        subtitle: Text(guest['phone_number']),
+                                        onTap: () {
+                                          setState(() {
+                                            _guestSearchController.text = guest[
+                                                'guest_name']; // Set selected guest
+                                            _guestIdController.text = guest[
+                                                    'guest_id']
+                                                .toString(); // Store selected guest
+                                            _guestRecords =
+                                                []; // Hide the dropdown
+                                          });
+                                          print('Selected Guest: $guest');
+                                        },
+                                      );
+                                    },
+                                  ),
+                                )
+                              : const SizedBox(), // Hide list when empty
+
                           // Pax Field
                           TextFormField(
                             controller: _paxController,

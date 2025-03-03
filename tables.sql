@@ -421,6 +421,9 @@ CREATE TABLE bills (
     other_charge NUMERIC(10, 2), -- Other charges
     grand_total NUMERIC(10, 2), -- Grand total (calculated as Total - Discounts + All Charges)
     bill_generated_at TIMESTAMP, -- Bill generation timestamp
+    guestName varchar (100),
+    pax int,
+    guestId varchar (50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Record creation timestamp
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last update timestamp
 );
