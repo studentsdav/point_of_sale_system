@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 class ItemsApiService {
@@ -8,6 +9,19 @@ class ItemsApiService {
   Future<List<dynamic>> fetchAllItems() async {
     try {
       final response = await http.get(Uri.parse("$baseUrl/items"));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception("Failed to fetch items: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Error fetching items: $e");
+    }
+  }
+
+  Future<List<dynamic>> fetchAllItemsnew() async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/items/allitems"));
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {

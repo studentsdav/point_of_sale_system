@@ -49,6 +49,8 @@ dependencies:
   csv: ^6.0.0
   printing: ^5.14.2
   syncfusion_flutter_charts: ^28.2.7
+  excel: ^4.0.6
+  open_file: ^3.5.10
 
 dev_dependencies:
   flutter_test:

@@ -1,12 +1,18 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'dart:io';
 import 'dart:math';
 
+import 'package:excel/excel.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:point_of_sale_system/backend/items_api_service.dart';
 
 class ItemMasterScreen extends StatefulWidget {
-  const ItemMasterScreen({Key? key}) : super(key: key);
+  const ItemMasterScreen({super.key});
 
   @override
   _ItemMasterScreenState createState() => _ItemMasterScreenState();
@@ -35,9 +41,9 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
   String? _selectedSubcategory = 'Vegetarian';
   String? _selectedOutlet = '';
   bool _isActive = true;
-  bool _isOnSale = false;
-  bool _isHappyHour = false;
-  bool _isDiscountable = true;
+  final bool _isOnSale = false;
+  final bool _isHappyHour = false;
+  final bool _isDiscountable = true;
   List<Map<String, dynamic>> _items = [];
   bool _happyHour = false;
   bool _discountable = true;
@@ -76,7 +82,7 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
       setState(() {
         this.properties = properties ?? [];
         this.outletConfigurations = outletConfigurations ?? [];
-        this.outlets = outletslist; // Set the outlets list
+        outlets = outletslist; // Set the outlets list
         _selectedOutlet = outletslist.first;
       });
     }
@@ -180,6 +186,165 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all required fields')),
+      );
+    }
+  }
+
+  Future<void> _importFromExcel() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xlsx'],
+    );
+
+    if (result != null) {
+      File file = File(result.files.single.path!);
+      var bytes = file.readAsBytesSync();
+      var excel = Excel.decodeBytes(bytes);
+
+      for (var table in excel.tables.keys) {
+        for (var row in excel.tables[table]!.rows.skip(1)) {
+          if (row.length >= 10) {
+            final itemData = {
+              'item_code': row[0]?.value.toString() ?? '',
+              'item_name': row[1]?.value.toString() ?? '',
+              'category': row[2]?.value.toString() ?? '',
+              'brand': row[3]?.value.toString() ?? '',
+              'subcategory_id': row[4]?.value.toString() ?? '',
+              'outlet': row[5]?.value.toString() ?? '',
+              'description': row[6]?.value.toString() ?? '',
+              'price': double.tryParse(row[7]?.value.toString() ?? '0') ?? 0.0,
+              'tax_rate':
+                  double.tryParse(row[8]?.value.toString() ?? '0') ?? 0.0,
+              'discount_percentage':
+                  double.tryParse(row[9]?.value.toString() ?? '0') ?? 0.0,
+              'stock_quantity':
+                  int.tryParse(row[10]?.value.toString() ?? '0') ?? 0,
+              'reorder_level':
+                  int.tryParse(row[11]?.value.toString() ?? '0') ?? 0,
+              'is_active': row[12]?.value.toString().toLowerCase() == 'true',
+              'on_sale': row[13]?.value.toString().toLowerCase() == 'true',
+              'happy_hour': row[14]?.value.toString().toLowerCase() == 'true',
+              'discountable': row[15]?.value.toString().toLowerCase() == 'true',
+              'property_id': row[16]?.value.toString() ?? '',
+              'tag': row[17]?.value.toString() ?? '',
+            };
+
+            try {
+              await _apiService.createItem(itemData);
+            } catch (e) {
+              print('Error adding item: $e');
+            }
+          }
+        }
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Excel import completed successfully')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No file selected')),
+      );
+    }
+  }
+
+  Future<void> _exportToExcel() async {
+    try {
+      // Fetch items from API
+      List items = await _apiService.fetchAllItemsnew();
+
+      if (items.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No items to export')),
+        );
+        return;
+      }
+
+      // Create Excel instance
+      var excel = Excel.createExcel();
+
+      // Get the default first sheet
+      String sheetName = "Items";
+      excel.rename(excel.getDefaultSheet()!, sheetName);
+      Sheet sheetObject = excel[sheetName];
+
+      // Add header row
+      sheetObject.appendRow([
+        TextCellValue('Item Code'),
+        TextCellValue('Item Name'),
+        TextCellValue('Category'),
+        TextCellValue('Brand'),
+        TextCellValue('Subcategory ID'),
+        TextCellValue('Outlet'),
+        TextCellValue('Description'),
+        TextCellValue('Price'),
+        TextCellValue('Tax Rate'),
+        TextCellValue('Discount %'),
+        TextCellValue('Stock'),
+        TextCellValue('Reorder Level'),
+        TextCellValue('Active'),
+        TextCellValue('On Sale'),
+        TextCellValue('Happy Hour'),
+        TextCellValue('Discountable'),
+        TextCellValue('Property ID'),
+        TextCellValue('Tag'),
+      ]);
+
+      // Add data rows
+      for (var item in items) {
+        sheetObject.appendRow([
+          TextCellValue(item['item_code'] ?? ''),
+          TextCellValue(item['item_name'] ?? ''),
+          TextCellValue(item['category'] ?? ''),
+          TextCellValue(item['brand'] ?? ''),
+          TextCellValue(item['subcategory_id'] ?? ''),
+          TextCellValue(item['outlet'] ?? ''),
+          TextCellValue(item['description'] ?? ''),
+          DoubleCellValue(
+              double.tryParse(item['price']?.toString() ?? '0.0') ?? 0.0),
+          DoubleCellValue(
+              double.tryParse(item['tax_rate']?.toString() ?? '0.0') ?? 0.0),
+          DoubleCellValue(double.tryParse(
+                  item['discount_percentage']?.toString() ?? '0.0') ??
+              0.0),
+          IntCellValue(
+              int.tryParse(item['stock_quantity']?.toString() ?? '0') ?? 0),
+          IntCellValue(
+              int.tryParse(item['reorder_level']?.toString() ?? '0') ?? 0),
+          BoolCellValue(item['is_active'] == true),
+          BoolCellValue(item['on_sale'] == true),
+          BoolCellValue(item['happy_hour'] == true),
+          BoolCellValue(item['discountable'] == true),
+          TextCellValue(item['property_id'] ?? ''),
+          TextCellValue(item['tag'] ?? ''),
+        ]);
+      }
+
+      // Ensure data is written
+      List<int>? excelData = excel.encode();
+      if (excelData == null) {
+        throw Exception("Failed to encode Excel file.");
+      }
+
+      // Get file path
+      Directory directory = await getApplicationDocumentsDirectory();
+      String timestamp = DateFormat('yyyyMMddHHmmss').format(DateTime.now());
+      String filePath = '${directory.path}/items_export_$timestamp.xlsx';
+
+      // Save the Excel file
+      File(filePath)
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(excelData);
+
+      // Open file after saving
+      OpenFile.open(filePath);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Export successful')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error exporting: $e')),
       );
     }
   }
@@ -628,7 +793,7 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
                   ),
                   const SizedBox(height: 20),
                   // Item List
-                  _filteredItems.length > 0
+                  _filteredItems.isNotEmpty
                       ? Expanded(
                           child: ListView.builder(
                             itemCount: _filteredItems
@@ -668,7 +833,24 @@ class _ItemMasterScreenState extends State<ItemMasterScreen> {
                               );
                             },
                           ),
-                        )
+                        ),
+
+                  SafeArea(
+                      child: Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: _importFromExcel,
+                        child: const Text("Import from Excel"),
+                      ),
+                      const SizedBox(
+                        width: 20,
+                      ),
+                      ElevatedButton(
+                        onPressed: _exportToExcel,
+                        child: const Text("Export"),
+                      ),
+                    ],
+                  ))
                 ],
               ),
             ),

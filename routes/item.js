@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT item_name, category, price, tax_rate, tag, discountable FROM items`
+      `SELECT item_id, item_name, category, price, tax_rate, tag, discountable FROM items`
     );
     res.json(result.rows);
   } catch (err) {
@@ -76,7 +76,7 @@ router.post('/', async (req, res) => {
 });
 
 // READ - Get all items
-router.get('/', async (req, res) => {
+router.get('/allitems/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM items');
     res.json(result.rows);
