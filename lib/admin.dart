@@ -7,12 +7,16 @@ import 'package:point_of_sale_system/backend/bill_service.dart';
 import 'package:point_of_sale_system/billconfig.dart';
 import 'package:point_of_sale_system/category.dart';
 import 'package:point_of_sale_system/dateconfig.dart';
+import 'package:point_of_sale_system/deliveryCharge.dart';
+import 'package:point_of_sale_system/discountConfig.dart';
 import 'package:point_of_sale_system/forgot_password.dart';
 import 'package:point_of_sale_system/guest_info.dart';
 import 'package:point_of_sale_system/happyhour.dart';
 import 'package:point_of_sale_system/inventory.dart';
 import 'package:point_of_sale_system/kotconfig.dart';
 import 'package:point_of_sale_system/outletconfig.dart';
+import 'package:point_of_sale_system/packingCharge.dart';
+import 'package:point_of_sale_system/platformfe.dart';
 import 'package:point_of_sale_system/printer.dart';
 import 'package:point_of_sale_system/propertyinfo.dart';
 import 'package:point_of_sale_system/reservation.dart';
@@ -228,6 +232,7 @@ class _AdminDashboard extends State {
           buildDrawerItem(Icons.perm_identity_sharp, 'User Permission'),
           buildDrawerItem(Icons.receipt, 'Bill Config'),
           buildDrawerItem(Icons.layers, 'Item Master'),
+          buildDrawerItem(Icons.category, 'Category'),
           buildDrawerItem(Icons.person_pin, 'Waiter Master'),
           buildDrawerItem(Icons.info, 'Guest Info Add'),
           buildDrawerItem(Icons.book, 'Reservation'),
@@ -236,6 +241,10 @@ class _AdminDashboard extends State {
           buildDrawerItem(Icons.print, 'Printer Config'),
           buildDrawerItem(Icons.toll, 'Tax Config'),
           buildDrawerItem(Icons.local_offer, 'Service Charge Config'),
+          buildDrawerItem(Icons.percent, 'Packing Charge Config'),
+          buildDrawerItem(Icons.local_shipping, 'Delivery Charge Config'),
+          buildDrawerItem(Icons.redeem, 'Discount Manage'),
+          buildDrawerItem(Icons.add_business, 'Platform Fee'),
           buildDrawerItem(Icons.access_alarm, 'Happy Hour Config'),
           buildDrawerItem(Icons.inventory, 'Inventory'),
           buildDrawerItem(Icons.lock, 'Password Reset'),
@@ -307,6 +316,11 @@ class _AdminDashboard extends State {
               context,
               MaterialPageRoute(
                   builder: (context) => ServiceChargeConfigForm()));
+        } else if (title == 'Packing Charge Config') {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const PackingChargeConfigForm()));
         } else if (title == 'Tax Config') {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => TaxConfigForm()));
@@ -331,6 +345,21 @@ class _AdminDashboard extends State {
               context,
               MaterialPageRoute(
                   builder: (context) => const ReservationFormScreen()));
+        } else if (title == 'Delivery Charge Config') {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const DeliveryChargeConfigForm()));
+        } else if (title == 'Discount Manage') {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const DiscountConfigForm()));
+        } else if (title == 'Platform Fee') {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const platformFeeConfigForm()));
         }
       },
     );
@@ -418,6 +447,19 @@ class _AdminDashboard extends State {
   }
 
   Widget buildSalesCards() {
+    String categoryDisplay = 'n/a';
+
+    if (categoriesData.isNotEmpty) {
+      if (categoriesData.length == 1) {
+        categoryDisplay = categoriesData[0]['item_category'];
+      } else if (categoriesData.length == 2) {
+        categoryDisplay =
+            '${categoriesData[0]['item_category']}, ${categoriesData[1]['item_category']}';
+      } else {
+        categoryDisplay =
+            '${categoriesData[0]['item_category']}, ${categoriesData[1]['item_category']}, ${categoriesData[2]['item_category']}';
+      }
+    }
     return Column(
       children: [
         Row(
@@ -449,12 +491,8 @@ class _AdminDashboard extends State {
                     yearly_growth, Colors.green, yearly_growth)),
             const SizedBox(width: 16),
             Expanded(
-                child: buildSalesCard(
-                    'Top 5 Categories',
-                    Icons.category,
-                    '${categoriesData[0]['item_category']}, etc.',
-                    Colors.teal,
-                    '')),
+                child: buildSalesCard('Top 5 Categories', Icons.category,
+                    '$categoryDisplay, etc...', Colors.teal, '')),
           ],
         ),
       ],
@@ -483,8 +521,9 @@ class _AdminDashboard extends State {
               const SizedBox(height: 4),
               Text(value, style: const TextStyle(fontSize: 14)),
               if (growthPercentage.isNotEmpty) const SizedBox(height: 4),
-              Text('Growth: $growthPercentage',
-                  style: const TextStyle(fontSize: 12, color: Colors.black)),
+              if (title != "Top 5 Categories")
+                Text('Growth: $growthPercentage',
+                    style: const TextStyle(fontSize: 12, color: Colors.black)),
             ],
           ),
         ],

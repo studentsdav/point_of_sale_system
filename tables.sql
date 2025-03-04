@@ -254,6 +254,75 @@ CREATE TABLE servicecharge_config (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- Timestamp for when the record is updated
 );
 
+
+-- Table: packingcharge_config
+CREATE TABLE packingcharge_config (
+    id SERIAL PRIMARY KEY,  -- Unique ID for the service charge configuration
+    property_id VARCHAR(100) NOT NULL,  -- Property ID the service charge is applied to
+    packing_charge DECIMAL(5, 2) NOT NULL,  -- Percentage of service charge to apply
+    outlet_name VARCHAR(255) NOT NULL,  -- The Name of the outlet (referencing outlet_configurations.outlet_name)
+    min_amount DECIMAL(10, 2) NOT NULL,  -- Minimum amount for the service charge to apply
+    max_amount DECIMAL(10, 2) NOT NULL,  -- Maximum amount for the service charge to apply
+    apply_on VARCHAR(50) DEFAULT 'all bills',  -- Condition to apply the charge (e.g., 'all bills', 'certain items')
+    status VARCHAR(50) DEFAULT 'active',  -- Status of the service charge configuration
+    start_date DATE NOT NULL,  -- Start date from which the service charge is valid
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp for when the record is created
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- Timestamp for when the record is updated
+);
+
+-- Table: discount_config
+CREATE TABLE discount_config (
+    id SERIAL PRIMARY KEY,  
+    property_id VARCHAR(100) NOT NULL,  
+    discount_type VARCHAR(50) NOT NULL DEFAULT 'percentage',  -- 'percentage' or 'fixed'
+    discount_value DECIMAL(5, 2) NOT NULL,  
+    min_amount DECIMAL(10, 2) NOT NULL,  
+    max_amount DECIMAL(10, 2) NOT NULL,  
+    outlet_name VARCHAR(255) NOT NULL,  -- The Name of the outlet (referencing outlet_configurations.outlet_name)
+    apply_on VARCHAR(50) DEFAULT 'all bills',  
+    status VARCHAR(50) DEFAULT 'active',  
+    start_date DATE NOT NULL,  
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+
+-- Table: platform_fee
+CREATE TABLE platformfees_config (
+    id SERIAL PRIMARY KEY,  
+    property_id VARCHAR(100) NOT NULL,  
+    platform_fee DECIMAL(5, 2) NOT NULL,  
+    fee_type VARCHAR(50) NOT NULL DEFAULT 'percentage',  -- 'percentage' or 'fixed'
+    min_amount DECIMAL(10, 2) NOT NULL,  
+    max_amount DECIMAL(10, 2) NOT NULL,  
+    apply_on VARCHAR(50) DEFAULT 'all transactions',  
+    outlet_name VARCHAR(255) NOT NULL,  -- The Name of the outlet (referencing outlet_configurations.outlet_name)
+    status VARCHAR(50) DEFAULT 'active',  
+    start_date DATE NOT NULL,  
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+
+-- Table: delivery_fee
+CREATE TABLE deliverycharge_config (
+    id SERIAL PRIMARY KEY,  
+    property_id VARCHAR(100) NOT NULL,  
+    delivery_charge DECIMAL(5, 2) NOT NULL,  
+    outlet_name VARCHAR(255) NOT NULL,  
+    min_amount DECIMAL(10, 2) NOT NULL,  
+    max_amount DECIMAL(10, 2) NOT NULL,  
+    apply_on VARCHAR(50) DEFAULT 'all bills',  
+    status VARCHAR(50) DEFAULT 'active',  
+    start_date DATE NOT NULL,  
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+
+
+
+
 -- Table: table_configurations
 CREATE TABLE table_configurations (
     id SERIAL PRIMARY KEY,               -- Unique ID for the table configuration
