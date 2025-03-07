@@ -6,7 +6,11 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:point_of_sale_system/backend/OrderApiService.dart';
 import 'package:point_of_sale_system/backend/bill_service.dart';
+import 'package:point_of_sale_system/backend/deliveryApiService.dart';
+import 'package:point_of_sale_system/backend/discountApiService.dart';
 import 'package:point_of_sale_system/backend/guest_record_api_service.dart';
+import 'package:point_of_sale_system/backend/packingChargeApiService.dart';
+import 'package:point_of_sale_system/backend/serviceChargeApiService.dart';
 
 class BillingFormScreen extends StatefulWidget {
   final tableno;
@@ -29,6 +33,20 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       OrderApiService(baseUrl: 'http://localhost:3000/api');
   GuestRecordApiService guestRecordApiService =
       GuestRecordApiService(baseUrl: 'http://localhost:3000/api');
+  DiscountApiService discountApiService =
+      DiscountApiService(baseUrl: 'http://localhost:3000/api');
+  PackingChargeApiService packingApiService =
+      PackingChargeApiService(baseUrl: 'http://localhost:3000/api');
+  DeliveryApiService deliveryApiService =
+      DeliveryApiService(baseUrl: 'http://localhost:3000/api');
+  List<Map<dynamic, dynamic>> discountList = []; // Variable to store discounts
+  List<Map<dynamic, dynamic>> packingList = []; // Variable to store discounts
+  List<Map<dynamic, dynamic>> deliveryList = []; // Variable to store discounts
+  List<Map<dynamic, dynamic>> serviceList = []; // Variable to store discounts
+
+  ServiceChargeApiService serviceChargeApiService =
+      ServiceChargeApiService(baseUrl: 'http://localhost:3000/api');
+
   final TextEditingController _billNoController = TextEditingController();
   final TextEditingController _orderNoController =
       TextEditingController(text: 'ORD67890');
@@ -68,12 +86,85 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
   Map<String, Map<String, dynamic>> itemMap = {};
   List<Map<String, dynamic>> _guestRecords = [];
 
+  bool _isloading = false;
+
   @override
   void initState() {
     _tableNoController.text = widget.tableno;
-    _fetchOrders();
-    generateBillId();
+    _fetchAllData();
     super.initState();
+  }
+
+  _fetchAllData() async {
+    setState(() {
+      _isloading = true;
+    });
+    await _fetchOrders();
+
+    await fetchDiscounts();
+
+    await fetchpacking();
+
+    await fetchService();
+
+    await fetchDelivery();
+
+    await generateBillId();
+    setState(() {
+      _isloading = false;
+    });
+  }
+
+  Future<void> fetchDiscounts() async {
+    try {
+      List<Map<dynamic, dynamic>> fetchedDiscounts =
+          await discountApiService.getDiscountConfigurations();
+
+      setState(() {
+        discountList = fetchedDiscounts; // Store fetched values in the variable
+      });
+    } catch (e) {
+      print('Error fetching discounts: $e');
+    }
+  }
+
+  Future<void> fetchpacking() async {
+    try {
+      List<Map<dynamic, dynamic>> fetchedPacking =
+          await packingApiService.getPackingChargeConfigurations();
+
+      setState(() {
+        packingList = fetchedPacking; // Store fetched values in the variable
+      });
+    } catch (e) {
+      print('Error fetching discounts: $e');
+    }
+  }
+
+  Future<void> fetchService() async {
+    try {
+      List<Map<dynamic, dynamic>> fetchedService =
+          await serviceChargeApiService.getServiceChargeConfigurations();
+
+      setState(() {
+        serviceList = fetchedService; // Store fetched values in the variable
+      });
+    } catch (e) {
+      print('Error fetching discounts: $e');
+    }
+  }
+
+  Future<void> fetchDelivery() async {
+    try {
+      List<Map<dynamic, dynamic>> fetchedDelivery =
+          await deliveryApiService.getDeliveryCharges();
+
+      setState(() {
+        deliveryList = fetchedDelivery; // Store fetched values in the variable
+      });
+    } catch (e) {
+      print('Error fetching discounts: $e');
+    }
   }
 
   void _reset() {
@@ -319,7 +410,12 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     try {
       // Assuming itemMap is already populated
       List<Map<String, dynamic>> updatedItems = [];
+      Map<String, dynamic> serviceConfig = serviceList.isNotEmpty
+          ? Map<String, dynamic>.from(serviceList[0])
+          : {};
 
+      double serviceValue =
+          double.parse(serviceConfig['service_charge'] ?? "0.0");
       // Get user input for discount
       double discountPercentageInput =
           double.tryParse(_percentDiscountController.text) ??
@@ -344,6 +440,8 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
         // Calculate the discount amount (either flat or percentage based on the input)
         double discountAmount = 0.0;
         double discountPercentage = 0.0;
+
+        validateDiscount(totalAmount);
 
         if (isFlatDiscount) {
           discountAmount = flatDiscountInput; // Flat discount
@@ -382,7 +480,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
         "table_no": widget.tableno,
         "tax_value": totals['cgst']! + totals['sgst']!, // Total tax from totals
         "discount_percentage": totals['discountPercentage'],
-        "service_charge_percentage": 5.0,
+        "service_charge_percentage": serviceValue,
         "packing_charge_percentage": 2.0,
         "delivery_charge_percentage": 3.0,
         "other_charge": 50.0,
@@ -416,6 +514,73 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       //   SnackBar(content: Text('Error: $error')),
       // );
     }
+  }
+
+  void validateDiscount(double billAmount) {
+    if (_percentDiscountController.text.isNotEmpty ||
+        _flatDiscountController.text.isNotEmpty) {
+      double enteredPercentage =
+          double.tryParse(_percentDiscountController.text) ?? 0.0;
+      double enteredFlatDiscount =
+          double.tryParse(_flatDiscountController.text) ?? 0.0;
+
+      // Assume we get the discount config from discountList
+      Map<String, dynamic> discountConfig = discountList.isNotEmpty
+          ? Map<String, dynamic>.from(discountList[0])
+          : {};
+
+      double minAmount =
+          double.parse(discountConfig['min_amount'].toString() ?? "0.0");
+      double maxAmount =
+          double.parse(discountConfig['max_amount'].toString() ?? "0.0");
+      double maxDiscountValue =
+          double.parse(discountConfig['discount_value'].toString() ?? "0.0");
+
+      String? errorMessage;
+
+      if (billAmount < minAmount) {
+        errorMessage =
+            "Bill amount must be at least ₹$minAmount to apply discount.";
+      }
+
+      if (_discountType == 'Percentage') {
+        double calculatedDiscount = (billAmount * enteredPercentage) / 100;
+
+        if (enteredPercentage > maxDiscountValue) {
+          errorMessage =
+              "Max allowed discount percentage is $maxDiscountValue%.";
+          _percentDiscountController.text = maxDiscountValue.toString();
+        }
+
+        if (calculatedDiscount > maxAmount) {
+          errorMessage = "Max discount allowed is ₹$maxAmount.";
+          _percentDiscountController.text =
+              ((maxAmount / billAmount) * 100).toStringAsFixed(2);
+        }
+      }
+
+      if (_discountType == 'Flat') {
+        if (enteredFlatDiscount > maxAmount) {
+          errorMessage = "Max flat discount allowed is ₹$maxAmount.";
+          _flatDiscountController.text = maxAmount.toString();
+        }
+      }
+
+      if (errorMessage != null) {
+        // SchedulerBinding.instance.addPostFrameCallback((_) {
+        //   showError(errorMessage!);
+        // });
+      }
+    }
+    Future.delayed(const Duration(milliseconds: 100), () {
+      setState(() {});
+    });
+  }
+
+  void showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
   void processResponserror(String response) {
@@ -621,7 +786,6 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
 
     double discountAmount = 0.0;
     double discountPercentage = 0.0;
-
     if (isFlatDiscount) {
       discountAmount = flatDiscountInput;
       discountPercentage = totalAmount > 0
@@ -632,13 +796,19 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       discountAmount = (totalAmount * discountPercentage) / 100;
     }
 
+    Map<String, dynamic> serviceConfig =
+        serviceList.isNotEmpty ? Map<String, dynamic>.from(serviceList[0]) : {};
+
+    double serviceValue =
+        double.parse(serviceConfig['service_charge'] ?? "0.0");
+
     return {
       'totalAmount': totalAmount,
       'totalDiscount': discountAmount,
       'discountPercentage': discountPercentage,
       'cgst': (totalAmount - discountAmount) * (taxRate / 2) / 100,
       'sgst': (totalAmount - discountAmount) * (taxRate / 2) / 100,
-      'serviceCharge': 10.0, // Example fixed value
+      'serviceCharge': (totalAmount * serviceValue / 100) // Example fixed value
     };
   }
 
@@ -670,7 +840,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       totalAmount +=
           item['total']; // Add only discountable items to the totalAmount
     });
-
+    validateDiscount(totalAmount);
     // Apply either flat discount or percentage discount
     if (isFlatDiscount && totalAmountnew > 0) {
       discountAmount = flatDiscountInput;
@@ -685,6 +855,12 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     double sgst = (subtotal * (taxRate / 2)) / 100; // SGST = 2.5%
     double netReceivableAmount = subtotal + cgst + sgst + serviceCharge;
 
+    Map<String, dynamic> serviceConfig =
+        serviceList.isNotEmpty ? Map<String, dynamic>.from(serviceList[0]) : {};
+
+    double serviceValue =
+        double.parse(serviceConfig['service_charge'] ?? "0.0");
+
     return {
       'totalAmount': totalAmount,
       'discount': discountAmount,
@@ -692,8 +868,9 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       'subtotal': subtotal,
       'cgst': cgst,
       'sgst': sgst,
-      'serviceCharge': serviceCharge,
-      'netReceivableAmount': netReceivableAmount,
+      'serviceCharge': (totalAmount * serviceValue / 100),
+      'netReceivableAmount':
+          netReceivableAmount + (totalAmount * serviceValue / 100),
     };
   }
 
@@ -728,543 +905,576 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
   @override
   Widget build(BuildContext context) {
     final totals = calculateTotals(itemMap);
+    Map<String, dynamic> serviceConfig =
+        serviceList.isNotEmpty ? Map<String, dynamic>.from(serviceList[0]) : {};
+
+    double serviceValue =
+        double.parse(serviceConfig['service_charge'] ?? "0.0");
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Billing Form'),
       ),
-      body: Center(
-        child: Container(
-          width: MediaQuery.of(context)
-              .size
-              .width, // Adjust the width to fit both sides
-          padding: const EdgeInsets.all(16.0),
+      body: _isloading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : Center(
+              child: Container(
+                width: MediaQuery.of(context)
+                    .size
+                    .width, // Adjust the width to fit both sides
+                padding: const EdgeInsets.all(16.0),
 
-          child: Row(
-            children: [
-              // Left side: Order List
+                child: Row(
+                  children: [
+                    // Left side: Order List
 
-              // const SizedBox(width: 16), // Space between left and right side
-              Expanded(
-                flex: 1,
-                child: Container(
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Orders',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Colors.blue,
+                    // const SizedBox(width: 16), // Space between left and right side
+                    Expanded(
+                      flex: 1,
+                      child: Container(
+                        padding: const EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ),
-                      const SizedBox(
-                          height: 10), // Space between header and list
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: orders.length,
-                          itemBuilder: (context, index) {
-                            final order = orders[index];
-                            return Card(
-                              child: ListTile(
-                                title:
-                                    Text('Order No: ${order["order_number"]}'),
-                                subtitle: Text(
-                                    'Table No: ${order["table_number"]} - ${order["order_type"]}'),
-                                onTap: () {
-                                  setState(() {
-                                    selectedOrderId =
-                                        order['order_id'].toString();
-                                    // //   ordernumber = order['order_number'].toString();
-                                    _fetchOrderItemsnew([selectedOrderId]);
-                                  });
-                                },
-                                selected: selectedOrderId ==
-                                    order['order_id'].toString(),
+                        child: Column(
+                          children: [
+                            const Text(
+                              'Orders',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: Colors.blue,
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Container(
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Order Items',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.blue,
                             ),
-                          ),
-                          IconButton(
-                              onPressed: () {
-                                _reset();
-                              },
-                              icon: const Icon(Icons.refresh))
-                        ],
-                      ),
-                      const SizedBox(
-                          height: 10), // Space between header and list
-                      Expanded(
-                        child: ListView(
-                          children: selectedOrderId.isEmpty
-                              // If no order is selected, show all items
-                              ? itemMap.entries.map((entry) {
-                                  var item = entry.value;
-                                  return ListTile(
-                                    title: Text(item['item_name']),
-                                    subtitle: Text(
-                                        'Qty: ${item['quantity']} | ₹${item['total']}'),
-                                    trailing: Text('₹${item['price']}'),
-                                  );
-                                }).toList()
-                              : itemMap.entries
-                                  // Filter items based on selectedOrderId
-                                  .where((entry) =>
-                                      entry.value['order_id'].toString() ==
-                                      selectedOrderId.toString())
-                                  .map((entry) {
-                                  var item = entry.value;
-                                  return ListTile(
-                                    title: Text(item['item_name']),
-                                    subtitle: Text(
-                                        'Qty: ${item['quantity']} | ₹${item['total']}'),
-                                    trailing: Text('₹${item['price']}'),
-                                  );
-                                }).toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Right side: Existing Billing Form
-              Expanded(
-                flex: 3,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Bill No:',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    TextField(
-                                        controller: _billNoController,
-                                        enabled: false,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Order No:',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    TextField(
-                                        controller: _orderNoController,
-                                        enabled: false,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Date:',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    TextField(
-                                        controller: _dateController,
-                                        enabled: false,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Time:',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    TextField(
-                                        controller: _timeController,
-                                        enabled: false,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Table No:',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    TextField(
-                                        controller: _tableNoController,
-                                        enabled: false,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Guest ID:',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    TextField(
-                                        controller: _guestIdController,
-                                        enabled: false,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          TextFormField(
-                            controller: _guestSearchController,
-                            decoration: InputDecoration(
-                              labelText: 'Search Guest',
-                              suffixIcon: _guestSearchController.text.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear),
-                                      onPressed: () {
+                            const SizedBox(
+                                height: 10), // Space between header and list
+                            Expanded(
+                              child: ListView.builder(
+                                itemCount: orders.length,
+                                itemBuilder: (context, index) {
+                                  final order = orders[index];
+                                  return Card(
+                                    child: ListTile(
+                                      title: Text(
+                                          'Order No: ${order["order_number"]}'),
+                                      subtitle: Text(
+                                          'Table No: ${order["table_number"]} - ${order["order_type"]}'),
+                                      onTap: () {
                                         setState(() {
-                                          _guestSearchController.clear();
-                                          _guestRecords =
-                                              []; // Hide suggestions
+                                          selectedOrderId =
+                                              order['order_id'].toString();
+                                          // //   ordernumber = order['order_number'].toString();
+                                          _fetchOrderItemsnew(
+                                              [selectedOrderId]);
                                         });
                                       },
-                                    )
-                                  : IconButton(
-                                      icon: const Icon(Icons.search),
-                                      onPressed: () {
-                                        if (_guestSearchController
-                                            .text.isNotEmpty) {
-                                          _searchGuest(
-                                              _guestSearchController.text);
-                                        }
+                                      selected: selectedOrderId ==
+                                          order['order_id'].toString(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Container(
+                        padding: const EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Order Items',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                                IconButton(
+                                    onPressed: () {
+                                      _reset();
+                                    },
+                                    icon: const Icon(Icons.refresh))
+                              ],
+                            ),
+                            const SizedBox(
+                                height: 10), // Space between header and list
+                            Expanded(
+                              child: ListView(
+                                children: selectedOrderId.isEmpty
+                                    // If no order is selected, show all items
+                                    ? itemMap.entries.map((entry) {
+                                        var item = entry.value;
+                                        return ListTile(
+                                          title: Text(item['item_name']),
+                                          subtitle: Text(
+                                              'Qty: ${item['quantity']} | ₹${item['total']}'),
+                                          trailing: Text('₹${item['price']}'),
+                                        );
+                                      }).toList()
+                                    : itemMap.entries
+                                        // Filter items based on selectedOrderId
+                                        .where((entry) =>
+                                            entry.value['order_id']
+                                                .toString() ==
+                                            selectedOrderId.toString())
+                                        .map((entry) {
+                                        var item = entry.value;
+                                        return ListTile(
+                                          title: Text(item['item_name']),
+                                          subtitle: Text(
+                                              'Qty: ${item['quantity']} | ₹${item['total']}'),
+                                          trailing: Text('₹${item['price']}'),
+                                        );
+                                      }).toList(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Right side: Existing Billing Form
+                    Expanded(
+                      flex: 3,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('Bill No:',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          TextField(
+                                              controller: _billNoController,
+                                              enabled: false,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('Order No:',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          TextField(
+                                              controller: _orderNoController,
+                                              enabled: false,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('Date:',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          TextField(
+                                              controller: _dateController,
+                                              enabled: false,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('Time:',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          TextField(
+                                              controller: _timeController,
+                                              enabled: false,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('Table No:',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          TextField(
+                                              controller: _tableNoController,
+                                              enabled: false,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('Guest ID:',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          TextField(
+                                              controller: _guestIdController,
+                                              enabled: false,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                TextFormField(
+                                  controller: _guestSearchController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Search Guest',
+                                    suffixIcon: _guestSearchController
+                                            .text.isNotEmpty
+                                        ? IconButton(
+                                            icon: const Icon(Icons.clear),
+                                            onPressed: () {
+                                              setState(() {
+                                                _guestSearchController.clear();
+                                                _guestRecords =
+                                                    []; // Hide suggestions
+                                              });
+                                            },
+                                          )
+                                        : IconButton(
+                                            icon: const Icon(Icons.search),
+                                            onPressed: () {
+                                              if (_guestSearchController
+                                                  .text.isNotEmpty) {
+                                                _searchGuest(
+                                                    _guestSearchController
+                                                        .text);
+                                              }
+                                            },
+                                          ),
+                                  ),
+                                  onChanged:
+                                      _searchGuest, // Call search function on text change
+                                ),
+                                const SizedBox(height: 10),
+                                _guestRecords.isNotEmpty
+                                    ? Container(
+                                        height: 200, // Adjust height as needed
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          border:
+                                              Border.all(color: Colors.grey),
+                                        ),
+                                        child: ListView.builder(
+                                          itemCount: _guestRecords.length,
+                                          itemBuilder: (context, index) {
+                                            final guest = _guestRecords[index];
+                                            return ListTile(
+                                              title: Text(guest['guest_name']),
+                                              subtitle:
+                                                  Text(guest['phone_number']),
+                                              onTap: () {
+                                                setState(() {
+                                                  _guestSearchController.text =
+                                                      guest[
+                                                          'guest_name']; // Set selected guest
+                                                  _guestIdController
+                                                      .text = guest[
+                                                          'guest_id']
+                                                      .toString(); // Store selected guest
+                                                  _guestRecords =
+                                                      []; // Hide the dropdown
+                                                });
+                                                print('Selected Guest: $guest');
+                                              },
+                                            );
+                                          },
+                                        ),
+                                      )
+                                    : const SizedBox(), // Hide list when empty
+
+                                // Pax Field
+                                TextFormField(
+                                  controller: _paxController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Pax (Number of People)',
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                ),
+                                const SizedBox(height: 10),
+                                // Discount Field with Radio Buttons for Discount Type
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    const Text('Discount Type:',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    Radio<String>(
+                                      value: 'Percentage',
+                                      groupValue: _discountType,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          isFlatDiscount = false;
+                                          _discountType = value!;
+                                        });
                                       },
                                     ),
-                            ),
-                            onChanged:
-                                _searchGuest, // Call search function on text change
-                          ),
-                          const SizedBox(height: 10),
-                          _guestRecords.isNotEmpty
-                              ? Container(
-                                  height: 200, // Adjust height as needed
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border.all(color: Colors.grey),
+                                    const Text('Percentage'),
+                                    Radio<String>(
+                                      value: 'Flat',
+                                      groupValue: _discountType,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          isFlatDiscount = true;
+                                          _discountType = value!;
+                                        });
+                                      },
+                                    ),
+                                    const Text('Flat Amount'),
+                                  ],
+                                ),
+                                if (_discountType == 'Percentage')
+                                  TextFormField(
+                                    maxLength: 3,
+                                    controller: _percentDiscountController,
+                                    decoration: const InputDecoration(
+                                        labelText: 'Discount Percentage'),
+                                    keyboardType: TextInputType.number,
+                                    onChanged: (value) {
+                                      setState(() {});
+                                    },
                                   ),
-                                  child: ListView.builder(
-                                    itemCount: _guestRecords.length,
-                                    itemBuilder: (context, index) {
-                                      final guest = _guestRecords[index];
-                                      return ListTile(
-                                        title: Text(guest['guest_name']),
-                                        subtitle: Text(guest['phone_number']),
-                                        onTap: () {
-                                          setState(() {
-                                            _guestSearchController.text = guest[
-                                                'guest_name']; // Set selected guest
-                                            _guestIdController.text = guest[
-                                                    'guest_id']
-                                                .toString(); // Store selected guest
-                                            _guestRecords =
-                                                []; // Hide the dropdown
-                                          });
-                                          print('Selected Guest: $guest');
-                                        },
+                                if (_discountType == 'Flat')
+                                  TextFormField(
+                                    maxLength: 10,
+                                    controller: _flatDiscountController,
+                                    decoration: const InputDecoration(
+                                        labelText: 'Discount Amount'),
+                                    keyboardType: TextInputType.number,
+                                    onChanged: (value) {
+                                      setState(() {});
+                                    },
+                                  ),
+                                const SizedBox(height: 10),
+                                // Scrollable Items List
+                                SizedBox(
+                                  height:
+                                      130, // Keeps height fixed to allow scrolling vertically
+                                  child: LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      return SingleChildScrollView(
+                                        scrollDirection:
+                                            Axis.vertical, // Vertical scrolling
+                                        child: SingleChildScrollView(
+                                          scrollDirection: Axis
+                                              .horizontal, // Horizontal scrolling
+                                          child: ConstrainedBox(
+                                            constraints: BoxConstraints(
+                                              minWidth: constraints
+                                                  .maxWidth, // Ensure table fits the container
+                                            ),
+                                            child: DataTable(
+                                              columnSpacing:
+                                                  20, // Adjust spacing between columns
+                                              columns: const [
+                                                DataColumn(label: Text('S.No')),
+                                                DataColumn(label: Text('Name')),
+                                                DataColumn(label: Text('Qty')),
+                                                DataColumn(label: Text('Rate')),
+                                                DataColumn(
+                                                    label: Text('Amount')),
+                                                DataColumn(label: Text('Tax')),
+                                                DataColumn(
+                                                    label: Text('Discount')),
+                                              ],
+                                              rows:
+                                                  itemMap.entries.map((entry) {
+                                                var item = entry.value;
+                                                return DataRow(cells: [
+                                                  DataCell(Text(
+                                                      item['sno'].toString())),
+                                                  DataCell(
+                                                      Text(item['item_name'])),
+                                                  DataCell(Text(item['quantity']
+                                                      .toString())),
+                                                  DataCell(Text(
+                                                      '₹${item['price']}')),
+                                                  DataCell(Text(
+                                                      '₹${item['total']}')),
+                                                  DataCell(
+                                                      Text('${item['tax']}%')),
+                                                  DataCell(Text(
+                                                      '${item['discountable']}')),
+                                                ]);
+                                              }).toList(),
+                                            ),
+                                          ),
+                                        ),
                                       );
                                     },
                                   ),
-                                )
-                              : const SizedBox(), // Hide list when empty
+                                ),
 
-                          // Pax Field
-                          TextFormField(
-                            controller: _paxController,
-                            decoration: const InputDecoration(
-                              labelText: 'Pax (Number of People)',
-                            ),
-                            keyboardType: TextInputType.number,
-                          ),
-                          const SizedBox(height: 10),
-                          // Discount Field with Radio Buttons for Discount Type
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              const Text('Discount Type:',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                              Radio<String>(
-                                value: 'Percentage',
-                                groupValue: _discountType,
-                                onChanged: (value) {
-                                  setState(() {
-                                    isFlatDiscount = false;
-                                    _discountType = value!;
-                                  });
-                                },
-                              ),
-                              const Text('Percentage'),
-                              Radio<String>(
-                                value: 'Flat',
-                                groupValue: _discountType,
-                                onChanged: (value) {
-                                  setState(() {
-                                    isFlatDiscount = true;
-                                    _discountType = value!;
-                                  });
-                                },
-                              ),
-                              const Text('Flat Amount'),
-                            ],
-                          ),
-                          if (_discountType == 'Percentage')
-                            TextFormField(
-                              maxLength: 3,
-                              controller: _percentDiscountController,
-                              decoration: const InputDecoration(
-                                  labelText: 'Discount Percentage'),
-                              keyboardType: TextInputType.number,
-                              onChanged: (value) {
-                                setState(() {});
-                              },
-                            ),
-                          if (_discountType == 'Flat')
-                            TextFormField(
-                              maxLength: 3,
-                              controller: _flatDiscountController,
-                              decoration: const InputDecoration(
-                                  labelText: 'Discount Amount'),
-                              keyboardType: TextInputType.number,
-                              onChanged: (value) {
-                                setState(() {});
-                              },
-                            ),
-                          const SizedBox(height: 10),
-                          // Scrollable Items List
-                          SizedBox(
-                            height:
-                                130, // Keeps height fixed to allow scrolling vertically
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                return SingleChildScrollView(
-                                  scrollDirection:
-                                      Axis.vertical, // Vertical scrolling
-                                  child: SingleChildScrollView(
-                                    scrollDirection:
-                                        Axis.horizontal, // Horizontal scrolling
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        minWidth: constraints
-                                            .maxWidth, // Ensure table fits the container
-                                      ),
-                                      child: DataTable(
-                                        columnSpacing:
-                                            20, // Adjust spacing between columns
-                                        columns: const [
-                                          DataColumn(label: Text('S.No')),
-                                          DataColumn(label: Text('Name')),
-                                          DataColumn(label: Text('Qty')),
-                                          DataColumn(label: Text('Rate')),
-                                          DataColumn(label: Text('Amount')),
-                                          DataColumn(label: Text('Tax')),
-                                          DataColumn(label: Text('Discount')),
-                                        ],
-                                        rows: itemMap.entries.map((entry) {
-                                          var item = entry.value;
-                                          return DataRow(cells: [
-                                            DataCell(
-                                                Text(item['sno'].toString())),
-                                            DataCell(Text(item['item_name'])),
-                                            DataCell(Text(
-                                                item['quantity'].toString())),
-                                            DataCell(Text('₹${item['price']}')),
-                                            DataCell(Text('₹${item['total']}')),
-                                            DataCell(Text('${item['tax']}%')),
-                                            DataCell(Text(
-                                                '${item['discountable']}')),
-                                          ]);
-                                        }).toList(),
-                                      ),
+                                // Summary Section
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text('Total Amount:'),
+                                        Text(
+                                            '₹${totals['totalAmount']!.toStringAsFixed(2)}'),
+                                      ],
                                     ),
-                                  ),
-                                );
-                              },
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                            'Discount: ${totals['discountPercentage']!.toStringAsFixed(2)}%'),
+                                        Text(
+                                            '₹${totals['discount']!.toStringAsFixed(2)}'),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text('Subtotal:'),
+                                        Text(
+                                            '₹${totals['subtotal']!.toStringAsFixed(2)}'),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text('CGST:'),
+                                        Text(
+                                            '₹${totals['cgst']!.toStringAsFixed(2)}'),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text('SGST:'),
+                                        Text(
+                                            '₹${totals['sgst']!.toStringAsFixed(2)}'),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                            'Service Charge: ${serviceValue.toStringAsFixed(2)}%'),
+                                        Text(
+                                            '₹${totals['serviceCharge']!.toStringAsFixed(2)}'),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text(
+                                          'Net Receivable Amount:',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          '₹${totals['netReceivableAmount']!.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                // Bottom Buttons
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        _saveBill();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.blue),
+                                      child: const Text('Save'),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        _generateAndSaveBill(1);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.orange),
+                                      child: const Text('Print Bill'),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
-
-                          // Summary Section
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Total Amount:'),
-                                  Text(
-                                      '₹${totals['totalAmount']!.toStringAsFixed(2)}'),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                      'Discount: ${totals['discountPercentage']!.toStringAsFixed(2)}%'),
-                                  Text(
-                                      '₹${totals['discount']!.toStringAsFixed(2)}'),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Subtotal:'),
-                                  Text(
-                                      '₹${totals['subtotal']!.toStringAsFixed(2)}'),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('CGST:'),
-                                  Text(
-                                      '₹${totals['cgst']!.toStringAsFixed(2)}'),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('SGST:'),
-                                  Text(
-                                      '₹${totals['sgst']!.toStringAsFixed(2)}'),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Service Charge:'),
-                                  Text(
-                                      '₹${totals['serviceCharge']!.toStringAsFixed(2)}'),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'Net Receivable Amount:',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    '₹${totals['netReceivableAmount']!.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          // Bottom Buttons
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              ElevatedButton(
-                                onPressed: () {
-                                  _saveBill();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue),
-                                child: const Text('Save'),
-                              ),
-                              const SizedBox(width: 10),
-                              ElevatedButton(
-                                onPressed: () {
-                                  _generateAndSaveBill(1);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.orange),
-                                child: const Text('Print Bill'),
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

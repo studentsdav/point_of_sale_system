@@ -64,7 +64,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
               List<Map<String, dynamic>>.from(fetchedOutletConfigurations);
           await _saveDataToHiveoutlet(outletConfigurationsList);
           print('Outlet configurations saved successfully.');
-        }
+        }      
       } catch (error) {
         print('Error fetching outlet configurations: $error');
       }

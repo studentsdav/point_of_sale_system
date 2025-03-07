@@ -2,12 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:point_of_sale_system/backend/outlet_service.dart';
+import 'package:point_of_sale_system/model/discount_model.dart';
+import 'package:point_of_sale_system/model/packing_charge_model.dart';
+import 'package:point_of_sale_system/model/service_charge_model.dart';
 import 'package:point_of_sale_system/poslogin.dart';
+
+import 'model/delivery_charge_model.dart';
 
 final OutletApiService apiService =
     OutletApiService(baseUrl: 'http://localhost:3000/api');
 void main() async {
   await _initializeHive();
+  Hive.registerAdapter(DiscountModelAdapter()); // Register the adapter
+  Hive.registerAdapter(ServiceChargeModelAdapter()); // Register the new model
+  Hive.registerAdapter(DeliveryChargeModelAdapter());
+  Hive.registerAdapter(PackingChargeModelAdapter());
+
   await _loadData();
   runApp(const MyApp());
 }
@@ -135,7 +145,7 @@ class _MyAppState extends State {
         // and then invoke "hot reload" (save your changes or press the "hot
         // reload" button in a Flutter-supported IDE, or press "r" if you used
         // the command line to start the app).
-        //     
+        //
         // Notice that the counter didn't reset back to zero; the application
         // state is not lost during the reload. To reset the state, use hot
         // restart instead.
