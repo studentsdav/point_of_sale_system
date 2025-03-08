@@ -18,6 +18,7 @@ class _platformFeeConfigFormState extends State<platformFeeConfigForm> {
   final _minAmountController = TextEditingController();
   final _maxAmountController = TextEditingController();
   final _typetController = TextEditingController();
+  final _taxController = TextEditingController();
   String _applyOn = 'all bills';
   String _status = 'active';
   String? _selectedOutlet; // Default selected outlet
@@ -102,7 +103,8 @@ class _platformFeeConfigFormState extends State<platformFeeConfigForm> {
         'status': _status,
         'start_date': startDate?.toIso8601String(),
         'outlet_name': _selectedOutlet.toString(),
-        'fee_type': _typetController.text
+        'fee_type': _typetController.text,
+        'tax': double.parse(_taxController.text),
       };
 
       // Check if the combination of property_id and outlet_name already exists
@@ -183,6 +185,7 @@ class _platformFeeConfigFormState extends State<platformFeeConfigForm> {
       _minAmountController.clear();
       _maxAmountController.clear();
       _typetController.clear();
+      _taxController.clear();
       _applyOn = 'all bills';
       _status = 'active';
       _selectedOutlet = null;
@@ -255,6 +258,26 @@ class _platformFeeConfigFormState extends State<platformFeeConfigForm> {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a fee percentage';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    maxLength: 3,
+                    controller: _taxController,
+                    decoration: const InputDecoration(
+                      labelText: 'Tax',
+                      prefixText: '%',
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter
+                          .digitsOnly, // Restricts input to digits only
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a charge percentage';
                       }
                       return null;
                     },

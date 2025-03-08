@@ -39,10 +39,14 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       PackingChargeApiService(baseUrl: 'http://localhost:3000/api');
   DeliveryApiService deliveryApiService =
       DeliveryApiService(baseUrl: 'http://localhost:3000/api');
-  List<Map<dynamic, dynamic>> discountList = []; // Variable to store discounts
-  List<Map<dynamic, dynamic>> packingList = []; // Variable to store discounts
-  List<Map<dynamic, dynamic>> deliveryList = []; // Variable to store discounts
-  List<Map<dynamic, dynamic>> serviceList = []; // Variable to store discounts
+  List<Map<dynamic, dynamic>> discountList = [
+    {}
+  ]; // Variable to store discounts
+  List<Map<dynamic, dynamic>> packingList = [{}]; // Variable to store discounts
+  List<Map<dynamic, dynamic>> deliveryList = [
+    {}
+  ]; // Variable to store discounts
+  List<Map<dynamic, dynamic>> serviceList = [{}]; // Variable to store discounts
 
   ServiceChargeApiService serviceChargeApiService =
       ServiceChargeApiService(baseUrl: 'http://localhost:3000/api');
@@ -410,12 +414,14 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     try {
       // Assuming itemMap is already populated
       List<Map<String, dynamic>> updatedItems = [];
-      Map<String, dynamic> serviceConfig = serviceList.isNotEmpty
-          ? Map<String, dynamic>.from(serviceList[0])
-          : {};
 
-      double serviceValue =
-          double.parse(serviceConfig['service_charge'] ?? "0.0");
+      double servicechargeValue =
+          double.parse(serviceList[0]['service_charge'] ?? "0.0");
+      double packingChargeValue =
+          double.parse(packingList[0]['packing_charge'] ?? "0.0");
+      double deliveryChargeValue =
+          double.parse(deliveryList[0]['delivery_charge'] ?? "0.0");
+
       // Get user input for discount
       double discountPercentageInput =
           double.tryParse(_percentDiscountController.text) ??
@@ -480,15 +486,24 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
         "table_no": widget.tableno,
         "tax_value": totals['cgst']! + totals['sgst']!, // Total tax from totals
         "discount_percentage": totals['discountPercentage'],
-        "service_charge_percentage": serviceValue,
-        "packing_charge_percentage": 2.0,
-        "delivery_charge_percentage": 3.0,
-        "other_charge": 50.0,
+        "service_charge_percentage": servicechargeValue,
+        "packing_charge_percentage": packingChargeValue,
+        "delivery_charge_percentage": deliveryChargeValue,
+        "other_charge": 0.00,
         "property_id": widget.propertyid,
         "outletname": widget.outlet,
         "pax": _paxController.text,
         "guestName": _guestSearchController.text,
         "guestId": _guestIdController.text,
+        "platform_fees_percentage": 0.00,
+        "platform_fees_tax": 0.00,
+        "platform_fees_tax_per": 0.00,
+        "packing_charge_tax": 0.00,
+        "delivery_charge_tax": 0.00,
+        "service_charge_tax": 0.00,
+        "packing_charge_tax_per": 0.00,
+        "delivery_charge_tax_per": 0.00,
+        "service_charge_tax_per": 0.00,
         "items":
             updatedItems, // Send updated items with tax, total, and discount
       };
@@ -786,6 +801,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
 
     double discountAmount = 0.0;
     double discountPercentage = 0.0;
+    validateDiscount(totalAmount);
     if (isFlatDiscount) {
       discountAmount = flatDiscountInput;
       discountPercentage = totalAmount > 0
@@ -796,11 +812,12 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       discountAmount = (totalAmount * discountPercentage) / 100;
     }
 
-    Map<String, dynamic> serviceConfig =
-        serviceList.isNotEmpty ? Map<String, dynamic>.from(serviceList[0]) : {};
-
-    double serviceValue =
-        double.parse(serviceConfig['service_charge'] ?? "0.0");
+    double servicechargeValue =
+        double.parse(serviceList[0]['service_charge'] ?? "0.0");
+    double packingChargeValue =
+        double.parse(packingList[0]['packing_charge'] ?? "0.0");
+    double deliveryChargeValue =
+        double.parse(deliveryList[0]['delivery_charge'] ?? "0.0");
 
     return {
       'totalAmount': totalAmount,
@@ -808,7 +825,9 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       'discountPercentage': discountPercentage,
       'cgst': (totalAmount - discountAmount) * (taxRate / 2) / 100,
       'sgst': (totalAmount - discountAmount) * (taxRate / 2) / 100,
-      'serviceCharge': (totalAmount * serviceValue / 100) // Example fixed value
+      'serviceCharge': (totalAmount * servicechargeValue / 100),
+      'packingCharge': (totalAmount * packingChargeValue / 100),
+      'deliveryCharge': (totalAmount * deliveryChargeValue / 100),
     };
   }
 
@@ -853,13 +872,14 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     double subtotal = totalAmount - discountAmount; // Subtotal after discount
     double cgst = (subtotal * (taxRate / 2)) / 100; // CGST = 2.5%
     double sgst = (subtotal * (taxRate / 2)) / 100; // SGST = 2.5%
-    double netReceivableAmount = subtotal + cgst + sgst + serviceCharge;
+    double netReceivableAmount = subtotal + cgst + sgst;
 
-    Map<String, dynamic> serviceConfig =
-        serviceList.isNotEmpty ? Map<String, dynamic>.from(serviceList[0]) : {};
-
-    double serviceValue =
-        double.parse(serviceConfig['service_charge'] ?? "0.0");
+    double servicechargeValue =
+        double.parse(serviceList[0]['service_charge'] ?? "0.0");
+    double packingChargeValue =
+        double.parse(packingList[0]['packing_charge'] ?? "0.0");
+    double deliveryChargeValue =
+        double.parse(deliveryList[0]['delivery_charge'] ?? "0.0");
 
     return {
       'totalAmount': totalAmount,
@@ -868,9 +888,13 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       'subtotal': subtotal,
       'cgst': cgst,
       'sgst': sgst,
-      'serviceCharge': (totalAmount * serviceValue / 100),
-      'netReceivableAmount':
-          netReceivableAmount + (totalAmount * serviceValue / 100),
+      'serviceCharge': (totalAmount * servicechargeValue / 100),
+      'packingCharge': (totalAmount * packingChargeValue / 100),
+      'deliveryCharge': (totalAmount * deliveryChargeValue / 100),
+      'netReceivableAmount': netReceivableAmount +
+          (totalAmount * servicechargeValue / 100) +
+          (totalAmount * packingChargeValue / 100) +
+          (totalAmount * deliveryChargeValue / 100),
     };
   }
 
@@ -905,11 +929,12 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
   @override
   Widget build(BuildContext context) {
     final totals = calculateTotals(itemMap);
-    Map<String, dynamic> serviceConfig =
-        serviceList.isNotEmpty ? Map<String, dynamic>.from(serviceList[0]) : {};
-
-    double serviceValue =
-        double.parse(serviceConfig['service_charge'] ?? "0.0");
+    double servicechargeValue =
+        double.parse(serviceList[0]['service_charge'] ?? "0.0");
+    double packingChargeValue =
+        double.parse(packingList[0]['packing_charge'] ?? "0.0");
+    double deliveryChargeValue =
+        double.parse(deliveryList[0]['delivery_charge'] ?? "0.0");
 
     return Scaffold(
       appBar: AppBar(
@@ -1417,7 +1442,27 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
-                                            'Service Charge: ${serviceValue.toStringAsFixed(2)}%'),
+                                            'Delivery Charge: ${deliveryChargeValue.toStringAsFixed(2)}%'),
+                                        Text(
+                                            '₹${totals['deliveryCharge']!.toStringAsFixed(2)}'),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                            'Packing Charge: ${packingChargeValue.toStringAsFixed(2)}%'),
+                                        Text(
+                                            '₹${totals['packingCharge']!.toStringAsFixed(2)}'),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                            'Service Charge: ${servicechargeValue.toStringAsFixed(2)}%'),
                                         Text(
                                             '₹${totals['serviceCharge']!.toStringAsFixed(2)}'),
                                       ],

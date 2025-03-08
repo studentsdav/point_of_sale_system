@@ -112,7 +112,7 @@ CREATE TABLE guest_record (
     email VARCHAR(255) UNIQUE NOT NULL,       -- Email (unique)
     anniversary DATE,                         -- Anniversary date (optional)
     dob DATE,                                 -- Date of birth
-    gst_no VARCHAR(50),                       -- GST Number
+    gst_no VARCHAR(50),                       -- GST Number (Taxpayer Identification Number)
     company_name VARCHAR(255),                -- Company name
     discount DECIMAL(5, 2),                   -- Discount (percentage)
     g_suggestion TEXT,                        -- Guest suggestions or comments
@@ -249,7 +249,8 @@ CREATE TABLE servicecharge_config (
     max_amount DECIMAL(10, 2) NOT NULL,  -- Maximum amount for the service charge to apply
     apply_on VARCHAR(50) DEFAULT 'all bills',  -- Condition to apply the charge (e.g., 'all bills', 'certain items')
     status VARCHAR(50) DEFAULT 'active',  -- Status of the service charge configuration
-    start_date DATE NOT NULL,  -- Start date from which the service charge is valid
+    start_date DATE NOT NULL,  -- Start date from which the service charge is valid,
+    tax DECIMAL(5, 2) NOT NULL,            -- tax on charge to apply
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp for when the record is created
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- Timestamp for when the record is updated
 );
@@ -265,7 +266,8 @@ CREATE TABLE packingcharge_config (
     max_amount DECIMAL(10, 2) NOT NULL,  -- Maximum amount for the service charge to apply
     apply_on VARCHAR(50) DEFAULT 'all bills',  -- Condition to apply the charge (e.g., 'all bills', 'certain items')
     status VARCHAR(50) DEFAULT 'active',  -- Status of the service charge configuration
-    start_date DATE NOT NULL,  -- Start date from which the service charge is valid
+    start_date DATE NOT NULL,  -- Start date from which the service charge is valid,
+    tax DECIMAL(5, 2) NOT NULL,     -- tax on charge to apply
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp for when the record is created
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- Timestamp for when the record is updated
 );
@@ -275,13 +277,14 @@ CREATE TABLE discount_config (
     id SERIAL PRIMARY KEY,  
     property_id VARCHAR(100) NOT NULL,  
     discount_type VARCHAR(50) NOT NULL DEFAULT 'percentage',  -- 'percentage' or 'fixed'
-    discount_value DECIMAL(5, 2) NOT NULL,  
+    discount_value DECIMAL(5, 2) NOT NULL,  --percentage
     min_amount DECIMAL(10, 2) NOT NULL,  
     max_amount DECIMAL(10, 2) NOT NULL,  
     outlet_name VARCHAR(255) NOT NULL,  -- The Name of the outlet (referencing outlet_configurations.outlet_name)
     apply_on VARCHAR(50) DEFAULT 'all bills',  
     status VARCHAR(50) DEFAULT 'active',  
-    start_date DATE NOT NULL,  
+    start_date TIMESTAMP NOT NULL, -- Discount start date
+    end_date TIMESTAMP NOT NULL, -- Discount expiry date 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -298,7 +301,8 @@ CREATE TABLE platformfees_config (
     apply_on VARCHAR(50) DEFAULT 'all transactions',  
     outlet_name VARCHAR(255) NOT NULL,  -- The Name of the outlet (referencing outlet_configurations.outlet_name)
     status VARCHAR(50) DEFAULT 'active',  
-    start_date DATE NOT NULL,  
+    start_date DATE NOT NULL,
+    tax DECIMAL(5, 2) NOT NULL,     -- tax percentage on charge to apply  
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -314,12 +318,11 @@ CREATE TABLE deliverycharge_config (
     max_amount DECIMAL(10, 2) NOT NULL,  
     apply_on VARCHAR(50) DEFAULT 'all bills',  
     status VARCHAR(50) DEFAULT 'active',  
-    start_date DATE NOT NULL,  
+    start_date DATE NOT NULL,
+    tax DECIMAL(5, 2) NOT NULL,     -- tax percentage on charge to apply  
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
-
-
 
 
 
@@ -489,6 +492,15 @@ CREATE TABLE bills (
     service_charge_value NUMERIC(10, 2), -- Service charge value
     packing_charge NUMERIC(10, 2), -- Packing charge
     delivery_charge NUMERIC(10, 2), -- Delivery charge
+    platform_fees NUMERIC(10, 2), --Platform Fees
+    platform_fees_tax NUMERIC(10, 2), --Platform Fees Tax
+    platform_fees_tax_per NUMERIC(10, 2),--Platform Fees Tax Per
+    packing_charge_tax NUMERIC(10, 2), -- Delivery Tax
+    delivery_charge_tax NUMERIC(10, 2), -- Packing Tax
+    service_charge_tax NUMERIC(10, 2), -- Service Tax ,
+    packing_charge_tax_per NUMERIC(10, 2), -- Delivery Tax
+    delivery_charge_tax_per NUMERIC(10, 2), -- Packing Tax
+    service_charge_tax_per NUMERIC(10, 2), -- Service Tax 
     other_charge NUMERIC(10, 2), -- Other charges
     grand_total NUMERIC(10, 2), -- Grand total (calculated as Total - Discounts + All Charges)
     bill_generated_at TIMESTAMP, -- Bill generation timestamp
@@ -604,3 +616,393 @@ BEGIN
 END $$;
 
 
+
+-- 2. Loyalty Programs Table (Defines loyalty earning and redemption rules)
+CREATE TABLE loyalty_programs (
+    program_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,  -- E.g., "Standard Loyalty Program"
+    points_per_currency NUMERIC(10, 2) NOT NULL, -- Points per unit of currency (e.g., 1 point per ₹10)
+    redemption_value NUMERIC(10, 2) NOT NULL, -- Value of 1 point in currency (e.g., 1 point = ₹0.50)
+    min_points_redeemable INT NOT NULL DEFAULT 100, -- Minimum points required for redemption
+    points_expiry_days INT DEFAULT 365, -- Points expire after 1 year by default
+    tier VARCHAR(50) DEFAULT 'Standard', -- Different tiers like Gold, Silver
+    max_redeemable_points INT DEFAULT 5000; -- Max points that can be redeemed in one transaction
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Customer Loyalty Table (Tracks each customer's points)
+CREATE TABLE customer_loyalty (
+    guest_id  INT REFERENCES guest_record (guest_id) ON DELETE CASCADE,
+    program_id INT REFERENCES loyalty_programs(program_id) ON DELETE CASCADE, 
+    total_points INT NOT NULL DEFAULT 0, -- Current balance of loyalty points
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expiry_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '1 year'; -- Default expiry of 1 year
+    PRIMARY KEY (guest_id)
+);
+
+-- 4. Loyalty Transactions Table (Logs points earned & redeemed)
+CREATE TABLE loyalty_transactions (
+    transaction_id SERIAL PRIMARY KEY,
+    guest_id INT REFERENCES guest_record(guest_id) ON DELETE CASCADE,
+    program_id INT REFERENCES loyalty_programs(program_id) ON DELETE CASCADE,
+    order_id INT, -- Reference to POS order
+    points_earned INT DEFAULT 0,
+    points_redeemed INT DEFAULT 0,
+    transaction_type VARCHAR(20) CHECK (transaction_type IN ('earn', 'redeem')),
+    expiry_date TIMESTAMP, -- Expiry date for earned points
+    store_id INT, -- Store or outlet where transaction happened
+    payment_method VARCHAR(50) CHECK (payment_method IN ('Cash', 'Card', 'UPI', 'Wallet')), -- Track payment method
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE loyalty_redemption_limits (
+    limit_id SERIAL PRIMARY KEY,
+    program_id INT REFERENCES loyalty_programs(program_id) ON DELETE CASCADE,
+    min_spend_amount NUMERIC(10,2) NOT NULL DEFAULT 1000, -- Minimum spend to redeem points
+    max_daily_redeem INT NOT NULL DEFAULT 500, -- Max points redeemable per day
+    max_monthly_redeem INT NOT NULL DEFAULT 5000, -- Max per month
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- 1. Expense Categories Table (E.g., Rent, Salaries, Utilities, Maintenance)
+
+
+CREATE TABLE employees (
+    employee_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) UNIQUE,
+    email VARCHAR(100) UNIQUE,
+    country_code VARCHAR(5) NOT NULL, -- Stores country (E.g., IN, US, UK)
+    position VARCHAR(100), -- Job role
+    base_salary NUMERIC(10,2) NOT NULL, -- Monthly salary before deductions
+    currency VARCHAR(10) NOT NULL DEFAULT 'INR', -- Currency for salary payments
+    house_allowance NUMERIC(10,2) DEFAULT 0.00, -- Country-specific benefit
+    insurance_contribution NUMERIC(10,2) DEFAULT 0.00, -- Employer insurance
+    pf_contribution NUMERIC(10,2) DEFAULT 0.00, -- Provident Fund/Retirement contribution
+    hire_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE attendance (
+    attendance_id SERIAL PRIMARY KEY,
+    employee_id INT REFERENCES employees(employee_id) ON DELETE CASCADE,
+    work_date DATE NOT NULL,
+    shift_start TIME NOT NULL,
+    shift_end TIME,
+    total_hours NUMERIC(5,2) GENERATED ALWAYS AS (EXTRACT(EPOCH FROM (shift_end - shift_start)) / 3600) STORED,
+    required_hours NUMERIC(5,2) NOT NULL DEFAULT 8.00, -- Standard work hours per day
+    overtime_hours NUMERIC(5,2) GENERATED ALWAYS AS (GREATEST(total_hours - required_hours, 0)) STORED,
+    underworked_hours NUMERIC(5,2) GENERATED ALWAYS AS (GREATEST(required_hours - total_hours, 0)) STORED,
+    status VARCHAR(20) CHECK (status IN ('Present', 'Absent', 'Leave', 'Late')),
+    biometric_entry TIMESTAMP, -- Biometric punch-in time
+    biometric_exit TIMESTAMP, -- Biometric punch-out time
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE salary_advances (
+    advance_id SERIAL PRIMARY KEY,
+    employee_id INT REFERENCES employees(employee_id) ON DELETE CASCADE,
+    amount NUMERIC(10,2) NOT NULL,
+    payment_method_id INT REFERENCES payment_methods(method_id) ON DELETE SET NULL,
+    advance_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    repaid BOOLEAN DEFAULT FALSE, -- Mark as true when deducted from salary
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE salaries (
+    salary_id SERIAL PRIMARY KEY,
+    employee_id INT REFERENCES employees(employee_id) ON DELETE CASCADE,
+    base_salary NUMERIC(10,2) NOT NULL,
+    present_days INT NOT NULL DEFAULT 0,
+    absent_days INT NOT NULL DEFAULT 0,
+    overtime_hours NUMERIC(5,2) DEFAULT 0.00,
+    underworked_hours NUMERIC(5,2) DEFAULT 0.00,
+    salary_deduction NUMERIC(10,2) GENERATED ALWAYS AS (base_salary / 30 * absent_days + (underworked_hours * (base_salary / (30 * 8)))) STORED,
+    overtime_bonus NUMERIC(10,2) GENERATED ALWAYS AS (overtime_hours * (base_salary / (30 * 8))) STORED,
+    commission_earned NUMERIC(10,2) DEFAULT 0.00,
+    tips_earned NUMERIC(10,2) DEFAULT 0.00,
+    advance_deduction NUMERIC(10,2) DEFAULT 0.00,
+    final_salary NUMERIC(10,2) GENERATED ALWAYS AS (
+        base_salary - salary_deduction + overtime_bonus + commission_earned + tips_earned - advance_deduction
+    ) STORED,
+    payment_method_id INT REFERENCES payment_methods(method_id) ON DELETE SET NULL,  -- Payment method used
+    salary_month DATE NOT NULL,
+    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE staff_earnings (
+    earning_id SERIAL PRIMARY KEY,
+    employee_id INT REFERENCES employees(employee_id) ON DELETE CASCADE,
+    earning_type VARCHAR(20) CHECK (earning_type IN ('Tip', 'Commission')),
+    amount NUMERIC(10,2) NOT NULL,
+    order_id INT, -- Linked order for tips or commissions
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE expense_categories (
+    category_id SERIAL PRIMARY KEY,
+    category_name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE expenses (
+    expense_id SERIAL PRIMARY KEY,
+    category_id INT REFERENCES expense_categories(category_id) ON DELETE SET NULL,
+    employee_id INT REFERENCES employees(employee_id) ON DELETE SET NULL, -- If related to payroll
+    vendor_id INT REFERENCES vendors(vendor_id) ON DELETE SET NULL, -- If related to vendor purchases
+    payment_method_id INT REFERENCES payment_methods(method_id) ON DELETE SET NULL, -- E.g., Bank Transfer, UPI, Cash
+    amount NUMERIC(10,2) NOT NULL,
+    description TEXT,
+    expense_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE payment_methods (
+    method_id SERIAL PRIMARY KEY,
+    method_name VARCHAR(50) UNIQUE NOT NULL, -- E.g., "Bank Transfer", "UPI", "Cash", "Credit Card"
+    description TEXT
+);
+
+CREATE TABLE expense_subcategories (
+    subcategory_id SERIAL PRIMARY KEY,
+    category_id INT REFERENCES expense_categories(category_id) ON DELETE CASCADE,
+    subcategory_name VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE expense_approvals (
+    approval_id SERIAL PRIMARY KEY,
+    expense_id INT REFERENCES expenses(expense_id) ON DELETE CASCADE,
+    approved_by INT REFERENCES employees(employee_id) ON DELETE SET NULL,
+    approval_status VARCHAR(20) CHECK (approval_status IN ('Pending', 'Approved', 'Rejected')),
+    approval_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE accounts (
+    account_id SERIAL PRIMARY KEY,
+    account_name VARCHAR(100) NOT NULL UNIQUE,
+    account_type VARCHAR(50) CHECK (account_type IN ('Cash', 'Bank', 'Wallet')),
+    balance NUMERIC(15,2) NOT NULL DEFAULT 0.00
+);
+
+
+CREATE TABLE employee_benefits (
+    benefit_id SERIAL PRIMARY KEY,
+    employee_id INT REFERENCES employees(employee_id) ON DELETE CASCADE,
+    benefit_type VARCHAR(100) NOT NULL, -- E.g., House Allowance, Insurance
+    amount NUMERIC(10,2) NOT NULL,
+    effective_date DATE NOT NULL
+);
+
+CREATE TABLE taxes (
+    tax_id SERIAL PRIMARY KEY,
+    tax_name VARCHAR(50) NOT NULL,
+    tax_rate NUMERIC(5,2) NOT NULL, -- E.g., 18% GST
+    applicable_on VARCHAR(50) CHECK (applicable_on IN ('Purchase', 'Salary', 'Expense'))
+);
+
+---inventory-----
+
+-- Ingredients Table (Raw Material Tracking)
+CREATE TABLE ingredients (
+    ingredient_id SERIAL PRIMARY KEY,
+    ingredient_name VARCHAR(100) NOT NULL UNIQUE,
+    stock_quantity NUMERIC(10,2) NOT NULL DEFAULT 0.00, -- Available stock
+    unit VARCHAR(20) NOT NULL, -- kg, liters, pieces
+    min_stock_level NUMERIC(10,2) NOT NULL DEFAULT 0.00, -- Low stock alert threshold
+    reorder_level NUMERIC(10,2) NOT NULL DEFAULT 0.00, -- Minimum quantity before reordering
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Suppliers Table (Ingredient Suppliers)
+CREATE TABLE vendors (
+    vendor_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    contact_person VARCHAR(100),
+    phone VARCHAR(15),
+    email VARCHAR(100),
+    address TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE vendor_payments (
+    payment_id SERIAL PRIMARY KEY,
+    vendor_id INT REFERENCES vendors(vendor_id) ON DELETE CASCADE,
+    purchase_id INT REFERENCES purchases(purchase_id) ON DELETE CASCADE,
+    expense_id INT REFERENCES expenses(expense_id) ON DELETE SET NULL,
+    payment_amount NUMERIC(10,2) NOT NULL,
+    amount_paid NUMERIC(10,2) NOT NULL,
+    payment_method VARCHAR(50) CHECK (payment_method IN ('Cash', 'Card', 'Bank Transfer', 'UPI', 'Other')),
+    due_amount NUMERIC(10,2) NOT NULL,
+    payment_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    status VARCHAR(20) CHECK (status IN ('Pending', 'Paid', 'Partial')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+-- Purchase Orders Table (Stock Replenishment from Suppliers)
+CREATE TABLE purchases (
+    purchase_id SERIAL PRIMARY KEY,
+    vendor_id INT REFERENCES vendors(vendor_id) ON DELETE SET NULL,
+    total_cost NUMERIC(10,2) NOT NULL DEFAULT 0.00, -- Total cost of the order
+    amount_paid NUMERIC(10,2) NOT NULL DEFAULT 0.00, -- Amount paid for the order
+    balance_due NUMERIC(10,2) GENERATED ALWAYS AS (total_cost - amount_paid) STORED, -- Remaining payment
+    purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    payment_status VARCHAR(20) CHECK (payment_status IN ('Pending', 'Paid', 'Partial')) DEFAULT 'Pending'
+);
+
+CREATE TABLE purchase_items (
+    purchase_item_id SERIAL PRIMARY KEY,
+    purchase_id INT REFERENCES purchases(purchase_id) ON DELETE CASCADE, -- Links to purchase order
+    ingredient_id INT REFERENCES ingredients(ingredient_id) ON DELETE CASCADE, -- Ingredient purchased
+    quantity NUMERIC(10,2) NOT NULL, -- Quantity purchased
+    cost_per_unit NUMERIC(10,2) NOT NULL, -- Price per unit
+    total_cost NUMERIC(10,2) GENERATED ALWAYS AS (quantity * cost_per_unit) STORED, -- Cost for this ingredient
+    purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Auto-insert purchase date
+    expiry_date DATE NOT NULL -- Expiry date of the ingredient
+);
+
+
+-- Recipes Table (Links Ingredients to Menu Items in Items Table)
+CREATE TABLE recipes (
+    recipe_id SERIAL PRIMARY KEY,
+    menu_item_id INT REFERENCES items(item_id) ON DELETE CASCADE, -- Links to your items table
+    ingredient_id INT REFERENCES ingredients(ingredient_id) ON DELETE CASCADE,
+    quantity_used NUMERIC(10,2) NOT NULL, -- Quantity per dish
+    unit VARCHAR(20) NOT NULL, -- kg, grams, ml, etc.
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Stock Movements Table (Tracks Stock Usage, Addition, and Wastage)
+CREATE TABLE stock_movements (
+    movement_id SERIAL PRIMARY KEY,
+    ingredient_id INT REFERENCES ingredients(ingredient_id) ON DELETE CASCADE,
+    change_type VARCHAR(20) CHECK (change_type IN ('Added', 'Used', 'Wasted', 'Transferred')),
+    quantity NUMERIC(10,2) NOT NULL,
+    reason TEXT,
+    movement_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Inventory Adjustments Table (Manual Stock Adjustments)
+CREATE TABLE inventory_adjustments (
+    adjustment_id SERIAL PRIMARY KEY,
+    ingredient_id INT REFERENCES ingredients(ingredient_id) ON DELETE CASCADE,
+    adjusted_quantity NUMERIC(10,2) NOT NULL,
+    adjustment_reason TEXT NOT NULL,
+    adjusted_by VARCHAR(100) NOT NULL, -- User making the adjustment
+    adjustment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+--closing report
+
+
+CREATE VIEW closing_balance AS
+SELECT 
+    i.ingredient_id,
+    i.ingredient_name,
+    i.unit,
+    COALESCE(SUM(p.quantity), 0) AS total_purchased,
+    COALESCE(SUM(sm.quantity), 0) FILTER (WHERE sm.change_type = 'Used') AS total_used,
+    COALESCE(SUM(sm.quantity), 0) FILTER (WHERE sm.change_type = 'Wasted') AS total_wasted,
+    (i.stock_quantity + COALESCE(SUM(p.quantity), 0) - 
+     COALESCE(SUM(sm.quantity) FILTER (WHERE sm.change_type = 'Used'), 0) - 
+     COALESCE(SUM(sm.quantity) FILTER (WHERE sm.change_type = 'Wasted'), 0)) 
+    AS closing_stock
+FROM ingredients i
+LEFT JOIN purchases p ON i.ingredient_id = p.ingredient_id
+LEFT JOIN stock_movements sm ON i.ingredient_id = sm.ingredient_id
+GROUP BY i.ingredient_id, i.ingredient_name, i.unit, i.stock_quantity;
+
+
+CREATE FUNCTION deduct_stock_on_sale() RETURNS TRIGGER AS $$
+BEGIN
+    -- Deduct ingredients based on the recipe
+    UPDATE ingredients 
+    SET stock_quantity = stock_quantity - (r.quantity_used * NEW.quantity)
+    FROM recipes r
+    WHERE r.menu_item_id = NEW.item_id 
+      AND r.ingredient_id = ingredients.ingredient_id;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_stock_after_sale
+AFTER INSERT ON sales
+FOR EACH ROW EXECUTE FUNCTION deduct_stock_on_sale();
+
+
+--adjustment
+
+CREATE OR REPLACE FUNCTION log_inventory_adjustment() 
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO stock_movements (ingredient_id, change_type, quantity, reason, movement_date)
+    VALUES (
+        NEW.ingredient_id,
+        CASE 
+            WHEN NEW.adjusted_quantity > 0 THEN 'Added' 
+            ELSE 'Used' 
+        END,
+        ABS(NEW.adjusted_quantity),
+        NEW.adjustment_reason,
+        NOW()
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER after_inventory_adjustment
+AFTER INSERT ON inventory_adjustments
+FOR EACH ROW
+EXECUTE FUNCTION log_inventory_adjustment();
+
+
+
+---customer feedback
+CREATE TABLE customer_feedback (
+    feedback_id SERIAL PRIMARY KEY,
+    guest_id INT REFERENCES guest_record(guest_id) ON DELETE CASCADE, -- Links to guest
+    rating INT CHECK (rating BETWEEN 1 AND 5) NOT NULL, -- 1 to 5-star rating
+    comments TEXT, -- Customer's feedback
+    feedback_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Auto-inserted timestamp
+);
+
+CREATE TABLE promo_codes (
+    promo_id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL, -- Promo Code (e.g., "WELCOME10")
+    discount_id INT REFERENCES discount_config(id) ON DELETE CASCADE, -- Links to the discount
+    max_uses INT NOT NULL DEFAULT 1, -- Maximum times a code can be used
+    per_user_limit INT NOT NULL DEFAULT 1, -- How many times one customer can use it
+    usage_count INT DEFAULT 0, -- Tracks how many times the promo has been used
+    is_active BOOLEAN DEFAULT TRUE, -- If the promo is active
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE applied_discounts (
+    applied_id SERIAL PRIMARY KEY,
+    order_id INT NOT NULL, -- Links to POS Order
+    guest_id INT REFERENCES guest_record(guest_id) ON DELETE CASCADE, -- Customer applying the discount
+    discount_id INT REFERENCES discount_config(id) ON DELETE CASCADE, -- Discount applied
+    promo_id INT REFERENCES promo_codes(promo_id) ON DELETE SET NULL, -- Applied promo code (optional)
+    discount_amount NUMERIC(10,2) NOT NULL, -- Final discount value applied
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE OR REPLACE FUNCTION check_promo_usage()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF (SELECT COUNT(*) FROM applied_discounts WHERE guest_id = NEW.guest_id AND promo_id = NEW.promo_id) > 0 THEN
+        RAISE EXCEPTION 'Promo code already used by this customer';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER prevent_duplicate_promo_use
+BEFORE INSERT ON applied_discounts
+FOR EACH ROW EXECUTE FUNCTION check_promo_usage();

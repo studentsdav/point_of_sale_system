@@ -354,7 +354,7 @@ router.post('/', async (req, res) => {
   const {
     table_no, tax_value, discount_percentage, service_charge_percentage,
     packing_charge_percentage, delivery_charge_percentage, other_charge,
-    property_id, outletname, billstatus, items, bill_number, pax, guestId, guestName
+    property_id, outletname, billstatus, items, bill_number, pax, guestId, guestName, platform_fees_percentage, platform_fees_tax, platform_fees_tax_per, packing_charge_tax, delivery_charge_tax, service_charge_tax, packing_charge_tax_per, delivery_charge_tax_per, service_charge_tax_per
   } = req.body;
 
   try {
@@ -378,14 +378,16 @@ router.post('/', async (req, res) => {
     const service_charge_value = (total_amount * (service_charge_percentage / 100)).toFixed(2);
     const packing_charge = (total_amount * (packing_charge_percentage / 100)).toFixed(2);
     const delivery_charge = (total_amount * (delivery_charge_percentage / 100)).toFixed(2);
+    const platform_fees = (total_amount * (platform_fees_percentage / 100)).toFixed(2);
+
     const grand_total = (
       total_amount -
       parseFloat(discount_value) +
       parseFloat(tax_value) +
       parseFloat(service_charge_value) +
       parseFloat(packing_charge) +
-      parseFloat(delivery_charge) +
-      parseFloat(other_charge || 0)
+      parseFloat(delivery_charge) + parseFloat(platform_fees) +
+      parseFloat(other_charge || 0) + parseFloat(platform_fees_tax || 0) + parseFloat(packing_charge_tax || 0) + parseFloat(delivery_charge_tax || 0) + parseFloat(service_charge_tax || 0)
     ).toFixed(2);
 
     // Insert the new bill into the `bills` table
@@ -393,8 +395,8 @@ router.post('/', async (req, res) => {
       `INSERT INTO bills (bill_number, total_amount, tax_value, discount_value, service_charge_value, 
                           packing_charge, delivery_charge, other_charge, grand_total, property_id, outlet_name, 
                           packing_charge_percentage, delivery_charge_percentage, discount_percentage, service_charge_percentage, 
-                          status, table_no, bill_generated_at, pax, guestId, guestName)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP, $18, $19, $20) 
+                          status, table_no, bill_generated_at, pax, guestId, guestName, platform_fees , platform_fees_tax , platform_fees_tax_per , packing_charge_tax , delivery_charge_tax , service_charge_tax , packing_charge_tax_per , delivery_charge_tax_per , service_charge_tax_per )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP, $18, $19, $20, $21,$22,$23,$24,$25,$26,$27,$28,$29) 
        RETURNING id`,
       [
         bill_number, // Generate a unique bill number
@@ -413,7 +415,7 @@ router.post('/', async (req, res) => {
         discount_percentage,
         service_charge_percentage,
         billstatus,
-        table_no, pax, guestId, guestName
+        table_no, pax, guestId, guestName, platform_fees, platform_fees_tax, platform_fees_tax_per, packing_charge_tax, delivery_charge_tax, service_charge_tax, packing_charge_tax_per, delivery_charge_tax_per, service_charge_tax_per
       ]
     );
 

@@ -18,6 +18,7 @@ class _PackingChargeConfigFormState extends State<PackingChargeConfigForm> {
   final _chargePercentageController = TextEditingController();
   final _minAmountController = TextEditingController();
   final _maxAmountController = TextEditingController();
+  final _taxController = TextEditingController();
   String _applyOn = 'all bills';
   String _status = 'active';
   String? _selectedOutlet; // Default selected outlet
@@ -102,6 +103,7 @@ class _PackingChargeConfigFormState extends State<PackingChargeConfigForm> {
         'status': _status,
         'start_date': startDate?.toIso8601String(),
         'outlet_name': _selectedOutlet.toString(),
+        'tax': double.parse(_taxController.text),
       };
 
       // Check if the combination of property_id and outlet_name already exists
@@ -185,6 +187,7 @@ class _PackingChargeConfigFormState extends State<PackingChargeConfigForm> {
       _chargePercentageController.clear();
       _minAmountController.clear();
       _maxAmountController.clear();
+      _taxController.clear();
       _applyOn = 'all bills';
       _status = 'active';
       _selectedOutlet = null;
@@ -231,6 +234,26 @@ class _PackingChargeConfigFormState extends State<PackingChargeConfigForm> {
                     controller: _chargePercentageController,
                     decoration: const InputDecoration(
                       labelText: 'Charge Percentage',
+                      prefixText: '%',
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter
+                          .digitsOnly, // Restricts input to digits only
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a charge percentage';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    maxLength: 3,
+                    controller: _taxController,
+                    decoration: const InputDecoration(
+                      labelText: 'Tax',
                       prefixText: '%',
                     ),
                     keyboardType: TextInputType.number,

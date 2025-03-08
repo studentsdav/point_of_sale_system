@@ -29,13 +29,13 @@ router.get('/:id', async (req, res) => {
 
 // POST (Create) new platform fee configuration
 router.post('/', async (req, res) => {
-  const { property_id, platform_fee, fee_type, min_amount, max_amount, apply_on, status, start_date, outlet_name } = req.body;
+  const { property_id, platform_fee, fee_type, min_amount, max_amount, apply_on, status, start_date, outlet_name, tax } = req.body;
 
   try {
     const result = await pool.query(
-      `INSERT INTO platformfees_config (property_id, platform_fee, fee_type, min_amount, max_amount, apply_on, status, start_date, outlet_name)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
-      [property_id, platform_fee, fee_type, min_amount, max_amount, apply_on, status, start_date, outlet_name]
+      `INSERT INTO platformfees_config (property_id, platform_fee, fee_type, min_amount, max_amount, apply_on, status, start_date, outlet_name, tax)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+      [property_id, platform_fee, fee_type, min_amount, max_amount, apply_on, status, start_date, outlet_name, tax]
     );
     res.status(201).json({ message: 'Platform fee configuration created successfully', platformFeeConfigId: result.rows[0].id });
   } catch (error) {
