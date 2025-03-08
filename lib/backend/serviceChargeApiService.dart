@@ -1,13 +1,43 @@
 import 'dart:convert';
+
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:point_of_sale_system/model/service_charge_model.dart';
 
 class ServiceChargeApiService {
   final String baseUrl;
 
   ServiceChargeApiService({required this.baseUrl});
 
+  Future<void> _ensureBoxesOpen() async {
+    if (!Hive.isBoxOpen('service')) {
+      await Hive.openBox<ServiceChargeModel>('service');
+    }
+    if (!Hive.isBoxOpen('cache_data_service')) {
+      await Hive.openBox<dynamic>('cache_data_service');
+    }
+  }
+
   // 1. Get all service charge configurations
   Future<List<Map<String, dynamic>>> getServiceChargeConfigurations() async {
+    await _ensureBoxesOpen(); // ✅ Ensure Hive boxes are opened
+
+    final Box<ServiceChargeModel> serviceBox =
+        Hive.box<ServiceChargeModel>('service');
+    final Box<dynamic> cacheBox = Hive.box('cache_data_service');
+
+    // Check last fetch timestamp
+    int? lastFetchTime = cacheBox.get('last_fetch_time_service');
+
+    // If cached data is available and less than 24 hours old, return cached data
+    // if (lastFetchTime != null &&
+    //     DateTime.now()
+    //             .difference(DateTime.fromMillisecondsSinceEpoch(lastFetchTime))
+    //             .inHours <
+    //         24) {
+    //   return serviceBox.values.map((discount) => discount.toJson()).toList();
+    // }
+
     final response = await http.get(
       Uri.parse('$baseUrl/servicecharge'),
       headers: {'Content-Type': 'application/json'},
@@ -15,6 +45,18 @@ class ServiceChargeApiService {
 
     if (response.statusCode == 200) {
       List<dynamic> responseData = json.decode(response.body);
+      List<ServiceChargeModel> discounts = responseData
+          .map((json) => ServiceChargeModel.fromJson(json))
+          .toList();
+
+      // Clear existing data and store new data in Hive
+      await serviceBox.clear();
+      await serviceBox.addAll(discounts);
+
+      // Store the current timestamp
+      await cacheBox.put(
+          'last_fetch_time_service', DateTime.now().millisecondsSinceEpoch);
+
       return List<Map<String, dynamic>>.from(responseData);
     } else {
       throw Exception(

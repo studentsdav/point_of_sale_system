@@ -4,6 +4,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:point_of_sale_system/backend/serviceChargeApiService.dart';
 
 class ServiceChargeConfigForm extends StatefulWidget {
+  const ServiceChargeConfigForm({super.key});
+
   @override
   _ServiceChargeConfigFormState createState() =>
       _ServiceChargeConfigFormState();
@@ -16,6 +18,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
   final _chargePercentageController = TextEditingController();
   final _minAmountController = TextEditingController();
   final _maxAmountController = TextEditingController();
+  final _taxController = TextEditingController();
   String _applyOn = 'all bills';
   String _status = 'active';
   String? _selectedOutlet; // Default selected outlet
@@ -57,7 +60,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
       setState(() {
         this.properties = properties ?? [];
         this.outletConfigurations = outletConfigurations ?? [];
-        this.outlets = outletslist; // Set the outlets list
+        outlets = outletslist; // Set the outlets list
       });
     }
     _fetchServiceCharges();
@@ -100,6 +103,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
         'status': _status,
         'start_date': startDate?.toIso8601String(),
         'outlet_name': _selectedOutlet.toString(),
+        'tax': double.parse(_taxController.text),
       };
 
       // Check if the combination of property_id and outlet_name already exists
@@ -126,15 +130,15 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
             newServiceCharge,
           );
 
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Service charge updated successfully')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Service charge updated successfully')));
         } else {
           // Create a new service charge configuration
           await serviceChargeApiService
               .createServiceChargeConfiguration(newServiceCharge);
 
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Service charge created successfully')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Service charge created successfully')));
         }
 
         _fetchServiceCharges(); // Refresh the UI
@@ -153,7 +157,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
           configId, updatedData);
 
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Service charge updated successfully')));
+          const SnackBar(content: Text('Service charge updated successfully')));
       _fetchServiceCharges(); // Refresh the UI
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -171,7 +175,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Service charge deleted successfully')));
+          const SnackBar(content: Text('Service charge deleted successfully')));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error deleting service charge: $e')));
@@ -183,6 +187,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
       _chargePercentageController.clear();
       _minAmountController.clear();
       _maxAmountController.clear();
+      _taxController.clear();
       _applyOn = 'all bills';
       _status = 'active';
       _selectedOutlet = null;
@@ -193,7 +198,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Service Charge Configuration')),
+      appBar: AppBar(title: const Text('Service Charge Configuration')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -218,15 +223,16 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                         child: Text(outlet),
                       );
                     }).toList(),
-                    decoration: InputDecoration(labelText: 'Select Outlet'),
+                    decoration:
+                        const InputDecoration(labelText: 'Select Outlet'),
                   ),
 
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   // Charge Percentage Input
                   TextFormField(
                     maxLength: 3,
                     controller: _chargePercentageController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Charge Percentage',
                       prefixText: '%',
                     ),
@@ -242,12 +248,32 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                       return null;
                     },
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    maxLength: 3,
+                    controller: _taxController,
+                    decoration: const InputDecoration(
+                      labelText: 'Tax',
+                      prefixText: '%',
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter
+                          .digitsOnly, // Restricts input to digits only
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a charge percentage';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
                   // Min Amount Input
                   TextFormField(
                     maxLength: 8,
                     controller: _minAmountController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Min Amount',
                       prefixText: '₹',
                     ),
@@ -263,12 +289,12 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                       return null;
                     },
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   // Max Amount Input
                   TextFormField(
                     maxLength: 8,
                     controller: _maxAmountController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Max Amount',
                       prefixText: '₹',
                     ),
@@ -284,11 +310,11 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                       return null;
                     },
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   // Start Date
                   TextFormField(
-                    decoration:
-                        InputDecoration(labelText: 'Start Date (yyyy-MM-dd)'),
+                    decoration: const InputDecoration(
+                        labelText: 'Start Date (yyyy-MM-dd)'),
                     keyboardType: TextInputType.datetime,
                     onTap: () async {
                       FocusScope.of(context).requestFocus(FocusNode());
@@ -315,7 +341,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                       return null;
                     },
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   // Apply On Dropdown
                   DropdownButtonFormField<String>(
                     value: _applyOn,
@@ -330,9 +356,9 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                         child: Text(applyOn),
                       );
                     }).toList(),
-                    decoration: InputDecoration(labelText: 'Apply On'),
+                    decoration: const InputDecoration(labelText: 'Apply On'),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   // Status Dropdown
                   DropdownButtonFormField<String>(
                     value: _status,
@@ -347,17 +373,17 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                         child: Text(status),
                       );
                     }).toList(),
-                    decoration: InputDecoration(labelText: 'Status'),
+                    decoration: const InputDecoration(labelText: 'Status'),
                   ),
-                  SizedBox(height: 32),
+                  const SizedBox(height: 32),
                   ElevatedButton(
                     onPressed: _saveServiceChargeConfig,
-                    child: Text('Save Service Charge Configuration'),
+                    child: const Text('Save Service Charge Configuration'),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
 
             // Display saved service charge configurations outlet-wise
             Expanded(
@@ -370,16 +396,16 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
 
                   return ExpansionTile(
                     title: Text(outlet),
-                    leading: Icon(Icons.store),
+                    leading: const Icon(Icons.store),
                     children: serviceCharges.map((serviceCharge) {
                       return Card(
-                        margin: EdgeInsets.symmetric(vertical: 8),
+                        margin: const EdgeInsets.symmetric(vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         child: ListTile(
-                          leading:
-                              Icon(Icons.attach_money, color: Colors.green),
+                          leading: const Icon(Icons.attach_money,
+                              color: Colors.green),
                           title: Text(
                               'Charge: ${serviceCharge['service_charge']}%'),
                           subtitle: Column(
@@ -396,7 +422,7 @@ class _ServiceChargeConfigFormState extends State<ServiceChargeConfigForm> {
                             ],
                           ),
                           trailing: IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(Icons.delete, color: Colors.red),
                             onPressed: () => _deleteServiceCharge(
                                 serviceCharge['id'].toString(),
                                 serviceCharge['outlet_name'],
