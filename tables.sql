@@ -808,16 +808,37 @@ CREATE TABLE taxes (
 ---inventory-----
 
 -- Ingredients Table (Raw Material Tracking)
+CREATE TABLE ingredient_categories (
+    category_id SERIAL PRIMARY KEY,
+    category_name VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE ingredient_subcategories (
+    subcategory_id SERIAL PRIMARY KEY,
+    category_id INT REFERENCES ingredient_categories(category_id) ON DELETE CASCADE,
+    subcategory_name VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE ingredient_brands (
+    brand_id SERIAL PRIMARY KEY,
+    brand_name VARCHAR(100) NOT NULL UNIQUE
+);
+
+
 CREATE TABLE ingredients (
     ingredient_id SERIAL PRIMARY KEY,
     ingredient_name VARCHAR(100) NOT NULL UNIQUE,
-    stock_quantity NUMERIC(10,2) NOT NULL DEFAULT 0.00, -- Available stock
-    unit VARCHAR(20) NOT NULL, -- kg, liters, pieces
-    min_stock_level NUMERIC(10,2) NOT NULL DEFAULT 0.00, -- Low stock alert threshold
-    reorder_level NUMERIC(10,2) NOT NULL DEFAULT 0.00, -- Minimum quantity before reordering
+    category_id INT REFERENCES ingredient_categories(category_id) ON DELETE SET NULL,
+    subcategory_id INT REFERENCES ingredient_subcategories(subcategory_id) ON DELETE SET NULL,
+    brand_id INT REFERENCES ingredient_brands(brand_id) ON DELETE SET NULL,
+    stock_quantity NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+    unit VARCHAR(20) NOT NULL,
+    min_stock_level NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+    reorder_level NUMERIC(10,2) NOT NULL DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
 
 -- Suppliers Table (Ingredient Suppliers)
 CREATE TABLE vendors (
@@ -856,30 +877,40 @@ CREATE TABLE purchases (
 
 CREATE TABLE purchase_items (
     purchase_item_id SERIAL PRIMARY KEY,
-    purchase_id INT REFERENCES purchases(purchase_id) ON DELETE CASCADE, -- Links to purchase order
-    ingredient_id INT REFERENCES ingredients(ingredient_id) ON DELETE CASCADE, -- Ingredient purchased
-    quantity NUMERIC(10,2) NOT NULL, -- Quantity purchased
-    cost_per_unit NUMERIC(10,2) NOT NULL, -- Price per unit
-    total_cost NUMERIC(10,2) GENERATED ALWAYS AS (quantity * cost_per_unit) STORED, -- Cost for this ingredient
-    purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Auto-insert purchase date
-    expiry_date DATE NOT NULL -- Expiry date of the ingredient
+    purchase_id INT REFERENCES purchases(purchase_id) ON DELETE CASCADE,
+    ingredient_id INT REFERENCES ingredients(ingredient_id) ON DELETE CASCADE,
+    category_id INT REFERENCES ingredient_categories(category_id) ON DELETE SET NULL,
+    subcategory_id INT REFERENCES ingredient_subcategories(subcategory_id) ON DELETE SET NULL,
+    brand_id INT REFERENCES ingredient_brands(brand_id) ON DELETE SET NULL,
+    quantity NUMERIC(10,2) NOT NULL,
+    cost_per_unit NUMERIC(10,2) NOT NULL,
+    total_cost NUMERIC(10,2) GENERATED ALWAYS AS (quantity * cost_per_unit) STORED,
+    purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expiry_date DATE NOT NULL
 );
 
 
 -- Recipes Table (Links Ingredients to Menu Items in Items Table)
 CREATE TABLE recipes (
     recipe_id SERIAL PRIMARY KEY,
-    menu_item_id INT REFERENCES items(item_id) ON DELETE CASCADE, -- Links to your items table
+    menu_item_id INT REFERENCES items(item_id) ON DELETE CASCADE,
     ingredient_id INT REFERENCES ingredients(ingredient_id) ON DELETE CASCADE,
-    quantity_used NUMERIC(10,2) NOT NULL, -- Quantity per dish
-    unit VARCHAR(20) NOT NULL, -- kg, grams, ml, etc.
+    category_id INT REFERENCES ingredient_categories(category_id) ON DELETE SET NULL,
+    subcategory_id INT REFERENCES ingredient_subcategories(subcategory_id) ON DELETE SET NULL,
+    brand_id INT REFERENCES ingredient_brands(brand_id) ON DELETE SET NULL,
+    quantity_used NUMERIC(10,2) NOT NULL,
+    unit VARCHAR(20) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- Stock Movements Table (Tracks Stock Usage, Addition, and Wastage)
 CREATE TABLE stock_movements (
     movement_id SERIAL PRIMARY KEY,
     ingredient_id INT REFERENCES ingredients(ingredient_id) ON DELETE CASCADE,
+    category_id INT REFERENCES ingredient_categories(category_id) ON DELETE SET NULL,
+    subcategory_id INT REFERENCES ingredient_subcategories(subcategory_id) ON DELETE SET NULL,
+    brand_id INT REFERENCES ingredient_brands(brand_id) ON DELETE SET NULL,
     change_type VARCHAR(20) CHECK (change_type IN ('Added', 'Used', 'Wasted', 'Transferred')),
     quantity NUMERIC(10,2) NOT NULL,
     reason TEXT,
