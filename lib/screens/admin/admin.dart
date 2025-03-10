@@ -4,7 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../backend/billing/bill_service.dart';
-import '../../billconfig.dart';
+import '../billing/billconfig.dart';
 import '../billing/guest_info.dart';
 import '../orders/waiters.dart';
 import '../rservation/reservation.dart';

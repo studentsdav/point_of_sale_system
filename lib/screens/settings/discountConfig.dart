@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:point_of_sale_system/backend/DiscountApiService.dart';
+
+import '../../backend/settings/discountApiService.dart';
 
 class DiscountConfigForm extends StatefulWidget {
   const DiscountConfigForm({super.key});
