@@ -7,7 +7,6 @@ import 'package:point_of_sale_system/model/service_charge_model.dart';
 
 import 'backend/settings/outlet_service.dart';
 import 'model/delivery_charge_model.dart';
-import 'screens/loyalty/customerFeedbackReport.dart';
 
 final OutletApiService apiService =
     OutletApiService(baseUrl: 'http://localhost:3000/api');
@@ -159,7 +158,9 @@ class _MyAppState extends State {
       //   propertyid: properties[0]['property_id'] ?? 0,
       //   outlet: outlets,
       // ),
-      home: FeedbackReportScreen(),
+      home: const MyHomePage(
+        title: "POS",
+      ),
     );
   }
 }

@@ -741,6 +741,16 @@ CREATE TABLE staff_earnings (
     order_id INT, -- Linked order for tips or commissions
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE employee_benefits (
+    benefit_id SERIAL PRIMARY KEY,
+    employee_id INT REFERENCES employees(employee_id) ON DELETE CASCADE,
+    benefit_type VARCHAR(100) NOT NULL, -- E.g., House Allowance, Insurance
+    amount NUMERIC(10,2) NOT NULL,
+    effective_date DATE NOT NULL
+);
+
+
 CREATE TABLE expense_categories (
     category_id SERIAL PRIMARY KEY,
     category_name VARCHAR(100) NOT NULL UNIQUE,
@@ -790,13 +800,7 @@ CREATE TABLE accounts (
 );
 
 
-CREATE TABLE employee_benefits (
-    benefit_id SERIAL PRIMARY KEY,
-    employee_id INT REFERENCES employees(employee_id) ON DELETE CASCADE,
-    benefit_type VARCHAR(100) NOT NULL, -- E.g., House Allowance, Insurance
-    amount NUMERIC(10,2) NOT NULL,
-    effective_date DATE NOT NULL
-);
+
 
 CREATE TABLE taxes (
     tax_id SERIAL PRIMARY KEY,
