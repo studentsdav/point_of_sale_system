@@ -2,12 +2,15 @@ import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:point_of_sale_system/screens/payroll/payrollDashboard.dart';
 
 import '../../backend/billing/bill_service.dart';
 import '../billing/billconfig.dart';
 import '../billing/guest_info.dart';
+import '../expense/expenseDashboard.dart';
+import '../inventory/inventoryDashboard.dart';
+import '../loyalty/loyaltyProgramDashboard.dart';
 import '../orders/waiters.dart';
-import '../payroll/payrollDashboard.dart';
 import '../rservation/reservation.dart';
 import '../settings/ItemManage.dart';
 import '../settings/category.dart';
@@ -16,7 +19,6 @@ import '../settings/deliveryCharge.dart';
 import '../settings/discountConfig.dart';
 import '../settings/forgot_password.dart';
 import '../settings/happyhour.dart';
-import '../settings/inventory.dart';
 import '../settings/kotconfig.dart';
 import '../settings/outletconfig.dart';
 import '../settings/packingCharge.dart';
@@ -229,7 +231,6 @@ class _AdminDashboard extends State {
           ),
           buildDrawerItem(Icons.settings_applications, 'Property Config'),
           buildDrawerItem(Icons.add_box, 'Add Module'),
-          buildDrawerItem(Icons.settings_applications, 'Payroll'),
           buildDrawerItem(Icons.table_rows, 'Table Master'),
           buildDrawerItem(Icons.person_add, 'User Master'),
           buildDrawerItem(Icons.perm_identity_sharp, 'User Permission'),
@@ -252,6 +253,9 @@ class _AdminDashboard extends State {
           buildDrawerItem(Icons.inventory, 'Inventory'),
           buildDrawerItem(Icons.lock, 'Password Reset'),
           buildDrawerItem(Icons.settings, 'Settings'),
+          buildDrawerItem(Icons.local_offer, 'Loyalty'),
+          buildDrawerItem(Icons.shop, 'Expense'),
+          buildDrawerItem(Icons.corporate_fare, 'Payroll'),
           buildDrawerItem(Icons.exit_to_app, 'Logout'),
         ],
       ),
@@ -290,8 +294,10 @@ class _AdminDashboard extends State {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => HappyHourConfigForm()));
         } else if (title == 'Inventory') {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => StockEntryForm()));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const InventoryDashboard()));
         } else if (title == 'Item Master') {
           Navigator.push(
               context,
@@ -376,6 +382,16 @@ class _AdminDashboard extends State {
               context,
               MaterialPageRoute(
                   builder: (context) => const PayrollDashboard()));
+        } else if (title == 'Expense') {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const ExpenseDashboard()));
+        } else if (title == 'Loyalty') {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const LoyaltyProgramDashboard()));
         }
       },
     );

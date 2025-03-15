@@ -55,7 +55,16 @@ class _LoyaltyProgramDashboardState extends State<LoyaltyProgramDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Loyalty Program Dashboard")),
+      appBar: AppBar(
+        title: const Text("Loyalty Program Dashboard"),
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.arrow_forward_ios))
+        ],
+      ),
       drawer: buildDrawer(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

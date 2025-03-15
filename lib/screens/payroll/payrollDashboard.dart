@@ -60,6 +60,13 @@ class _PayrollDashboardState extends State<PayrollDashboard> {
         title: Text(_titles[_selectedIndex],
             style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.blueAccent,
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.arrow_forward_ios))
+        ],
       ),
       body: _selectedIndex == 0
           ? const DashboardScreen()

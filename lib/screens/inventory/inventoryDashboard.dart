@@ -43,7 +43,16 @@ class _InventoryDashboardState extends State<InventoryDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Inventory Dashboard")),
+      appBar: AppBar(
+        title: const Text("Inventory Dashboard"),
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.arrow_forward_ios))
+        ],
+      ),
       drawer: buildDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
