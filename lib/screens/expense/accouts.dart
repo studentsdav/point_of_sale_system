@@ -1,25 +1,5 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const ExpenseManagerApp());
-}
-
-class ExpenseManagerApp extends StatelessWidget {
-  const ExpenseManagerApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: const AccountManagerScreen(),
-    );
-  }
-}
-
 class AccountManagerScreen extends StatefulWidget {
   const AccountManagerScreen({super.key});
 
