@@ -7,6 +7,7 @@ import '../../backend/billing/bill_service.dart';
 import '../billing/billconfig.dart';
 import '../billing/guest_info.dart';
 import '../orders/waiters.dart';
+import '../payroll/payrollDashboard.dart';
 import '../rservation/reservation.dart';
 import '../settings/ItemManage.dart';
 import '../settings/category.dart';
@@ -228,6 +229,7 @@ class _AdminDashboard extends State {
           ),
           buildDrawerItem(Icons.settings_applications, 'Property Config'),
           buildDrawerItem(Icons.add_box, 'Add Module'),
+          buildDrawerItem(Icons.settings_applications, 'Payroll'),
           buildDrawerItem(Icons.table_rows, 'Table Master'),
           buildDrawerItem(Icons.person_add, 'User Master'),
           buildDrawerItem(Icons.perm_identity_sharp, 'User Permission'),
@@ -369,6 +371,11 @@ class _AdminDashboard extends State {
               context,
               MaterialPageRoute(
                   builder: (context) => const platformFeeConfigForm()));
+        } else if (title == 'Payroll') {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const PayrollDashboard()));
         }
       },
     );
