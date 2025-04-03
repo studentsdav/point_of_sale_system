@@ -8,12 +8,31 @@ This project aims to revolutionize restaurant management with an **open-source, 
 
 🛠️ **We need your help** to add innovative features, improve performance, and make this the go-to solution for restaurants worldwide.  
 
-**💡 Let's build the future of restaurant POS together!** 💡  
+**💡 Let's build the future of restaurant POS together!** 💡
+
+### Admin Dashboard
+The Admin Dashboard provides an overview of the restaurant’s performance, sales trends, and user activity. From here, admins can manage staff, update settings, and monitor real-time reports.
 
 ![POS System Screenshot](assets/images/admin.PNG)
+
+### Attendance Dashboard
+The Attendance Dashboard helps track employee attendance, work hours, late arrivals, and absences. It provides detailed reports for payroll processing and staff management.
+
 ![POS System Screenshot](assets/images/attendance.PNG)
+
+### Expenses Dashboard
+The Expenses Dashboard allows restaurant owners to track daily, weekly, and monthly expenses. It helps in managing operational costs, analyzing spending trends, and ensuring financial stability.
+
 ![POS System Screenshot](assets/images/expenses.PNG)
+
+### Inventory Dashboard
+The Inventory Dashboard helps restaurant managers monitor stock levels, track ingredient usage, and set reorder alerts. It ensures smooth kitchen operations by preventing stock shortages or overstocking.
+
 ![POS System Screenshot](assets/images/inventory.PNG)
+
+### loyalty Dashboard
+The Loyalty Dashboard enables businesses to manage customer loyalty programs. It helps in tracking reward points, customer engagement, and promotions to retain customers and boost sales.
+
 ![POS System Screenshot](assets/images/loyalty.PNG)
 
 ---
