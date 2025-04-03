@@ -226,7 +226,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
         title: Row(
           children: [
             const Text(
-              'Nourish Bistro and Cafe',
+              'Outlet Name',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             const Spacer(),
