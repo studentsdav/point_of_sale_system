@@ -10,6 +10,12 @@ This project aims to revolutionize restaurant management with an **open-source, 
 
 **💡 Let's build the future of restaurant POS together!** 💡  
 
+![POS System Screenshot](assets/images/admin.PNG)
+![POS System Screenshot](assets/images/attendance.PNG)
+![POS System Screenshot](assets/images/expenses.PNG)
+![POS System Screenshot](assets/images/inventory.PNG)
+![POS System Screenshot](assets/images/loyalty.PNG)
+
 ---
 
 ## **Getting Started**  
