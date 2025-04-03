@@ -42,7 +42,7 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboard extends State {
   String selectedOutlet = 'Restaurant';
-  final List<String> outlets = ['BISTRO', 'SUNSET'];
+  final List<String> outlets = ['Outlet1', 'Outlet2'];
   ChartType chartType = ChartType.line;
   final BillingApiService billingApiService =
       BillingApiService(baseUrl: 'http://localhost:3000/api');
