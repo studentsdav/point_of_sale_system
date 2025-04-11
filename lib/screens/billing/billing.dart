@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -412,74 +413,89 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
   }
 
   Future<void> _saveBill() async {
+    List<Map<String, dynamic>> updatedItems = [];
+
+    double servicechargeValue = (serviceList.isNotEmpty &&
+            serviceList[0]['service_charge'] != null)
+        ? double.tryParse(serviceList[0]['service_charge'].toString()) ?? 0.0
+        : 0.0;
+
+    double packingChargeValue = (packingList.isNotEmpty &&
+            packingList[0]['packing_charge'] != null)
+        ? double.tryParse(packingList[0]['packing_charge'].toString()) ?? 0.0
+        : 0.0;
+    double deliveryChargeValue = (deliveryList.isNotEmpty &&
+            deliveryList[0]['delivery_charge'] != null)
+        ? double.tryParse(deliveryList[0]['delivery_charge'].toString()) ?? 0.0
+        : 0.0;
+
+    // Get user input for discount
+    double discountPercentageInput =
+        double.tryParse(_percentDiscountController.text) ??
+            0.0; // Input percentage discount
+    double flatDiscountInput = double.tryParse(_flatDiscountController.text) ??
+        0.0; // Input flat discount
+
+    double combinedTotal = 0.0;
+    itemMap.forEach((_, item) {
+      combinedTotal += item['quantity'] * item['price'];
+    });
+    double discountAmount = 0.0;
+    double discountPercentage = 0.0;
+    if (isFlatDiscount) {
+      discountAmount = flatDiscountInput; // Flat discount
+      discountPercentage =
+          (flatDiscountInput / combinedTotal) * 100; // Calculate percentage
+    }
+    // Calculate and update tax, total, and discount values for each item in the map
+    itemMap.forEach((itemName, itemDetails) {
+      int itemQuantity =
+          itemDetails['quantity']; // Assuming quantity is available
+      double itemRate = itemDetails['price']; // Assuming price is available
+      int taxRate = itemDetails['tax']; // Assuming tax rate is available
+
+      // Calculate the tax value (assuming tax is already the percentage)
+      double taxValue = (itemQuantity * itemRate * taxRate) / 100;
+
+      // Calculate total amount (itemQuantity * itemRate + taxValue)
+      double totalAmount = (itemQuantity * itemRate);
+
+      // Calculate the discount amount (either flat or percentage based on the input)
+
+      validateDiscount(totalAmount);
+
+      if (isFlatDiscount) {
+        discountAmount = flatDiscountInput; // Flat discount
+        discountPercentage =
+            (flatDiscountInput / totalAmount) * 100; // Calculate percentage
+      } else {
+        discountPercentage = discountPercentageInput; // Percentage discount
+        discountAmount =
+            (totalAmount * discountPercentageInput) / 100; // Calculate amount
+      }
+
+      // Prepare updated item with new calculated values
+      Map<String, dynamic> updatedItem = {
+        'sno': itemMap.length + 1,
+        'item_name': itemName, // Get item name from map key
+        'quantity': itemQuantity,
+        'price': itemRate,
+        'tax': taxValue,
+        'total': totalAmount +
+            taxValue -
+            discountAmount, // Subtract discount from total
+        'discountable': itemDetails['discountable'],
+        'discountPercentage': discountPercentage,
+        'dis_amt': discountAmount, // Discount amount
+        'order_id': itemDetails['order_id'],
+      };
+      updatedItems.add(updatedItem);
+    });
+    Map<String, double> totals = calculateTotalsitems(updatedItems);
     try {
       // Assuming itemMap is already populated
-      List<Map<String, dynamic>> updatedItems = [];
-
-      double servicechargeValue =
-          double.parse(serviceList[0]['service_charge'] ?? "0.0");
-      double packingChargeValue =
-          double.parse(packingList[0]['packing_charge'] ?? "0.0");
-      double deliveryChargeValue =
-          double.parse(deliveryList[0]['delivery_charge'] ?? "0.0");
-
-      // Get user input for discount
-      double discountPercentageInput =
-          double.tryParse(_percentDiscountController.text) ??
-              0.0; // Input percentage discount
-      double flatDiscountInput =
-          double.tryParse(_flatDiscountController.text) ??
-              0.0; // Input flat discount
-
-      // Calculate and update tax, total, and discount values for each item in the map
-      itemMap.forEach((itemName, itemDetails) {
-        int itemQuantity =
-            itemDetails['quantity']; // Assuming quantity is available
-        double itemRate = itemDetails['price']; // Assuming price is available
-        int taxRate = itemDetails['tax']; // Assuming tax rate is available
-
-        // Calculate the tax value (assuming tax is already the percentage)
-        double taxValue = (itemQuantity * itemRate * taxRate) / 100;
-
-        // Calculate total amount (itemQuantity * itemRate + taxValue)
-        double totalAmount = (itemQuantity * itemRate);
-
-        // Calculate the discount amount (either flat or percentage based on the input)
-        double discountAmount = 0.0;
-        double discountPercentage = 0.0;
-
-        validateDiscount(totalAmount);
-
-        if (isFlatDiscount) {
-          discountAmount = flatDiscountInput; // Flat discount
-          discountPercentage =
-              (flatDiscountInput / totalAmount) * 100; // Calculate percentage
-        } else {
-          discountPercentage = discountPercentageInput; // Percentage discount
-          discountAmount =
-              (totalAmount * discountPercentageInput) / 100; // Calculate amount
-        }
-
-        // Prepare updated item with new calculated values
-        Map<String, dynamic> updatedItem = {
-          'sno': itemMap.length + 1,
-          'item_name': itemName, // Get item name from map key
-          'quantity': itemQuantity,
-          'price': itemRate,
-          'tax': taxValue,
-          'total': totalAmount +
-              taxValue -
-              discountAmount, // Subtract discount from total
-          'discountable': itemDetails['discountable'],
-          'discountPercentage': discountPercentage,
-          'dis_amt': discountAmount, // Discount amount
-          'order_id': itemDetails['order_id'],
-        };
-        updatedItems.add(updatedItem);
-      });
 
       // Step 1: Calculate totals for the bill
-      Map<String, double> totals = calculateTotalsitems(updatedItems);
 
       // Step 2: Prepare bill data with updated items and totals
       Map<String, dynamic> billData = {
@@ -511,7 +527,15 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
 
       // Step 3: Send data to API
       var result = await billingApiService.generateBill(billData);
-      processResponse(result);
+      processResponse(
+          result,
+          servicechargeValue,
+          packingChargeValue,
+          deliveryChargeValue,
+          double.parse(totals['discountPercentage']!.toStringAsFixed(2)),
+          widget.tableno,
+          _paxController.text,
+          "1");
       //_generateAndSaveBill(result.billid);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bill saved successfully!')),
@@ -520,7 +544,15 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       _clearControllers();
     } catch (error) {
       // Handle any errors
-      processResponserror(error.toString());
+      processResponserror(
+          error.toString(),
+          servicechargeValue,
+          packingChargeValue,
+          deliveryChargeValue,
+          double.parse(totals['discountPercentage']!.toStringAsFixed(2)),
+          widget.tableno,
+          _paxController.text,
+          "1");
       _clearControllers();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bill saved successfully!')),
@@ -599,7 +631,16 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     );
   }
 
-  void processResponserror(String response) {
+  void processResponserror(
+    String response,
+    double serviceChargePer,
+    double packingChargePer,
+    double deliveryChargePer,
+    double discountPer,
+    String tableNo,
+    String orderNo,
+    String pax,
+  ) {
     try {
       // Remove the prefix to extract the JSON part
       final jsonStartIndex = response.indexOf('{');
@@ -616,7 +657,16 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       // Extract the required fields
       int billId = jsonResponse['billId'];
       double grandTotal = double.parse(jsonResponse['grand_total']);
-      _generateAndSaveBill(billId);
+      _generateAndSaveBill(
+        billId,
+        serviceChargePer,
+        packingChargePer,
+        deliveryChargePer,
+        discountPer,
+        tableNo,
+        orderNo,
+        pax,
+      );
       // Process the extracted fields
       print('Bill ID: $billId');
       print('Grand Total: $grandTotal');
@@ -627,7 +677,16 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     }
   }
 
-  void processResponse(response) {
+  void processResponse(
+    response,
+    double serviceChargePer,
+    double packingChargePer,
+    double deliveryChargePer,
+    double discountPer,
+    String tableNo,
+    String orderNo,
+    String pax,
+  ) {
     // Decode the JSON response into a map
     Map<String, dynamic> result = json.decode(response);
 
@@ -641,19 +700,65 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     print("Grand Total: ₹$grandTotal");
 
     // Call _generateAndSaveBill with the billId
-    _generateAndSaveBill(billId);
+    _generateAndSaveBill(
+      billId,
+      serviceChargePer,
+      packingChargePer,
+      deliveryChargePer,
+      discountPer,
+      tableNo,
+      orderNo,
+      pax,
+    );
   }
 
-  Future<void> _generateAndSaveBill(billid) async {
+  Future<void> _generateAndSaveBill(
+    int billid,
+    double serviceChargePer,
+    double packingChargePer,
+    double deliverychargePer,
+    double discountPer,
+    String tableNo,
+    String orderNo,
+    String pax,
+  ) async {
     final pdf = pw.Document();
 
-    // Calculate totals
-    double subtotal = orderItems.fold(
-        0, (sum, item) => sum + (item['quantity'] * item['price']));
-    double tax = subtotal * 0.05; // Example 5% tax
-    double total = subtotal + tax;
+    double totalAmount = 0;
 
-    // Page format for 80mm receipt paper
+    Map<String, double> taxSummary = {}; // Stores tax by rate slab
+
+    double taxTotal = 0.0;
+
+    for (var item in orderItems) {
+      final quantity = item['quantity'];
+      final price = item['price'];
+      final taxRate = item['tax'] ?? 0; // e.g., 5, 12, 18, 25
+
+      final itemTotal = quantity * price;
+      final itemTax = (itemTotal * taxRate) / 100;
+
+      totalAmount += itemTotal;
+
+      if (taxSummary.containsKey('$taxRate%')) {
+        taxSummary['$taxRate%'] = taxSummary['$taxRate%']! + itemTax;
+      } else {
+        taxSummary['$taxRate%'] = itemTax;
+      }
+
+      taxTotal += itemTax;
+    }
+
+    double discount = (discountPer / 100) * totalAmount;
+    double subtotal = totalAmount - discount;
+
+    double serviceCharge = (serviceChargePer / 100) * subtotal;
+    double packingCharge = (packingChargePer / 100) * subtotal;
+    double deliveryCharge = (deliverychargePer / 100) * subtotal;
+
+    double netPayable =
+        subtotal + taxTotal + serviceCharge + packingCharge + deliveryCharge;
+
     const pageWidth = 80.0 * PdfPageFormat.mm;
     const pageFormat = PdfPageFormat(pageWidth, double.infinity);
 
@@ -665,57 +770,112 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             // Header
-            pw.Text('My Business Name',
-                textAlign: pw.TextAlign.center,
-                style:
-                    pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
-            pw.Text('123 Business Street, City, Country',
-                textAlign: pw.TextAlign.center,
-                style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
-            pw.Text('Phone: +123456789 | Email: contact@business.com',
-                textAlign: pw.TextAlign.center,
-                style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+            pw.Center(
+              child: pw.Text('My Business Name',
+                  style: pw.TextStyle(
+                      fontSize: 14, fontWeight: pw.FontWeight.bold)),
+            ),
+            pw.Center(
+              child: pw.Text('123 Business Street, City, Country',
+                  style:
+                      const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+            ),
+            pw.Center(
+              child: pw.Text('Phone: +123456789 | Email: contact@business.com',
+                  style:
+                      const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+            ),
             pw.Divider(thickness: 1, color: PdfColors.black),
             pw.SizedBox(height: 5),
 
-            // Bill Info
+            // Order Info
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Table: $tableNo',
+                    style: const pw.TextStyle(fontSize: 9)),
+                pw.Text('PAX: $pax', style: const pw.TextStyle(fontSize: 9)),
+              ],
+            ),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Bill No: $billid',
+                    style: const pw.TextStyle(fontSize: 9)),
+                pw.Text('Order #: $orderNo',
+                    style: const pw.TextStyle(fontSize: 9)),
+              ],
+            ),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'Date: ${DateFormat('dd-MMM-yyyy').format(DateTime.now())}',
+                  style: const pw.TextStyle(fontSize: 9),
+                ),
+                pw.Text(
+                  'Time: ${DateFormat('hh:mm a').format(DateTime.now())}',
+                  style: const pw.TextStyle(fontSize: 9),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 5),
+
+            // Bill To
             pw.Text('Bill To:',
                 style:
                     pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
             pw.Text('Customer Name: John Doe',
                 style: const pw.TextStyle(fontSize: 9)),
-            pw.Text(
-                'Date: ${DateTime.now().toLocal().toString().split(' ')[0]}',
-                style: const pw.TextStyle(fontSize: 9)),
-            pw.SizedBox(height: 5),
 
-            // Itemized Bill
+            pw.SizedBox(height: 5),
+            pw.Divider(thickness: 1, color: PdfColors.black),
+
             pw.Text('Itemized Bill:',
                 style:
                     pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 5),
             pw.TableHelper.fromTextArray(
               cellAlignment: pw.Alignment.centerLeft,
-              headers: ['Item', 'Qty', 'Price', 'Total'],
+              headers: ['Item', 'Qty', 'Price', 'Tax%', 'Total'],
               headerStyle: pw.TextStyle(
                   fontSize: 9,
                   fontWeight: pw.FontWeight.bold,
                   color: PdfColors.black),
               cellStyle: const pw.TextStyle(fontSize: 9),
               data: orderItems.map((item) {
-                double total = item['quantity'] * item['price'];
+                final itemTotal = item['quantity'] * item['price'];
                 return [
                   item['item_name'],
                   '${item['quantity']}',
                   '${item['price'].toStringAsFixed(2)}',
-                  (total.toStringAsFixed(2)),
+                  '${item['tax']}%',
+                  itemTotal.toStringAsFixed(2),
                 ];
               }).toList(),
             ),
             pw.SizedBox(height: 10),
-
-            // Totals
             pw.Divider(thickness: 1, color: PdfColors.black),
+
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Total Amount:',
+                    style: const pw.TextStyle(fontSize: 10)),
+                pw.Text(totalAmount.toStringAsFixed(2),
+                    style: const pw.TextStyle(fontSize: 10)),
+              ],
+            ),
+            if (discount > 0)
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('Discount (${discountPer.toStringAsFixed(0)}%):',
+                      style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text('-${discount.toStringAsFixed(2)}',
+                      style: const pw.TextStyle(fontSize: 10)),
+                ],
+              ),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -724,28 +884,65 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                     style: const pw.TextStyle(fontSize: 10)),
               ],
             ),
+            ...taxSummary.entries.map((entry) {
+              return pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('Tax (${entry.key}):',
+                      style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text(entry.value.toStringAsFixed(2),
+                      style: const pw.TextStyle(fontSize: 10)),
+                ],
+              );
+            }),
+
+            if (serviceCharge > 0)
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                      'Service Charge (${serviceChargePer.toStringAsFixed(0)}%):',
+                      style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text(serviceCharge.toStringAsFixed(2),
+                      style: const pw.TextStyle(fontSize: 10)),
+                ],
+              ),
+            if (packingCharge > 0)
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                      'Packing Charge (${packingChargePer.toStringAsFixed(0)}%):',
+                      style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text(packingCharge.toStringAsFixed(2),
+                      style: const pw.TextStyle(fontSize: 10)),
+                ],
+              ),
+            if (deliveryCharge > 0)
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                      'Delivery Charge (${deliverychargePer.toStringAsFixed(0)}%):',
+                      style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text(deliveryCharge.toStringAsFixed(2),
+                      style: const pw.TextStyle(fontSize: 10)),
+                ],
+              ),
+
+            pw.Divider(thickness: 1, color: PdfColors.black),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text('Tax (5%):', style: const pw.TextStyle(fontSize: 10)),
-                pw.Text(tax.toStringAsFixed(2),
-                    style: const pw.TextStyle(fontSize: 10)),
-              ],
-            ),
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text('Total:',
+                pw.Text('Net Payable:',
                     style: pw.TextStyle(
                         fontSize: 12, fontWeight: pw.FontWeight.bold)),
-                pw.Text(total.toStringAsFixed(2),
+                pw.Text(netPayable.toStringAsFixed(2),
                     style: pw.TextStyle(
                         fontSize: 12, fontWeight: pw.FontWeight.bold)),
               ],
             ),
             pw.SizedBox(height: 10),
-
-            // Footer
             pw.Text('Thank you for your purchase!',
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
@@ -813,12 +1010,19 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       discountAmount = (totalAmount * discountPercentage) / 100;
     }
 
-    double servicechargeValue =
-        double.parse(serviceList[0]['service_charge'] ?? "0.0");
-    double packingChargeValue =
-        double.parse(packingList[0]['packing_charge'] ?? "0.0");
-    double deliveryChargeValue =
-        double.parse(deliveryList[0]['delivery_charge'] ?? "0.0");
+    double servicechargeValue = (serviceList.isNotEmpty &&
+            serviceList[0]['service_charge'] != null)
+        ? double.tryParse(serviceList[0]['service_charge'].toString()) ?? 0.0
+        : 0.0;
+
+    double packingChargeValue = (packingList.isNotEmpty &&
+            packingList[0]['packing_charge'] != null)
+        ? double.tryParse(packingList[0]['packing_charge'].toString()) ?? 0.0
+        : 0.0;
+    double deliveryChargeValue = (deliveryList.isNotEmpty &&
+            deliveryList[0]['delivery_charge'] != null)
+        ? double.tryParse(deliveryList[0]['delivery_charge'].toString()) ?? 0.0
+        : 0.0;
 
     return {
       'totalAmount': totalAmount,
@@ -875,12 +1079,19 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     double sgst = (subtotal * (taxRate / 2)) / 100; // SGST = 2.5%
     double netReceivableAmount = subtotal + cgst + sgst;
 
-    double servicechargeValue =
-        double.parse(serviceList[0]['service_charge'] ?? "0.0");
-    double packingChargeValue =
-        double.parse(packingList[0]['packing_charge'] ?? "0.0");
-    double deliveryChargeValue =
-        double.parse(deliveryList[0]['delivery_charge'] ?? "0.0");
+    double servicechargeValue = (serviceList.isNotEmpty &&
+            serviceList[0]['service_charge'] != null)
+        ? double.tryParse(serviceList[0]['service_charge'].toString()) ?? 0.0
+        : 0.0;
+
+    double packingChargeValue = (packingList.isNotEmpty &&
+            packingList[0]['packing_charge'] != null)
+        ? double.tryParse(packingList[0]['packing_charge'].toString()) ?? 0.0
+        : 0.0;
+    double deliveryChargeValue = (deliveryList.isNotEmpty &&
+            deliveryList[0]['delivery_charge'] != null)
+        ? double.tryParse(deliveryList[0]['delivery_charge'].toString()) ?? 0.0
+        : 0.0;
 
     return {
       'totalAmount': totalAmount,
@@ -930,12 +1141,19 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
   @override
   Widget build(BuildContext context) {
     final totals = calculateTotals(itemMap);
-    double servicechargeValue =
-        double.parse(serviceList[0]['service_charge'] ?? "0.0");
-    double packingChargeValue =
-        double.parse(packingList[0]['packing_charge'] ?? "0.0");
-    double deliveryChargeValue =
-        double.parse(deliveryList[0]['delivery_charge'] ?? "0.0");
+    double servicechargeValue = (serviceList.isNotEmpty &&
+            serviceList[0]['service_charge'] != null)
+        ? double.tryParse(serviceList[0]['service_charge'].toString()) ?? 0.0
+        : 0.0;
+
+    double packingChargeValue = (packingList.isNotEmpty &&
+            packingList[0]['packing_charge'] != null)
+        ? double.tryParse(packingList[0]['packing_charge'].toString()) ?? 0.0
+        : 0.0;
+    double deliveryChargeValue = (deliveryList.isNotEmpty &&
+            deliveryList[0]['delivery_charge'] != null)
+        ? double.tryParse(deliveryList[0]['delivery_charge'].toString()) ?? 0.0
+        : 0.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -1503,7 +1721,21 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                     const SizedBox(width: 10),
                                     ElevatedButton(
                                       onPressed: () {
-                                        _generateAndSaveBill(1);
+                                        _generateAndSaveBill(
+                                            1,
+                                            double.parse(
+                                                totals['serviceCharge']!
+                                                    .toStringAsFixed(2)),
+                                            double.parse(packingChargeValue
+                                                .toStringAsFixed(2)),
+                                            double.parse(deliveryChargeValue
+                                                .toStringAsFixed(2)),
+                                            double.parse(
+                                                totals['discountPercentage']!
+                                                    .toStringAsFixed(2)),
+                                            widget.tableno,
+                                            _paxController.text,
+                                            "1");
                                       },
                                       style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.orange),
