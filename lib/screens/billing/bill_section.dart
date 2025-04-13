@@ -19,6 +19,7 @@ class _BillPageState extends State<BillPage> {
   OrderApiService orderApiService =
       OrderApiService(baseUrl: 'http://localhost:3000/api');
   List<Map<String, String>> _bills = [];
+  final List<Map<String, String>> _billsdata = [];
   List<Map<String, dynamic>> orders = [];
   List<Map<String, dynamic>> orderItems = [];
   var selectedOrderId;
@@ -39,8 +40,8 @@ class _BillPageState extends State<BillPage> {
   Future<List<Map<String, String>>> getbillByStatusnew(String status) async {
     try {
       // Await the result from the API call
-      List<Map<String, dynamic>> billJson =
-          await billApiService.getbillByStatus(status); // Await the Future
+      List<Map<String, dynamic>> billJson = await billApiService
+          .getbillByStatus(status: status); // Await the Future
 
       // Map the API response to the structure of _bills
       _bills = billJson.map((bill) {
@@ -48,15 +49,22 @@ class _BillPageState extends State<BillPage> {
           'bill_id': bill['id']
               .toString(), // Adjust based on the field name in your API response
           'bill_number': bill['bill_number'].toString(),
-          'amount': bill['grand_total']
-              .toString(), // Adjust based on the field name in your API response
-          'total_amount': bill['grand_total'].toString(),
           'tax_value': bill['tax_value'].toString(),
           'discount_value': bill['discount_value'].toString(),
           'outlet_name': bill['outlet_name'].toString(),
           'status': bill['status'].toString(),
           'bill_generated_at': bill['bill_generated_at'].toString(),
           'guest_name': bill['guestname'].toString(),
+          'grand_total': bill['grand_total'].toString(),
+          'discount_percentage': bill['discount_percentage'].toString(),
+          'service_charge_percentage':
+              bill['service_charge_percentage'].toString(),
+          'service_charge_value': bill['service_charge_value'].toString(),
+          'delivery_charge': bill['delivery_charge'].toString(),
+          'packing_charge': bill['packing_charge'].toString(),
+          'delivery_charge_value': bill['delivery_charge_value'].toString(),
+          'packing_charge_value': bill['packing_charge_value'].toString(),
+          'total_amount': bill['total_amount'].toString(),
           'country': 'India'
         };
       }).toList();
@@ -66,6 +74,37 @@ class _BillPageState extends State<BillPage> {
       throw Exception('Error fetching orders: $e');
     }
   }
+
+  // Future<List<Map<String, String>>> getbillBybillno(String billno) async {
+  //   try {
+  //     // Await the result from the API call
+  //     List<Map<String, dynamic>> billJson = await billApiService
+  //         .getbillByStatus(billno: billno); // Await the Future
+
+  //     // Map the API response to the structure of _bills
+  //     _billsdata = billJson.map((bill) {
+  //       return {
+  //         'bill_id': bill['id']
+  //             .toString(), // Adjust based on the field name in your API response
+  //         'bill_number': bill['bill_number'].toString(),
+  //         'amount': bill['grand_total']
+  //             .toString(), // Adjust based on the field name in your API response
+  //         'total_amount': bill['grand_total'].toString(),
+  //         'tax_value': bill['tax_value'].toString(),
+  //         'discount_value': bill['discount_value'].toString(),
+  //         'outlet_name': bill['outlet_name'].toString(),
+  //         'status': bill['status'].toString(),
+  //         'bill_generated_at': bill['bill_generated_at'].toString(),
+  //         'guest_name': bill['guestname'].toString(),
+  //         'country': 'India'
+  //       };
+  //     }).toList();
+
+  //     return _billsdata;
+  //   } catch (e) {
+  //     throw Exception('Error fetching orders: $e');
+  //   }
+  // }
 
   Future<void> _fetchOrders(billid) async {
     setState(() {
@@ -218,7 +257,8 @@ class _BillPageState extends State<BillPage> {
                             margin: const EdgeInsets.symmetric(vertical: 8.0),
                             child: ListTile(
                                 title: Text('Bill ID: ${bill['bill_number']}'),
-                                subtitle: Text('Amount: ${bill['amount']}'),
+                                subtitle:
+                                    Text('Amount: ${bill['grand_total']}'),
                                 onTap: () {
                                   _fetchOrders(bill['bill_id'].toString());
                                   _selectBill(bill);
@@ -341,60 +381,69 @@ class _BillPageState extends State<BillPage> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Charges:',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text('Total:'),
+                                          Text(
+                                            '₹${_selectedBill?['total_amount'] ?? '0.00'}',
+                                          ),
+                                        ],
                                       ),
+
                                       const SizedBox(height: 8),
 
                                       // Tax Details
-                                      if (_selectedBill?['country'] ==
-                                          'India') ...[
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Text('Tax (GST):'),
-                                            Text(
-                                              '${_selectedBill?['tax_percentage'] ?? '0'}% | ₹${_selectedBill?['tax_value'] ?? '0.00'}',
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Text('CGST:'),
-                                            Text(
-                                              '${_selectedBill?['cgst_percentage'] ?? '0'}% | ₹${_selectedBill?['cgst_value'] ?? '0.00'}',
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Text('SGST:'),
-                                            Text(
-                                              '${_selectedBill?['sgst_percentage'] ?? '0'}% | ₹${_selectedBill?['sgst_value'] ?? '0.00'}',
-                                            ),
-                                          ],
-                                        ),
-                                      ] else ...[
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Text('Tax:'),
-                                            Text(
-                                              '${_selectedBill?['tax_percentage'] ?? '0'}% | ₹${_selectedBill?['tax_value'] ?? '0.00'}',
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                      // if (_selectedBill?['country'] ==
+                                      //     'India') ...[
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text('Tax:'),
+                                          Text(
+                                            '₹${_selectedBill?['tax_value'] ?? '0.00'}',
+                                          ),
+                                        ],
+                                      ),
+
+                                      // Row(
+                                      //   mainAxisAlignment:
+                                      //       MainAxisAlignment.spaceBetween,
+                                      //   children: [
+                                      //     Text(
+                                      //         'CGST: ${_selectedBill?['cgst_percentage'] ?? '0'}% '),
+                                      //     Text(
+                                      //       '₹${_selectedBill?['cgst_value'] ?? '0.00'}',
+                                      //     ),
+                                      //   ],
+                                      // ),
+                                      // const SizedBox(height: 8),
+                                      // Row(
+                                      //   mainAxisAlignment:
+                                      //       MainAxisAlignment.spaceBetween,
+                                      //   children: [
+                                      //     Text(
+                                      //         'SGST: ${_selectedBill?['sgst_percentage'] ?? '0'}%'),
+                                      //     Text(
+                                      //       '₹${_selectedBill?['sgst_value'] ?? '0.00'}',
+                                      //     ),
+                                      //   ],
+                                      // ),
+                                      // ] else ...[
+                                      //   Row(
+                                      //     mainAxisAlignment:
+                                      //         MainAxisAlignment.spaceBetween,
+                                      //     children: [
+                                      //       Text(
+                                      //           'Tax: ${_selectedBill?['tax_percentage'] ?? '0'}%'),
+                                      //       Text(
+                                      //         '₹${_selectedBill?['tax_value'] ?? '0.00'}',
+                                      //       ),
+                                      //     ],
+                                      //   ),
+                                      // ],
                                       const SizedBox(height: 8),
 
                                       // Discount
@@ -402,9 +451,10 @@ class _BillPageState extends State<BillPage> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Text('Discount:'),
                                           Text(
-                                            '${_selectedBill?['discount_percentage'] ?? '0'}% | ₹${_selectedBill?['discount_value'] ?? '0.00'}',
+                                              'Discount: ${_selectedBill?['discount_percentage'] ?? '0'}% '),
+                                          Text(
+                                            '₹${_selectedBill?['discount_value'] ?? '0.00'}',
                                           ),
                                         ],
                                       ),
@@ -415,9 +465,10 @@ class _BillPageState extends State<BillPage> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Text('Service Charge:'),
                                           Text(
-                                            '${_selectedBill?['service_charge_percentage'] ?? '0'}% | ₹${_selectedBill?['service_charge'] ?? '0.00'}',
+                                              'Service Charge: ${_selectedBill?['service_charge_percentage'] ?? '0'}% '),
+                                          Text(
+                                            '₹${_selectedBill?['service_charge_value'] ?? '0.00'}',
                                           ),
                                         ],
                                       ),
@@ -428,9 +479,10 @@ class _BillPageState extends State<BillPage> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Text('Packing Charge:'),
                                           Text(
-                                            '${_selectedBill?['packing_charge_percentage'] ?? '0'}% | ₹${_selectedBill?['packing_charge'] ?? '0.00'}',
+                                              'Packing Charge: ${_selectedBill?['packing_charge_percentage'] ?? '0'}%'),
+                                          Text(
+                                            '₹${_selectedBill?['packing_charge'] ?? '0.00'}',
                                           ),
                                         ],
                                       ),
@@ -441,21 +493,35 @@ class _BillPageState extends State<BillPage> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Text('Delivery Charge:'),
                                           Text(
-                                            '${_selectedBill?['delivery_charge_percentage'] ?? '0'}% | ₹${_selectedBill?['delivery_charge'] ?? '0.00'}',
+                                              'Delivery Charge: ${_selectedBill?['delivery_charge_percentage'] ?? '0'}%'),
+                                          Text(
+                                            '₹${_selectedBill?['delivery_charge'] ?? '0.00'}',
                                           ),
                                         ],
                                       ),
                                       const SizedBox(height: 8),
 
                                       // Grand Total
-                                      Text(
-                                        'Grand Total: ₹${_selectedBill?['amount'] ?? '0.00'}',
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            'Grand Total:',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Text(
+                                            '₹${_selectedBill?['grand_total'] ?? '0.00'}',
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                       const SizedBox(height: 16),
 
@@ -601,7 +667,7 @@ class _BillPageState extends State<BillPage> {
           packingCharge +
           deliveryCharge -
           discount;
-      _selectedBill?['amount'] = grandTotal.toStringAsFixed(2);
+      _selectedBill?['grand_total'] = grandTotal.toStringAsFixed(2);
     });
 
     // Optionally, save changes to the backend

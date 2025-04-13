@@ -106,8 +106,8 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
   Future<List<Map<String, String>>> getbillByStatusnew(String status) async {
     try {
       // Await the result from the API call
-      List<Map<String, dynamic>> billJson =
-          await billApiService.getbillByStatus(status); // Await the Future
+      List<Map<String, dynamic>> billJson = await billApiService
+          .getbillByStatus(status: status); // Await the Future
 
       // Map the API response to the structure of _bills
       _bills = billJson.map((bill) {

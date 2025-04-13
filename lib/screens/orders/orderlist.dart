@@ -323,6 +323,9 @@ class _OrderListState extends State<OrderList> {
                                       order['order_id'].toString() ==
                                       selectedOrderId.toString());
                                   itemMap.remove(selectedOrderId);
+
+                                  orderApiService
+                                      .deleteOrder(selectedOrderId.toString());
                                   selectedOrderId = null;
                                 });
                                 ScaffoldMessenger.of(context).showSnackBar(

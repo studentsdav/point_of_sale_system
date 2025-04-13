@@ -448,6 +448,8 @@ CREATE TABLE order_items (
     item_category VARCHAR(255),
     item_quantity INT,
     item_rate DECIMAL(10, 2),
+    subtotal DECIMAL(10, 2),
+    grandtotal DECIMAL(10, 2),
     item_amount DECIMAL(10, 2),
     item_tax DECIMAL(10, 2),
     total_item_value DECIMAL(10, 2),
@@ -488,6 +490,7 @@ CREATE TABLE bills (
     bill_number VARCHAR(50) UNIQUE NOT NULL, -- Unique bill number
     total_amount NUMERIC(10, 2), -- Base total billing amount
     discount_value NUMERIC(10, 2), -- Total discount value
+    subtotal DECIMAL(10, 2),
     tax_value NUMERIC(10, 2), -- Tax value
     service_charge_value NUMERIC(10, 2), -- Service charge value
     packing_charge NUMERIC(10, 2), -- Packing charge
@@ -581,7 +584,8 @@ ADD COLUMN table_no VARCHAR(50),
 ADD COLUMN packing_charge_percentage NUMERIC(5, 2),
 ADD COLUMN delivery_charge_percentage NUMERIC(5, 2),
 ADD COLUMN discount_percentage NUMERIC(5, 2),
-ADD COLUMN service_charge_percentage NUMERIC(5, 2);
+ADD COLUMN service_charge_percentage NUMERIC(5, 2),
+ADD COLUMN subtotal DECIMAL(10, 2)
 
 -- Alter outlet_configurations table
 ALTER TABLE outlet_configurations

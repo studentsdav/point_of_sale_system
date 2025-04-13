@@ -172,6 +172,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
   void _saveOrder() async {
     try {
       double totalAmount = 0;
+      double totaltaxvalue = 0;
       List<Map<String, dynamic>> items = [];
 
       // Collect items and calculate total amounts
@@ -203,7 +204,8 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
           items.add(itemData);
 
           // Calculate total amount (including tax)
-          totalAmount += (amount + tax);
+          totalAmount += amount;
+          totaltaxvalue += tax;
         }
       }
 
@@ -224,7 +226,7 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
             DateTime.now().toIso8601String(), // Use actual timestamp here
         'transaction_id': '',
         'tax_percentage': 0,
-        'tax_value': totalAmount,
+        'tax_value': totaltaxvalue,
         'total_amount': totalAmount,
         'discount_percentage': 0,
         'total_discount_value': 0,
