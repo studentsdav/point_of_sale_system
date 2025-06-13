@@ -7,11 +7,13 @@ class ModifyOrderList extends StatefulWidget {
   final propertyid;
   final outletname;
   final orders;
+  final billid;
   const ModifyOrderList(
       {super.key,
       required this.orders,
       required this.propertyid,
-      required this.outletname});
+      required this.outletname,
+      required this.billid});
   @override
   _ModifyOrderListState createState() => _ModifyOrderListState();
 }

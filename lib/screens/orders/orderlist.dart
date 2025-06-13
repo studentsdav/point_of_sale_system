@@ -376,6 +376,7 @@ class _OrderListState extends State<OrderList> {
                   outletname: widget.outletname,
                   propertyid: widget.propertyid,
                   orders: orders,
+                  billid: "",
                 )));
   }
 }

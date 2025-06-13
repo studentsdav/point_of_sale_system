@@ -712,6 +712,94 @@ router.get('/reports/payment-breakdown', async (req, res) => {
 });
 
 
+router.get('/bills/print/:billno', async (req, res) => {
+  try {
+    const { billno } = req.params;
+
+    // Get bill and order details
+    const query = `
+      SELECT 
+        b.bill_number,
+        b.table_no,
+        b.pax,
+        b.bill_generated_at,
+        b.guestname,
+        b.total_amount,
+        b.discount_percentage,
+        b.discount_value,
+        b.tax_value,
+        b.service_charge_percentage,
+        b.service_charge_value,
+        b.grand_total,
+        json_agg(
+          json_build_object(
+            'item_name', oi.item_name,
+            'quantity', oi.item_quantity,
+            'price', oi.total_item_value,
+            'tax', oi.item_tax
+          )
+        ) AS items
+      FROM bills b
+      LEFT JOIN orders o ON b.id = o.bill_id
+      LEFT JOIN order_items oi ON o.order_id = oi.order_id
+      WHERE b.bill_number = $1
+      GROUP BY b.id
+    `;
+
+    const result = await pool.query(query, [billno]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Bill not found' });
+    }
+
+    const bill = result.rows[0];
+    const formattedDate = new Date(bill.bill_generated_at).toLocaleDateString('en-GB');
+    const formattedTime = new Date(bill.bill_generated_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    const formattedResponse = {
+      business: {
+        name: "My Business Name",
+        address: "123 Business Street, City, Country",
+        phone: "+123456789",
+        email: "contact@business.com"
+      },
+      bill_header: {
+        table: bill.table_no,
+        pax: bill.pax,
+        bill_number: bill.bill_number,
+        date: formattedDate,
+        time: formattedTime,
+        guest_name: bill.guestname
+      },
+      items: bill.items.map(item => ({
+        name: item.item_name,
+        quantity: item.quantity,
+        price: item.price,
+        tax: item.tax
+      })),
+      totals: {
+        total_amount: parseFloat(bill.total_amount),
+        discount: {
+          percent: bill.discount_percentage,
+          value: parseFloat(bill.discount_value)
+        },
+        subtotal: parseFloat(bill.total_amount - bill.discount_value),
+        tax: parseFloat(bill.tax_value),
+        service_charge: {
+          percent: bill.service_charge_percentage,
+          value: parseFloat(bill.service_charge_value)
+        },
+        net_payable: parseFloat(bill.grand_total)
+      },
+      footer: "Thank you for your purchase! Visit Again!"
+    };
+
+    res.json(formattedResponse);
+  } catch (err) {
+    console.error('[ERROR] Fetching bill for print:', err.message);
+    res.status(500).json({ error: 'Failed to fetch bill', details: err.message });
+  }
+});
 
 
 

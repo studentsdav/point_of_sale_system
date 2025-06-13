@@ -10,16 +10,16 @@ import '../../backend/billing/bill_service.dart';
 import '../../backend/order/OrderApiService.dart';
 import '../orders/modifyOrder.dart';
 
-class BillPage extends StatefulWidget {
+class OldBillPage extends StatefulWidget {
   final propertyid;
   final outletname;
-  const BillPage(
+  const OldBillPage(
       {super.key, required this.propertyid, required this.outletname});
   @override
-  _BillPageState createState() => _BillPageState();
+  _OldBillPageState createState() => _OldBillPageState();
 }
 
-class _BillPageState extends State<BillPage> {
+class _OldBillPageState extends State<OldBillPage> {
   BillingApiService billApiService =
       BillingApiService(baseUrl: 'http://localhost:3000/api');
   OrderApiService orderApiService =
@@ -39,7 +39,7 @@ class _BillPageState extends State<BillPage> {
 
   @override
   void initState() {
-    _billingFuture = getbillByStatusnew('UnPaid');
+    _billingFuture = getbillByStatusnew('Paid');
     super.initState();
   }
 
@@ -545,7 +545,7 @@ class _BillPageState extends State<BillPage> {
                                           ElevatedButton(
                                             onPressed: () =>
                                                 _modifyBillDialog(),
-                                            child: const Text('Modidy'),
+                                            child: const Text('Modify'),
                                           ),
                                           ElevatedButton(
                                             onPressed: () => _modifyBill(orders,
