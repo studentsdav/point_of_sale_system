@@ -105,23 +105,52 @@ This is a **Point of Sale (POS) system** designed specifically for **restaurants
 
 ### **Steps to Install**  
 
-1. **Clone the repository**:  
-   Clone this repository to your local machine using the following command:  
-   ```bash
-   git clone https://github.com/studentsdav/point_of_sale_system.git
-   ```
-2. **Navigate to the project directory**:  
-   ```bash
-   cd point_of_sale_system
-   ```
-3. **Install dependencies**:  
-   ```bash
-   flutter pub get
-   ```
-4. **Run the application**:  
-   ```bash
-   flutter run
-   ```
+**Flutter App Setup**
+1. Clone the repository
+```bash
+git clone https://github.com/studentsdav/point_of_sale_system.git
+```
+2. Navigate to the project directory
+```bash
+cd point_of_sale_system
+```
+3. Install dependencies
+```bash
+flutter pub get
+```
+4. Run the application
+```bash
+flutter run
+```
+🌐 Server API Setup (Ubuntu / Windows / Linux)
+1. Clone the server repository
+```bash
+git clone https://github.com/studentsdav/auto_deploy_project.git
+cd auto_deploy_project
+```
+2. Install Node.js dependencies
+```bash
+npm install
+```
+3. Set up environment variables
+```bash
+Create a `.env` file in the root directory and add the following:
+
+PORT=5000
+DB_HOST=your_db_host
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_NAME=your_db_name
+```
+4. Run the server
+```bash
+npm start
+```
+5. For development mode (with auto-restart)
+```bash
+npm run dev
+```
+✅ Your Flutter POS application and Node.js backend server are now ready!
 
 ---
 
