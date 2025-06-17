@@ -150,55 +150,87 @@ const pool = require('../db'); // Database connection
 const router = express.Router();
 
 
-
-
-
-router.get('/:status', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    // Get the 'status' parameter from the URL (not query string)
-    const { status } = req.params;
+    const { status, billno } = req.query;
 
-    // Check if the status is provided
-    if (!status) {
-      return res.status(400).json({ error: 'Status is required' });
+    if (!status && !billno) {
+      return res.status(400).json({ error: 'Either status or billno must be provided' });
     }
 
-    // Construct the base query
-    const query = `
-      SELECT 
-        id,
-        bill_number, 
-        total_amount, 
-        tax_value, 
-        discount_value, 
-        grand_total, 
-        outlet_name, 
-        status, 
-        bill_generated_at, 
-        table_no,
-        guestName, 
-        guestId,
-        pax
-      FROM bills 
-      WHERE status = $1
-    `;
+    let query = '';
+    let params = [];
 
-    // Execute the query with the provided status
-    const result = await pool.query(query, [status]);
+    if (billno) {
+      query = `
+        SELECT 
+          id,
+          bill_number, 
+          total_amount, 
+          tax_value, 
+          discount_value, 
+          grand_total, 
+          outlet_name, 
+          status, 
+          bill_generated_at, 
+          table_no,
+          guestName, 
+          guestId,
+          discount_percentage,
+          service_charge_percentage,
+          service_charge_value,
+          packing_charge,
+          delivery_charge,
+          other_charge,
+          delivery_charge_percentage,
+          packing_charge_percentage, 
+          pax
+        FROM bills 
+        WHERE bill_number = $1
+      `;
+      params = [billno];
+    } else if (status) {
+      query = `
+       SELECT 
+          id,
+          bill_number, 
+          total_amount, 
+          tax_value, 
+          discount_value, 
+          grand_total, 
+          outlet_name, 
+          status, 
+          bill_generated_at, 
+          table_no,
+          guestName, 
+          guestId,
+          discount_percentage,
+          service_charge_percentage,
+          service_charge_value,
+          packing_charge,
+          delivery_charge,
+          other_charge,
+          delivery_charge_percentage,
+          packing_charge_percentage, 
+          pax
+        FROM bills 
+        WHERE status = $1
+      `;
+      params = [status];
+    }
 
-    // Check if no bills are found
+    const result = await pool.query(query, params);
+
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'No bills found for the specified status' });
+      return res.status(404).json({ message: 'No bills found for the provided criteria' });
     }
 
-    // Return the results
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('Error retrieving bills:', error.message);
     res.status(500).json({ error: 'Failed to retrieve bills', details: error.message });
   }
 });
-
 
 router.get("/dashboard/today-stats", async (req, res) => {
   try {
@@ -353,14 +385,14 @@ router.get('/next-bill-number/:outletId', async (req, res) => {
 router.post('/', async (req, res) => {
   const {
     table_no, tax_value, discount_percentage, service_charge_percentage,
-    packing_charge_percentage, delivery_charge_percentage, other_charge,
+    packing_charge_percentage, delivery_charge_percentage, other_charge, totalamount, subtotal,
     property_id, outletname, billstatus, items, bill_number, pax, guestId, guestName, platform_fees_percentage, platform_fees_tax, platform_fees_tax_per, packing_charge_tax, delivery_charge_tax, service_charge_tax, packing_charge_tax_per, delivery_charge_tax_per, service_charge_tax_per
   } = req.body;
 
   try {
     // Fetch all pending orders for the table
     const ordersResult = await pool.query(
-      `SELECT order_id, total_amount FROM orders WHERE table_number = $1 AND status = 'Pending'`,
+      `SELECT order_id FROM orders WHERE table_number = $1 AND status = 'Pending'`,
       [table_no]
     );
 
@@ -371,17 +403,18 @@ router.post('/', async (req, res) => {
     const orders = ordersResult.rows;
 
     // Calculate aggregated values for the bill
-    let total_amount = 0;
-    orders.forEach(order => total_amount += parseFloat(order.total_amount));
-
-    const discount_value = (total_amount * (discount_percentage / 100)).toFixed(2);
+    let total_amount = subtotal;
+    const totalAmount = totalamount.toFixed(2);
+    const subTotal = subtotal.toFixed(2);
+    const discount_value = (totalAmount * (discount_percentage / 100)).toFixed(2);
     const service_charge_value = (total_amount * (service_charge_percentage / 100)).toFixed(2);
     const packing_charge = (total_amount * (packing_charge_percentage / 100)).toFixed(2);
     const delivery_charge = (total_amount * (delivery_charge_percentage / 100)).toFixed(2);
     const platform_fees = (total_amount * (platform_fees_percentage / 100)).toFixed(2);
 
+
     const grand_total = (
-      total_amount -
+      totalAmount -
       parseFloat(discount_value) +
       parseFloat(tax_value) +
       parseFloat(service_charge_value) +
@@ -395,12 +428,12 @@ router.post('/', async (req, res) => {
       `INSERT INTO bills (bill_number, total_amount, tax_value, discount_value, service_charge_value, 
                           packing_charge, delivery_charge, other_charge, grand_total, property_id, outlet_name, 
                           packing_charge_percentage, delivery_charge_percentage, discount_percentage, service_charge_percentage, 
-                          status, table_no, bill_generated_at, pax, guestId, guestName, platform_fees , platform_fees_tax , platform_fees_tax_per , packing_charge_tax , delivery_charge_tax , service_charge_tax , packing_charge_tax_per , delivery_charge_tax_per , service_charge_tax_per )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP, $18, $19, $20, $21,$22,$23,$24,$25,$26,$27,$28,$29) 
+                          status, table_no, bill_generated_at, pax, guestId, guestName, platform_fees , platform_fees_tax , platform_fees_tax_per , packing_charge_tax , delivery_charge_tax , service_charge_tax , packing_charge_tax_per , delivery_charge_tax_per , service_charge_tax_per, subtotal )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP, $18, $19, $20, $21,$22,$23,$24,$25,$26,$27,$28,$29, $30) 
        RETURNING id`,
       [
         bill_number, // Generate a unique bill number
-        total_amount,
+        totalAmount,
         tax_value,
         discount_value,
         service_charge_value,
@@ -415,7 +448,7 @@ router.post('/', async (req, res) => {
         discount_percentage,
         service_charge_percentage,
         billstatus,
-        table_no, pax, guestId, guestName, platform_fees, platform_fees_tax, platform_fees_tax_per, packing_charge_tax, delivery_charge_tax, service_charge_tax, packing_charge_tax_per, delivery_charge_tax_per, service_charge_tax_per
+        table_no, pax, guestId, guestName, platform_fees, platform_fees_tax, platform_fees_tax_per, packing_charge_tax, delivery_charge_tax, service_charge_tax, packing_charge_tax_per, delivery_charge_tax_per, service_charge_tax_per, subTotal
       ]
     );
 
@@ -443,13 +476,13 @@ router.post('/', async (req, res) => {
 
     // **Update order_items table** for the given items
     for (const item of items) {
-      const { order_id, item_name, total, dis_amt, tax, discountPercentage } = item;
-
+      const { order_id, item_name, total, dis_amt, tax, discountPercentage, subtotal, grandtotal } = item;
+      let total_item_value = total + tax;
       await pool.query(
         `UPDATE order_items 
-         SET total_item_value = $1, total_discount_value = $2, item_tax=$3, discount_percentage=$4
-         WHERE order_id = $5 AND item_name = $6`,
-        [total, dis_amt, tax, discountPercentage, order_id, item_name]
+         SET total_item_value = $1, total_discount_value = $2, item_tax=$3, discount_percentage=$4, subtotal= $5, grandtotal=$6
+         WHERE order_id = $7 AND item_name = $8`,
+        [total_item_value, dis_amt, tax, discountPercentage, subtotal, grandtotal, order_id, item_name]
       );
     }
 
@@ -679,6 +712,94 @@ router.get('/reports/payment-breakdown', async (req, res) => {
 });
 
 
+router.get('/bills/print/:billno', async (req, res) => {
+  try {
+    const { billno } = req.params;
+
+    // Get bill and order details
+    const query = `
+      SELECT 
+        b.bill_number,
+        b.table_no,
+        b.pax,
+        b.bill_generated_at,
+        b.guestname,
+        b.total_amount,
+        b.discount_percentage,
+        b.discount_value,
+        b.tax_value,
+        b.service_charge_percentage,
+        b.service_charge_value,
+        b.grand_total,
+        json_agg(
+          json_build_object(
+            'item_name', oi.item_name,
+            'quantity', oi.item_quantity,
+            'price', oi.total_item_value,
+            'tax', oi.item_tax
+          )
+        ) AS items
+      FROM bills b
+      LEFT JOIN orders o ON b.id = o.bill_id
+      LEFT JOIN order_items oi ON o.order_id = oi.order_id
+      WHERE b.bill_number = $1
+      GROUP BY b.id
+    `;
+
+    const result = await pool.query(query, [billno]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Bill not found' });
+    }
+
+    const bill = result.rows[0];
+    const formattedDate = new Date(bill.bill_generated_at).toLocaleDateString('en-GB');
+    const formattedTime = new Date(bill.bill_generated_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    const formattedResponse = {
+      business: {
+        name: "My Business Name",
+        address: "123 Business Street, City, Country",
+        phone: "+123456789",
+        email: "contact@business.com"
+      },
+      bill_header: {
+        table: bill.table_no,
+        pax: bill.pax,
+        bill_number: bill.bill_number,
+        date: formattedDate,
+        time: formattedTime,
+        guest_name: bill.guestname
+      },
+      items: bill.items.map(item => ({
+        name: item.item_name,
+        quantity: item.quantity,
+        price: item.price,
+        tax: item.tax
+      })),
+      totals: {
+        total_amount: parseFloat(bill.total_amount),
+        discount: {
+          percent: bill.discount_percentage,
+          value: parseFloat(bill.discount_value)
+        },
+        subtotal: parseFloat(bill.total_amount - bill.discount_value),
+        tax: parseFloat(bill.tax_value),
+        service_charge: {
+          percent: bill.service_charge_percentage,
+          value: parseFloat(bill.service_charge_value)
+        },
+        net_payable: parseFloat(bill.grand_total)
+      },
+      footer: "Thank you for your purchase! Visit Again!"
+    };
+
+    res.json(formattedResponse);
+  } catch (err) {
+    console.error('[ERROR] Fetching bill for print:', err.message);
+    res.status(500).json({ error: 'Failed to fetch bill', details: err.message });
+  }
+});
 
 
 

@@ -435,17 +435,20 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
             0.0; // Input percentage discount
     double flatDiscountInput = double.tryParse(_flatDiscountController.text) ??
         0.0; // Input flat discount
-
-    double combinedTotal = 0.0;
-    itemMap.forEach((_, item) {
-      combinedTotal += item['quantity'] * item['price'];
-    });
     double discountAmount = 0.0;
     double discountPercentage = 0.0;
+    double combinedTotal = 0.0;
+    itemMap.forEach((_, item) {
+      if (item['discountable'] == true) {
+        combinedTotal += (item['quantity'] * item['price']);
+      }
+    });
+
     if (isFlatDiscount) {
-      discountAmount = flatDiscountInput; // Flat discount
       discountPercentage =
           (flatDiscountInput / combinedTotal) * 100; // Calculate percentage
+    } else {
+      discountPercentage = discountPercentageInput; // Percentage discount
     }
     // Calculate and update tax, total, and discount values for each item in the map
     itemMap.forEach((itemName, itemDetails) {
@@ -455,25 +458,22 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       int taxRate = itemDetails['tax']; // Assuming tax rate is available
 
       // Calculate the tax value (assuming tax is already the percentage)
-      double taxValue = (itemQuantity * itemRate * taxRate) / 100;
 
       // Calculate total amount (itemQuantity * itemRate + taxValue)
       double totalAmount = (itemQuantity * itemRate);
 
       // Calculate the discount amount (either flat or percentage based on the input)
 
-      validateDiscount(totalAmount);
-
-      if (isFlatDiscount) {
-        discountAmount = flatDiscountInput; // Flat discount
-        discountPercentage =
-            (flatDiscountInput / totalAmount) * 100; // Calculate percentage
-      } else {
-        discountPercentage = discountPercentageInput; // Percentage discount
+      if (itemDetails['discountable'] == true) {
         discountAmount =
-            (totalAmount * discountPercentageInput) / 100; // Calculate amount
+            (totalAmount * discountPercentage) / 100; // Calculate amount
+      } else {
+        discountPercentage = 0.0;
+        discountAmount = 0.0;
       }
 
+      double subtotal = totalAmount - discountAmount;
+      double taxValue = (subtotal * taxRate) / 100;
       // Prepare updated item with new calculated values
       Map<String, dynamic> updatedItem = {
         'sno': itemMap.length + 1,
@@ -481,9 +481,9 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
         'quantity': itemQuantity,
         'price': itemRate,
         'tax': taxValue,
-        'total': totalAmount +
-            taxValue -
-            discountAmount, // Subtract discount from total
+        'total': totalAmount, // Subtract discount from total
+        'subtotal': subtotal,
+        'grandtotal': subtotal + taxValue,
         'discountable': itemDetails['discountable'],
         'discountPercentage': discountPercentage,
         'dis_amt': discountAmount, // Discount amount
@@ -512,6 +512,8 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
         "pax": _paxController.text,
         "guestName": _guestSearchController.text,
         "guestId": _guestIdController.text,
+        "totalamount": totals['totalAmount'],
+        "subtotal": totals['subtotal'],
         "platform_fees_percentage": 0.00,
         "platform_fees_tax": 0.00,
         "platform_fees_tax_per": 0.00,
@@ -738,15 +740,21 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       final itemTotal = quantity * price;
       final itemTax = (itemTotal * taxRate) / 100;
 
+      double discountedItemTax = itemTax;
+
+      if (item['discountable'] == true) {
+        discountedItemTax = itemTax - ((discountPer / 100) * itemTax);
+      }
+
       totalAmount += itemTotal;
 
       if (taxSummary.containsKey('$taxRate%')) {
-        taxSummary['$taxRate%'] = taxSummary['$taxRate%']! + itemTax;
+        taxSummary['$taxRate%'] = taxSummary['$taxRate%']! + discountedItemTax;
       } else {
-        taxSummary['$taxRate%'] = itemTax;
+        taxSummary['$taxRate%'] = discountedItemTax;
       }
 
-      taxTotal += itemTax;
+      taxTotal += discountedItemTax;
     }
 
     double discount = (discountPer / 100) * totalAmount;
@@ -993,13 +1001,12 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     // Sum amounts only for discountable items
     for (var item in items) {
       if (item['discountable'] == true) {
-        totalAmount += item['total'];
+        totalAmount += item['price'] * item['quantity'];
       }
     }
 
     double discountAmount = 0.0;
     double discountPercentage = 0.0;
-    validateDiscount(totalAmount);
     if (isFlatDiscount) {
       discountAmount = flatDiscountInput;
       discountPercentage = totalAmount > 0
@@ -1028,6 +1035,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
       'totalAmount': totalAmount,
       'totalDiscount': discountAmount,
       'discountPercentage': discountPercentage,
+      'subtotal': totalAmount - discountAmount,
       'cgst': (totalAmount - discountAmount) * (taxRate / 2) / 100,
       'sgst': (totalAmount - discountAmount) * (taxRate / 2) / 100,
       'serviceCharge': (totalAmount * servicechargeValue / 100),
@@ -1055,14 +1063,14 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
     // Filter only discountable items and calculate totalAmount for discountable items
     itemMap.forEach((key, item) {
       if (item['discountable'] == true) {
-        totalAmountnew +=
-            item['total']; // Add only discountable items to the totalAmount
+        totalAmountnew += item['quantity'] *
+            item['price']; // Add only discountable items to the totalAmount
       }
     });
 
     itemMap.forEach((key, item) {
-      totalAmount +=
-          item['total']; // Add only discountable items to the totalAmount
+      totalAmount += item['quantity'] *
+          item['price']; // Add only discountable items to the totalAmount
     });
     validateDiscount(totalAmount);
     // Apply either flat discount or percentage discount
@@ -1265,7 +1273,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                         return ListTile(
                                           title: Text(item['item_name']),
                                           subtitle: Text(
-                                              'Qty: ${item['quantity']} | ₹${item['total']}'),
+                                              'Qty: ${item['quantity']} | ₹${item['quantity'] * item['price']}'),
                                           trailing: Text('₹${item['price']}'),
                                         );
                                       }).toList()
@@ -1280,7 +1288,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                         return ListTile(
                                           title: Text(item['item_name']),
                                           subtitle: Text(
-                                              'Qty: ${item['quantity']} | ₹${item['total']}'),
+                                              'Qty: ${item['quantity']} | ₹${item['quantity'] * item['price']}'),
                                           trailing: Text('₹${item['price']}'),
                                         );
                                       }).toList(),
@@ -1591,7 +1599,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
                                                   DataCell(Text(
                                                       '₹${item['price']}')),
                                                   DataCell(Text(
-                                                      '₹${item['total']}')),
+                                                      '₹${item['quantity'] * item['price']} ')),
                                                   DataCell(
                                                       Text('${item['tax']}%')),
                                                   DataCell(Text(

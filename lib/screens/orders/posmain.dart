@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:point_of_sale_system/screens/billing/bill_old.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import '../../backend/billing/bill_service.dart';
@@ -305,6 +306,15 @@ class _POSMainScreenState extends State<POSMainScreen> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => const ReportScreen()));
+                  }),
+                  _buildDrawerItem(Icons.report, 'Old Bill', () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => OldBillPage(
+                                  propertyid: widget.propertyid,
+                                  outletname: selectedOutlet,
+                                )));
                   }),
                   _buildDrawerItem(Icons.add_box, 'Item Add', () {
                     Navigator.push(

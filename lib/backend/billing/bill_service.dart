@@ -33,23 +33,49 @@ class BillingApiService {
     }
   }
 
-  // Fetch orders by table number and status
-  Future<List<Map<String, dynamic>>> getbillByStatus(String status) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/bill/$status'),
-      headers: {'Content-Type': 'application/json'},
+  Future<List<Map<String, dynamic>>> getbillByStatus(
+      {String? status, String? billno}) async {
+    if (status == null && billno == null) {
+      throw Exception('Either status or billno must be provided');
+    }
+
+    final uri = Uri.parse('$baseUrl/bill').replace(
+      queryParameters: {
+        if (status != null) 'status': status,
+        if (billno != null) 'billno': billno,
+      },
     );
+
+    final response =
+        await http.get(uri, headers: {'Content-Type': 'application/json'});
+
     if (response.statusCode == 200) {
-      List<dynamic> billJson =
-          json.decode(response.body); // Assuming response is an array
-      return List<Map<String, dynamic>>.from(
-          billJson); // Convert to List<Map<String, dynamic>>
+      List<dynamic> billJson = json.decode(response.body);
+      return List<Map<String, dynamic>>.from(billJson);
     } else if (response.statusCode == 404) {
-      throw Exception('No bill found for the specified table and status');
+      throw Exception('No bills found');
     } else {
-      throw Exception('Failed to fetch bill: ${response.body}');
+      throw Exception('Failed to fetch bills: ${response.body}');
     }
   }
+
+  // Fetch orders by table number and status
+  // Future<List<Map<String, dynamic>>> getbillByStatus(String status) async {
+  //   final response = await http.get(
+  //     Uri.parse('$baseUrl/bill/$status'),
+  //     headers: {'Content-Type': 'application/json'},
+  //   );
+  //   if (response.statusCode == 200) {
+  //     List<dynamic> billJson =
+  //         json.decode(response.body); // Assuming response is an array
+  //     return List<Map<String, dynamic>>.from(
+  //         billJson); // Convert to List<Map<String, dynamic>>
+  //   } else if (response.statusCode == 404) {
+  //     throw Exception('No bill found for the specified table and status');
+  //   } else {
+  //     throw Exception('Failed to fetch bill: ${response.body}');
+  //   }
+  // }
 
   Future<Map<String, dynamic>> getDashboardStatus() async {
     final response = await http.get(
