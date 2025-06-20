@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../backend/guestmanage/guest_record_api_service.dart';
+import '../../backend/api_config.dart';
 
 class GuestRegistrationScreen extends StatefulWidget {
   const GuestRegistrationScreen({super.key});
@@ -15,7 +16,7 @@ class GuestRegistrationScreen extends StatefulWidget {
 class _GuestRegistrationScreenState extends State<GuestRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final GuestRecordApiService apiService =
-      GuestRecordApiService(baseUrl: 'http://localhost:3000/api');
+      GuestRecordApiService(baseUrl: apiBaseUrl);
   final String _guestId = 'G100'; // Set default Guest ID
   String? _guestName;
   String? _phoneNumber;

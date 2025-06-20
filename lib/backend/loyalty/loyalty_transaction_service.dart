@@ -1,9 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class LoyaltyTransactionService {
-  final String baseUrl = "https://your-api-url.com/loyalty-transactions";
+  final String baseUrl = '$apiBaseUrl/loyalty-transactions';
 
   Future<Map<String, dynamic>> createTransaction(
       {required int guestId,

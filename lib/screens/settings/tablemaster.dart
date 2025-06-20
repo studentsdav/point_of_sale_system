@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../backend/order/table_api_service.dart';
+import '../../backend/api_config.dart';
 
 class TableManagementPage extends StatefulWidget {
   const TableManagementPage({super.key});
@@ -17,13 +18,12 @@ class _TableManagementPageState extends State<TableManagementPage> {
   String? _selectedOutlet; // Outlet selection
   List<Map<String, dynamic>> _tables = [];
   List<String> outlets = []; // Example outlets
-  final String apiUrl =
-      'http://localhost:3000/api'; // Replace with your backend API URL
+  final String apiUrl = apiBaseUrl;
   List<dynamic> properties = [];
   List<dynamic> outletConfigurations = [];
 
-  final TableApiService _tableApiService = TableApiService(
-      apiUrl: 'http://localhost:3000/api'); // Create the service instance
+  final TableApiService _tableApiService =
+      TableApiService(apiUrl: apiBaseUrl); // Create the service instance
 
   // Fetch table configurations
   Future<void> _fetchTableConfigs() async {

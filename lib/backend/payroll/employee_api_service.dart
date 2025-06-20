@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class EmployeeApiService {
-  final String baseUrl =
-      "http://your-api-url.com/employees"; // Replace with actual API URL
+  final String baseUrl = '$apiBaseUrl/employees';
 
   // Create Employee
   Future<Map<String, dynamic>> createEmployee(

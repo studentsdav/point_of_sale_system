@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class PropertyService {
-  final String _baseUrl = "http://localhost:3000/api";
+  final String _baseUrl = apiBaseUrl;
 
   Future<Map<String, dynamic>> createProperty({
     required int propertyId,

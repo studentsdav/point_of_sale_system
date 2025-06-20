@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class ExpenseSubcategoryApiService {
-  final String baseUrl =
-      "http://your-api-url.com/expense-subcategories"; // Replace with actual API URL
+  final String baseUrl = '$apiBaseUrl/expense-subcategories';
 
   // Add a new expense subcategory
   Future<Map<String, dynamic>> addSubcategory(

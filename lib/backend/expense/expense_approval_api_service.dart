@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class ExpenseApprovalApiService {
-  final String baseUrl =
-      "http://your-api-url.com/expense-approvals"; // Replace with actual API URL
+  final String baseUrl = '$apiBaseUrl/expense-approvals';
 
   // Submit a new expense approval request
   Future<Map<String, dynamic>> submitApproval(

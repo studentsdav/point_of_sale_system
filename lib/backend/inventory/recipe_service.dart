@@ -1,9 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class RecipeService {
-  static const String baseUrl = 'http://your-api-url.com';
+  static const String baseUrl = apiBaseUrl;
 
   // Fetch all recipes
   static Future<List<dynamic>> getAllRecipes() async {

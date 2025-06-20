@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../../backend/billing/bill_service.dart';
 import '../../backend/order/OrderApiService.dart';
+import '../../backend/api_config.dart';
 import '../orders/modifyOrder.dart';
 
 class BillPage extends StatefulWidget {
@@ -20,10 +21,8 @@ class BillPage extends StatefulWidget {
 }
 
 class _BillPageState extends State<BillPage> {
-  BillingApiService billApiService =
-      BillingApiService(baseUrl: 'http://localhost:3000/api');
-  OrderApiService orderApiService =
-      OrderApiService(baseUrl: 'http://localhost:3000/api');
+  BillingApiService billApiService = BillingApiService(baseUrl: apiBaseUrl);
+  OrderApiService orderApiService = OrderApiService(baseUrl: apiBaseUrl);
   List<Map<String, String>> _bills = [];
   final List<Map<String, String>> _billsdata = [];
   List<Map<String, dynamic>> orders = [];

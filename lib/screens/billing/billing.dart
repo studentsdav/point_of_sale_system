@@ -13,6 +13,7 @@ import '../../backend/settings/deliveryApiService.dart';
 import '../../backend/settings/discountApiService.dart';
 import '../../backend/settings/packingChargeApiService.dart';
 import '../../backend/settings/serviceChargeApiService.dart';
+import '../../backend/api_config.dart';
 
 class BillingFormScreen extends StatefulWidget {
   final tableno;
@@ -29,18 +30,16 @@ class BillingFormScreen extends StatefulWidget {
 }
 
 class _BillingFormScreenState extends State<BillingFormScreen> {
-  BillingApiService billingApiService =
-      BillingApiService(baseUrl: 'http://localhost:3000/api');
-  OrderApiService orderApiService =
-      OrderApiService(baseUrl: 'http://localhost:3000/api');
+  BillingApiService billingApiService = BillingApiService(baseUrl: apiBaseUrl);
+  OrderApiService orderApiService = OrderApiService(baseUrl: apiBaseUrl);
   GuestRecordApiService guestRecordApiService =
-      GuestRecordApiService(baseUrl: 'http://localhost:3000/api');
+      GuestRecordApiService(baseUrl: apiBaseUrl);
   DiscountApiService discountApiService =
-      DiscountApiService(baseUrl: 'http://localhost:3000/api');
+      DiscountApiService(baseUrl: apiBaseUrl);
   PackingChargeApiService packingApiService =
-      PackingChargeApiService(baseUrl: 'http://localhost:3000/api');
+      PackingChargeApiService(baseUrl: apiBaseUrl);
   DeliveryApiService deliveryApiService =
-      DeliveryApiService(baseUrl: 'http://localhost:3000/api');
+      DeliveryApiService(baseUrl: apiBaseUrl);
   List<Map<dynamic, dynamic>> discountList = [
     {}
   ]; // Variable to store discounts
@@ -51,7 +50,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
   List<Map<dynamic, dynamic>> serviceList = [{}]; // Variable to store discounts
 
   ServiceChargeApiService serviceChargeApiService =
-      ServiceChargeApiService(baseUrl: 'http://localhost:3000/api');
+      ServiceChargeApiService(baseUrl: apiBaseUrl);
 
   final TextEditingController _billNoController = TextEditingController();
   final TextEditingController _orderNoController =

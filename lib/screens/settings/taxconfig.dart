@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../backend/settings/taxConfigApiService.dart';
+import '../../backend/api_config.dart';
 
 class TaxConfigForm extends StatefulWidget {
   const TaxConfigForm({super.key});
@@ -18,7 +19,7 @@ class _TaxConfigFormState extends State<TaxConfigForm> {
   final _greaterthanController = TextEditingController();
   final _lessthanController = TextEditingController();
   final TaxConfigApiService taxApiService =
-      TaxConfigApiService(baseUrl: 'http://localhost:3000/api');
+      TaxConfigApiService(baseUrl: apiBaseUrl);
   String _taxType = 'exclusive'; // Default tax type
   String? _selectedOutlet; // To store the selected outlet
 

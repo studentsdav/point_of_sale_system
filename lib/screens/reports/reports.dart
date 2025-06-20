@@ -5,6 +5,7 @@ import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import '../../backend/api_config.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class ReportScreen extends StatefulWidget {
@@ -15,7 +16,7 @@ class ReportScreen extends StatefulWidget {
 }
 
 class _ReportScreenState extends State<ReportScreen> {
-  final String baseUrl = 'http://localhost:3000/api/bill/reports';
+  final String baseUrl = '$apiBaseUrl/bill/reports';
   List<Map<String, dynamic>> reportData = [];
   String? selectedReport;
 

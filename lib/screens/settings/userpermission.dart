@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:point_of_sale_system/backend/settings/user_permissions.dart';
+import '../../backend/api_config.dart';
 
 class UserPermissionForm extends StatefulWidget {
   const UserPermissionForm({super.key});
@@ -12,7 +13,7 @@ class UserPermissionForm extends StatefulWidget {
 class _UserPermissionFormState extends State<UserPermissionForm> {
   final _formKey = GlobalKey<FormState>();
   UserPermissionApiService userPermissionApiService =
-      UserPermissionApiService(baseUrl: 'http://localhost:3000/api');
+      UserPermissionApiService(baseUrl: apiBaseUrl);
   List<String> selectedOutlets = [];
   List<String> selectedUsers = []; // List to store selected user ids
   Map<String, List<String>> userPermissions =

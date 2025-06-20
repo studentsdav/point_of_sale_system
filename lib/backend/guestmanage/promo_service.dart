@@ -1,9 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class PromoService {
-  static const String baseUrl = "https://your-api-url.com/promo-codes";
+  static const String baseUrl = '$apiBaseUrl/promo-codes';
 
   // Create a new promo code
   static Future<Map<String, dynamic>?> createPromoCode(

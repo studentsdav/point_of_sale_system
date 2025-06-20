@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../backend/settings/deliveryApiService.dart';
+import '../../backend/api_config.dart';
 
 class DeliveryChargeConfigForm extends StatefulWidget {
   const DeliveryChargeConfigForm({super.key});
@@ -14,7 +15,7 @@ class DeliveryChargeConfigForm extends StatefulWidget {
 
 class _DeliveryChargeConfigFormState extends State<DeliveryChargeConfigForm> {
   DeliveryApiService deliveryApiService =
-      DeliveryApiService(baseUrl: 'http://localhost:3000/api');
+      DeliveryApiService(baseUrl: apiBaseUrl);
   final _formKey = GlobalKey<FormState>();
   final _chargePercentageController = TextEditingController();
   final _minAmountController = TextEditingController();

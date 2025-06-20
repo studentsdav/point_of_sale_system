@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../backend/settings/platformFeeApiService.dart';
+import '../../backend/api_config.dart';
 
 class platformFeeConfigForm extends StatefulWidget {
   const platformFeeConfigForm({super.key});
@@ -13,7 +14,7 @@ class platformFeeConfigForm extends StatefulWidget {
 
 class _platformFeeConfigFormState extends State<platformFeeConfigForm> {
   PlatformFeeApiService platformFeeApiService =
-      PlatformFeeApiService(baseUrl: 'http://localhost:3000/api');
+      PlatformFeeApiService(baseUrl: apiBaseUrl);
   final _formKey = GlobalKey<FormState>();
   final _feePercentageController = TextEditingController();
   final _minAmountController = TextEditingController();

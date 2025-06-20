@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class IngredientApiService {
-  final String baseUrl =
-      "http://your-api-url.com/ingredients"; // Replace with your actual API URL
+  final String baseUrl = '$apiBaseUrl/ingredients';
 
   // Get all ingredients
   Future<List<dynamic>> getAllIngredients() async {

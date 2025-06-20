@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class SalaryService {
-  static const String baseUrl =
-      'http://your-api-url.com/salaries'; // Replace with your API URL
+  static const String baseUrl = '$apiBaseUrl/salaries';
 
   // Add a new salary record
   static Future<Map<String, dynamic>?> addSalary(

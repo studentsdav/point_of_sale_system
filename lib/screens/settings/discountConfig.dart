@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../backend/settings/discountApiService.dart';
+import '../../backend/api_config.dart';
 
 class DiscountConfigForm extends StatefulWidget {
   const DiscountConfigForm({super.key});
@@ -13,7 +14,7 @@ class DiscountConfigForm extends StatefulWidget {
 
 class _DiscountConfigFormState extends State<DiscountConfigForm> {
   DiscountApiService discountApiService =
-      DiscountApiService(baseUrl: 'http://localhost:3000/api');
+      DiscountApiService(baseUrl: apiBaseUrl);
   final _formKey = GlobalKey<FormState>();
   final _feePercentageController = TextEditingController();
   final _minAmountController = TextEditingController();

@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../backend/order/OrderApiService.dart';
 import '../../backend/order/items_api_service.dart';
 import '../../backend/order/waiterApiService.dart';
+import '../../backend/api_config.dart';
 
 class KOTFormScreen extends StatefulWidget {
   final tableno;
@@ -23,12 +24,9 @@ class KOTFormScreen extends StatefulWidget {
 }
 
 class _KOTFormScreenState extends State<KOTFormScreen> {
-  OrderApiService orderApiService =
-      OrderApiService(baseUrl: 'http://localhost:3000/api');
-  ItemsApiService itemsApiService =
-      ItemsApiService(baseUrl: 'http://localhost:3000/api');
-  WaiterApiService waiterApiService =
-      WaiterApiService(baseUrl: 'http://localhost:3000/api');
+  OrderApiService orderApiService = OrderApiService(baseUrl: apiBaseUrl);
+  ItemsApiService itemsApiService = ItemsApiService(baseUrl: apiBaseUrl);
+  WaiterApiService waiterApiService = WaiterApiService(baseUrl: apiBaseUrl);
   final List<String> _categories = ['Starters', 'Main Course', 'Desserts'];
   late Future<Map<String, List<Map<String, String>>>> _menuItemsFuture;
   // Menu items with their tags (Veg/Non-Veg) and rate

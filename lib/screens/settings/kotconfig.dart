@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../backend/settings/kotConfigApiService.dart';
+import '../../backend/api_config.dart';
 
 class KOTConfigForm extends StatefulWidget {
   const KOTConfigForm({super.key});
@@ -13,7 +14,7 @@ class KOTConfigForm extends StatefulWidget {
 
 class _KOTConfigFormState extends State<KOTConfigForm> {
   KOTConfigApiService kotConfigApiService =
-      KOTConfigApiService(baseUrl: 'http://localhost:3000/api');
+      KOTConfigApiService(baseUrl: apiBaseUrl);
   final _formKey = GlobalKey<FormState>();
   int kotStartingNumber = 1;
   DateTime? startDate;
