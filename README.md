@@ -114,9 +114,9 @@ git clone https://github.com/studentsdav/point_of_sale_system.git
 ```bash
 cd point_of_sale_system
 ```
-3. Install dependencies
+3. Run the setup script
 ```bash
-flutter pub get
+./scripts/setup.sh
 ```
 4. Run the application
 ```bash
