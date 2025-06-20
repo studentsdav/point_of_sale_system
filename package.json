@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "dev": "nodemon global_server_single_use/server.js",
+    "start": "node global_server_single_use/server.js"
+  },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

@@ -132,30 +132,22 @@ flutter run --dart-define=API_BASE_URL=https://your.api.server/api
 
 When this variable is supplied, the `apiBaseUrl` constant is set to the provided value.
 🌐 Server API Setup (Ubuntu / Windows / Linux)
-1. Clone the server repository
-```bash
-git clone https://github.com/studentsdav/auto_deploy_project.git
-cd auto_deploy_project
-```
-2. Install Node.js dependencies
+The backend server is included in this repository inside `global_server_single_use`.
+
+1. Install dependencies from the project root
 ```bash
 npm install
 ```
-3. Set up environment variables
+2. Create a `.env` file in the project root and add your database settings
 ```bash
-Create a `.env` file in the root directory and add the following:
-
 PORT=5000
 DB_HOST=your_db_host
 DB_USER=your_db_user
 DB_PASSWORD=your_db_password
-DB_NAME=your_db_name
+DB_DATABASE=your_db_name
+DB_PORT=5432
 ```
-4. Run the server
-```bash
-npm start
-```
-5. For development mode (with auto-restart)
+3. Start the server in development mode
 ```bash
 npm run dev
 ```
