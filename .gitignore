@@ -48,6 +48,7 @@ Desktop.ini
 
 # Node.js related
 node_modules/
+/nodemon
 
 # Build files (for Flutter, Android, etc.)
 build/
