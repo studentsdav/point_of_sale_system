@@ -142,14 +142,18 @@ cd auto_deploy_project
 npm install
 ```
 3. Set up environment variables
+Copy the example file and update the values to match your environment:
 ```bash
-Create a `.env` file in the root directory and add the following:
-
+cp .env.example .env
+```
+Edit `.env` with your database details. The default values in `.env.example` are:
+```bash
 PORT=5000
-DB_HOST=your_db_host
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-DB_NAME=your_db_name
+DB_HOST=localhost
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_DATABASE=pos_db
+DB_PORT=5432
 ```
 4. Run the server
 ```bash
