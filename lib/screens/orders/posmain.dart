@@ -4,6 +4,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import '../../backend/billing/bill_service.dart';
 import '../../backend/order/table_api_service.dart';
+import '../../backend/api_config.dart';
 import '../admin/admin.dart';
 import '../billing/bill_section.dart';
 import '../billing/billing.dart';
@@ -27,9 +28,9 @@ class POSMainScreen extends StatefulWidget {
 }
 
 class _POSMainScreenState extends State<POSMainScreen> {
-  final tableapiService = TableApiService(apiUrl: 'http://localhost:3000/api');
+  final tableapiService = TableApiService(apiUrl: apiBaseUrl);
   final BillingApiService billingApiService =
-      BillingApiService(baseUrl: 'http://localhost:3000/api');
+      BillingApiService(baseUrl: apiBaseUrl);
   String today_reservations = "0";
   String today_sales = "0";
   String running_orders = "0";
@@ -108,7 +109,7 @@ class _POSMainScreenState extends State<POSMainScreen> {
   }
 
   void _initializeWebSocket() {
-    socket = IO.io('http://localhost:3000', <String, dynamic>{
+    socket = IO.io(apiBaseUrl.replaceFirst('/api', ''), <String, dynamic>{
       'transports': ['websocket'], // Force WebSocket transport
       'autoConnect': true,
     });

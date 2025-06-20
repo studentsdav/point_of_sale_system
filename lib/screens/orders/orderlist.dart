@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../backend/order/OrderApiService.dart';
+import '../../backend/api_config.dart';
 import 'modifyOrder.dart';
 
 class OrderList extends StatefulWidget {
@@ -14,7 +15,7 @@ class OrderList extends StatefulWidget {
 
 class _OrderListState extends State<OrderList> {
   OrderApiService orderApiService =
-      OrderApiService(baseUrl: 'http://localhost:3000/api');
+      OrderApiService(baseUrl: apiBaseUrl);
   List<Map<String, dynamic>> orders = [];
   List<Map<String, dynamic>> orderItems = [];
   var selectedOrderId;

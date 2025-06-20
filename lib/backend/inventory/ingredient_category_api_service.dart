@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class IngredientCategoryApiService {
-  final String baseUrl =
-      "http://your-api-url.com/ingredient-categories"; // Replace with actual API URL
+  final String baseUrl = '$apiBaseUrl/ingredient-categories';
 
   // Get all ingredient categories
   Future<List<dynamic>> getAllCategories() async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../backend/settings/bill_api_service.dart';
+import '../../backend/api_config.dart';
 
 class BillConfigurationForm extends StatefulWidget {
   const BillConfigurationForm({super.key});
@@ -12,8 +13,7 @@ class BillConfigurationForm extends StatefulWidget {
 
 class _BillConfigurationFormState extends State<BillConfigurationForm> {
   final _formKey = GlobalKey<FormState>();
-  final BillApiService apiService = BillApiService(
-      'http://localhost:3000/api/bill-config'); // Update with your backend URL
+  final BillApiService apiService = BillApiService('$apiBaseUrl/bill-config');
   String? selectedOutlet;
   String billPrefix = '';
   String? billSuffix;

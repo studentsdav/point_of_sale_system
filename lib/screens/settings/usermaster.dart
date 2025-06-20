@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../backend/settings/user_api_service.dart';
+import '../../backend/api_config.dart';
 
 class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key});
@@ -15,8 +16,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _dobController = TextEditingController();
   final TextEditingController _joinDateController = TextEditingController();
-  UserApiService userApiService =
-      UserApiService(baseUrl: 'http://localhost:3000/api');
+  UserApiService userApiService = UserApiService(baseUrl: apiBaseUrl);
   String? _username;
   String? _fullName;
   DateTime _dob = DateTime(1990, 1, 1);

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../backend/settings/printerApiService.dart';
+import '../../backend/api_config.dart';
 
 class PrinterConfigForm extends StatefulWidget {
   const PrinterConfigForm({super.key});
@@ -14,7 +15,7 @@ class PrinterConfigForm extends StatefulWidget {
 class _PrinterConfigFormState extends State<PrinterConfigForm> {
   final _formKey = GlobalKey<FormState>();
   PrinterApiService printerApiService =
-      PrinterApiService(baseUrl: 'http://localhost:3000/api');
+      PrinterApiService(baseUrl: apiBaseUrl);
   TextEditingController printerNumberController = TextEditingController();
   String printerName = '';
   String printerType = 'receipt';

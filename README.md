@@ -122,6 +122,15 @@ flutter pub get
 ```bash
 flutter run
 ```
+
+### Configuring the API Base URL
+The app uses a default API endpoint defined in `lib/backend/api_config.dart`. You can override this value at build time using Flutter's `--dart-define` option:
+
+```bash
+flutter run --dart-define=API_BASE_URL=https://your.api.server/api
+```
+
+When this variable is supplied, the `apiBaseUrl` constant is set to the provided value.
 🌐 Server API Setup (Ubuntu / Windows / Linux)
 1. Clone the server repository
 ```bash

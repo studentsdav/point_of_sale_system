@@ -6,11 +6,11 @@ import 'package:point_of_sale_system/model/packing_charge_model.dart';
 import 'package:point_of_sale_system/model/service_charge_model.dart';
 
 import 'backend/settings/outlet_service.dart';
+import 'backend/api_config.dart';
 import 'model/delivery_charge_model.dart';
 import 'screens/users/poslogin.dart';
 
-final OutletApiService apiService =
-    OutletApiService(baseUrl: 'http://localhost:3000/api');
+final OutletApiService apiService = OutletApiService(baseUrl: apiBaseUrl);
 void main() async {
   await _initializeHive();
   Hive.registerAdapter(DiscountModelAdapter()); // Register the adapter

@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../backend/settings/outlet_service.dart';
+import '../../backend/api_config.dart';
 
 class OutletConfigurationForm extends StatefulWidget {
   const OutletConfigurationForm({super.key});
@@ -14,7 +15,7 @@ class OutletConfigurationForm extends StatefulWidget {
 
 class _OutletConfigurationFormState extends State<OutletConfigurationForm> {
   final OutletApiService apiService =
-      OutletApiService(baseUrl: 'http://localhost:3000/api');
+      OutletApiService(baseUrl: apiBaseUrl);
   List<dynamic> properties = [];
   List<dynamic> outletConfigurations = [];
   bool isLoading = true;

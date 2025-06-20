@@ -1,9 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class EarningService {
-  final String baseUrl = "http://your-api-url.com/staff-earnings";
+  final String baseUrl = '$apiBaseUrl/staff-earnings';
 
   // Add a new earning record
   Future<Map<String, dynamic>?> addEarning(

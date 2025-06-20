@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class LoyaltyRedemptionService {
-  final String baseUrl =
-      "http://your-api-url.com/redemption-limits"; // Replace with actual API URL
+  final String baseUrl = '$apiBaseUrl/redemption-limits';
 
   // Create a new redemption limit
   Future<Map<String, dynamic>> createRedemptionLimit(

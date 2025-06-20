@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class LoyaltyProgramApiService {
-  final String baseUrl =
-      "http://your-api-url.com/loyalty-programs"; // Replace with your actual API URL
+  final String baseUrl = '$apiBaseUrl/loyalty-programs';
 
   // Get all loyalty programs
   Future<List<dynamic>> getAllLoyaltyPrograms() async {

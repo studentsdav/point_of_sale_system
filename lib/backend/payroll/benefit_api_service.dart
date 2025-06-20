@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class BenefitApiService {
-  final String baseUrl =
-      "http://your-api-url.com/benefits"; // Replace with actual API URL
+  final String baseUrl = '$apiBaseUrl/benefits';
 
   // Create a new benefit
   Future<Map<String, dynamic>> createBenefit(

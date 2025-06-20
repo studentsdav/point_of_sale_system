@@ -1,9 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class PaymentMethodService {
-  final String baseUrl = "https://your-api-url.com/payment-methods";
+  final String baseUrl = '$apiBaseUrl/payment-methods';
 
   Future<Map<String, dynamic>?> addPaymentMethod(
       String methodName, String description) async {
