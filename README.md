@@ -141,7 +141,11 @@ cd auto_deploy_project
 ```bash
 npm install
 ```
-3. Set up environment variables
+3. Create the PostgreSQL schema
+```bash
+psql -U <user> -d <db> -f global_server_single_use/tables.sql
+```
+4. Set up environment variables
 ```bash
 Create a `.env` file in the root directory and add the following:
 
@@ -151,11 +155,11 @@ DB_USER=your_db_user
 DB_PASSWORD=your_db_password
 DB_NAME=your_db_name
 ```
-4. Run the server
+5. Run the server
 ```bash
 npm start
 ```
-5. For development mode (with auto-restart)
+6. For development mode (with auto-restart)
 ```bash
 npm run dev
 ```
