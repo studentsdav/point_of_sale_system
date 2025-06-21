@@ -556,7 +556,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
           "1");
       _clearControllers();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bill saved successfully!')),
+        SnackBar(content: Text('Failed to save bill: $error')),
       );
       print('Error: $error');
       // ScaffoldMessenger.of(context).showSnackBar(
