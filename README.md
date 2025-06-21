@@ -101,7 +101,7 @@ This is a **Point of Sale (POS) system** designed specifically for **restaurants
 ### **Prerequisites**  
 - **Operating System**: Windows, macOS, or Linux  
 - **Software**: Node.js, npm (for the backend)  
-- **Database**: MySQL/PostgreSQL (for data storage)  
+- **Database**: PostgreSQL (for data storage)  
 
 ### **Steps to Install**  
 
@@ -149,11 +149,16 @@ DB_USER=your_db_user
 DB_PASSWORD=your_db_password
 DB_NAME=your_db_name
 ```
-3. Run the server
+3. Create the PostgreSQL database and load the schema
+```bash
+createdb -U $DB_USER $DB_NAME
+psql -U $DB_USER -d $DB_NAME -f global_server_single_use/tables.sql
+```
+4. Run the server
 ```bash
 npm start
 ```
-4. For development mode (with auto-restart)
+5. For development mode (with auto-restart)
 ```bash
 npm run dev
 ```
