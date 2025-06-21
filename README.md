@@ -131,6 +131,9 @@ flutter run --dart-define=API_BASE_URL=https://your.api.server/api
 ```
 
 When this variable is supplied, the `apiBaseUrl` constant is set to the provided value.
+All backend service classes use this base URL by default. For example, the
+`AttendanceApiService` and `AccountApiService` will automatically point to
+`apiBaseUrl` unless a custom URL is supplied when constructing them.
 🌐 Server API Setup (Ubuntu / Windows / Linux)
 1. Install Node.js dependencies in the project root
 ```bash
