@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../backend/payroll/attendance_api_service.dart';
+import '../../backend/payroll/employee_api_service.dart';
+import '../../backend/api_config.dart';
 
 class AttendanceEntryScreen extends StatefulWidget {
   const AttendanceEntryScreen({super.key});
@@ -14,23 +17,62 @@ class _AttendanceEntryScreenState extends State<AttendanceEntryScreen> {
   final TextEditingController shiftEndController = TextEditingController();
 
   String selectedStatus = 'Present';
-  String selectedEmployee = 'Employee 1';
+  int? selectedEmployeeId;
   final List<String> statuses = ['Present', 'Absent', 'Leave', 'Late'];
-  final List<String> employees = ['Employee 1', 'Employee 2', 'Employee 3'];
 
-  List<Map<String, String>> attendanceRecords = [];
+  List<dynamic> employees = [];
+  List<dynamic> attendanceRecords = [];
 
-  void submitForm() {
-    if (_formKey.currentState!.validate()) {
+  final AttendanceApiService _attendanceService =
+      AttendanceApiService(apiBaseUrl);
+  final EmployeeApiService _employeeService = EmployeeApiService();
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchInitialData();
+  }
+
+  Future<void> _fetchInitialData() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      employees = await _employeeService.getAllEmployees();
+      if (employees.isNotEmpty) {
+        selectedEmployeeId = employees.first['employee_id'];
+      }
+      attendanceRecords = await _attendanceService.fetchAllAttendance();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
       setState(() {
-        attendanceRecords.add({
-          "Employee": selectedEmployee,
-          "Work Date": workDateController.text,
-          "Shift Start": shiftStartController.text,
-          "Shift End": shiftEndController.text,
-          "Status": selectedStatus,
-        });
+        _loading = false;
       });
+    }
+  }
+
+  Future<void> submitForm() async {
+    if (_formKey.currentState!.validate() && selectedEmployeeId != null) {
+      try {
+        await _attendanceService.addAttendance({
+          'employee_id': selectedEmployeeId,
+          'work_date': workDateController.text,
+          'shift_start': shiftStartController.text,
+          'shift_end': shiftEndController.text,
+          'status': selectedStatus,
+          'biometric_entry': '',
+          'biometric_exit': ''
+        });
+        _fetchInitialData();
+      } catch (e) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
     }
   }
 
@@ -95,38 +137,45 @@ class _AttendanceEntryScreenState extends State<AttendanceEntryScreen> {
                               fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 10),
                       Expanded(
-                        child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text('Employee')),
-                            DataColumn(label: Text('Work Date')),
-                            DataColumn(label: Text('Shift Start')),
-                            DataColumn(label: Text('Shift End')),
-                            DataColumn(label: Text('Status')),
-                          ],
-                          rows: attendanceRecords.map((record) {
-                            Color rowColor = getStatusColor(record["Status"]!);
-                            return DataRow(cells: [
-                              DataCell(Text(record["Employee"]!)),
-                              DataCell(Text(record["Work Date"]!)),
-                              DataCell(Text(record["Shift Start"]!)),
-                              DataCell(Text(record["Shift End"]!)),
-                              DataCell(
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: rowColor,
-                                    borderRadius: BorderRadius.circular(8),
+                        child: _loading
+                            ? const Center(child: CircularProgressIndicator())
+                            : _error != null
+                                ? Center(child: Text(_error!))
+                                : DataTable(
+                                    columns: const [
+                                      DataColumn(label: Text('Employee')),
+                                      DataColumn(label: Text('Work Date')),
+                                      DataColumn(label: Text('Shift Start')),
+                                      DataColumn(label: Text('Shift End')),
+                                      DataColumn(label: Text('Status')),
+                                    ],
+                                    rows: attendanceRecords.map((record) {
+                                      Color rowColor =
+                                          getStatusColor(record['status']);
+                                      return DataRow(cells: [
+                                        DataCell(Text('${record['employee_id']}')),
+                                        DataCell(Text(record['work_date'] ?? '')),
+                                        DataCell(Text(record['shift_start'] ?? '')),
+                                        DataCell(Text(record['shift_end'] ?? '')),
+                                        DataCell(
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: rowColor,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              record['status'] ?? '',
+                                              style: const TextStyle(
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                        ),
+                                      ]);
+                                    }).toList(),
                                   ),
-                                  child: Text(
-                                    record["Status"]!,
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ),
-                            ]);
-                          }).toList(),
-                        ),
                       ),
                     ],
                   ),
@@ -183,17 +232,17 @@ class _AttendanceEntryScreenState extends State<AttendanceEntryScreen> {
   Widget buildDropdownEmployeeField() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: DropdownButtonFormField<String>(
-        value: selectedEmployee,
-        items: employees.map((String employee) {
-          return DropdownMenuItem<String>(
-            value: employee,
-            child: Text(employee),
+      child: DropdownButtonFormField<int>(
+        value: selectedEmployeeId,
+        items: employees.map<DropdownMenuItem<int>>((employee) {
+          return DropdownMenuItem<int>(
+            value: employee['employee_id'],
+            child: Text(employee['name'] ?? ''),
           );
         }).toList(),
-        onChanged: (String? newValue) {
+        onChanged: (int? newValue) {
           setState(() {
-            selectedEmployee = newValue!;
+            selectedEmployeeId = newValue;
           });
         },
         decoration: InputDecoration(
@@ -210,7 +259,19 @@ Widget buildDatePickerField() {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 8.0),
     child: TextFormField(
-      onTap: () => () {},
+      controller: workDateController,
+      readOnly: true,
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        );
+        if (picked != null) {
+          workDateController.text = picked.toIso8601String().split('T').first;
+        }
+      },
       decoration: InputDecoration(
         labelText: 'Work Date',
         prefixIcon: const Icon(Icons.calendar_today),

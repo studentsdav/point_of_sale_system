@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import '../../backend/payroll/salary_service.dart';
 
 class SalarySummaryScreen extends StatefulWidget {
   const SalarySummaryScreen({super.key});
@@ -10,7 +11,9 @@ class SalarySummaryScreen extends StatefulWidget {
 }
 
 class _SalarySummaryScreenState extends State<SalarySummaryScreen> {
-  List<Map<String, dynamic>> salaryData = [];
+  List<dynamic> salaryData = [];
+  bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -18,42 +21,20 @@ class _SalarySummaryScreenState extends State<SalarySummaryScreen> {
     fetchSalaryData();
   }
 
-  void fetchSalaryData() {
+  Future<void> fetchSalaryData() async {
     setState(() {
-      salaryData = List.generate(
-        10,
-        (index) => {
-          "name": "Employee ${index + 1}",
-          "base_salary": 30000 + (index * 1000),
-          "present_days": 25 - index,
-          "absent_days": index,
-          "overtime_hours": index * 2,
-          "underworked_hours": index,
-          "total_leaves": index,
-          "total_hours": (25 - index) * 8 + (index * 2) - index,
-          "salary_deduction": index * 500,
-          "overtime_bonus": index * 300,
-          "required_hours": (25 - index) * 8,
-          "commission_earned": index * 200,
-          "tips_earned": index * 150,
-          "advance_deduction": index * 250,
-          "insurance": 500,
-          "da": (30000 + (index * 1000)) * 0.1,
-          "esi": (30000 + (index * 1000)) * 0.075,
-          "epf": (30000 + (index * 1000)) * 0.12,
-          "final_salary": (30000 + (index * 1000)) -
-              (index * 500) +
-              (index * 300) +
-              (index * 200) +
-              (index * 150) -
-              (index * 250) -
-              500 +
-              (30000 + (index * 1000)) * 0.1 -
-              (30000 + (index * 1000)) * 0.075 -
-              (30000 + (index * 1000)) * 0.12,
-        },
-      );
+      _loading = true;
+      _error = null;
     });
+    try {
+      salaryData = await SalaryService.getAllSalaries();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -77,7 +58,11 @@ class _SalarySummaryScreenState extends State<SalarySummaryScreen> {
                   scrollDirection: Axis.horizontal,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
-                    child: DataTable(
+                    child: _loading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _error != null
+                            ? Center(child: Text(_error!))
+                            : DataTable(
                       headingRowColor:
                           WidgetStateProperty.all(Colors.grey[200]),
                       columns: const [
@@ -102,58 +87,52 @@ class _SalarySummaryScreenState extends State<SalarySummaryScreen> {
                         DataColumn(label: Text("Final Salary")),
                       ],
                       rows: salaryData.map((data) {
-                        Color salaryColor = data['final_salary'] < 25000
+                        double finalSalary = (data['base_salary'] as num).toDouble();
+                        if (data.containsKey('commission_earned')) {
+                          finalSalary +=
+                              (data['commission_earned'] as num).toDouble();
+                        }
+                        if (data.containsKey('tips_earned')) {
+                          finalSalary += (data['tips_earned'] as num).toDouble();
+                        }
+                        if (data.containsKey('advance_deduction')) {
+                          finalSalary -=
+                              (data['advance_deduction'] as num).toDouble();
+                        }
+                        Color salaryColor = finalSalary < 25000
                             ? Colors.red
                             : Colors.green;
 
                         return DataRow(cells: [
-                          DataCell(Text(data['name'])), // Employee Name
-                          DataCell(
-                              Text("₹${data['base_salary']}")), // Base Salary
-                          DataCell(
-                              Text(" ${data['present_days']}")), // Present Days
-                          DataCell(Text(" ${data['absent_days']}",
-                              style: const TextStyle(
-                                  color: Colors.red))), // Absent Days (Red)
-                          DataCell(Text(" ${data['overtime_hours']} hrs",
-                              style: const TextStyle(
-                                  color: Colors.blue))), // Overtime (Blue)
-                          DataCell(Text(" ${data['underworked_hours']} hrs",
-                              style: const TextStyle(
-                                  color:
-                                      Colors.orange))), // Underworked (Orange)
-                          DataCell(
-                              Text(" ${data['total_leaves']}")), // Total Leaves
-                          DataCell(Text(
-                              " ${data['total_hours']} hrs")), // Total Hours
-                          DataCell(Text(
-                              " ${data['required_hours']} hrs")), // Required Hours
-                          DataCell(Text("₹${data['salary_deduction']}",
-                              style: const TextStyle(
-                                  color: Colors.red))), // Deduction (Red)
-                          DataCell(Text("₹${data['overtime_bonus']}",
-                              style: const TextStyle(
-                                  color: Colors.green))), // Bonus (Green)
-                          DataCell(Text("₹${data['commission_earned']}",
-                              style: const TextStyle(
-                                  color:
-                                      Colors.purple))), // Commission (Purple)
-                          DataCell(Text("₹${data['tips_earned']}",
-                              style: const TextStyle(
-                                  color: Colors.teal))), // Tips (Teal)
-                          DataCell(Text("₹${data['advance_deduction']}",
-                              style: const TextStyle(
-                                  color: Colors
-                                      .brown))), // Advance Deduction (Brown)
-                          DataCell(Text("₹${data['insurance']}")), // Insurance
-                          DataCell(Text("₹${data['da']}")), // DA
-                          DataCell(Text("₹${data['esi']}")), // ESI
-                          DataCell(Text("₹${data['epf']}")), // EPF
-                          DataCell(Text("₹${data['final_salary']}",
+                          DataCell(Text(data['employee_id'].toString())),
+                          DataCell(Text('₹${data['base_salary']}')),
+                          DataCell(Text('${data['present_days']}')),
+                          DataCell(Text('${data['absent_days']}',
+                              style: const TextStyle(color: Colors.red))),
+                          DataCell(Text('${data['overtime_hours']} hrs',
+                              style: const TextStyle(color: Colors.blue))),
+                          DataCell(Text('${data['underworked_hours']} hrs',
+                              style: const TextStyle(color: Colors.orange))),
+                          DataCell(Text('${data['total_leaves']}')),
+                          DataCell(Text('${data['total_hours']} hrs')),
+                          DataCell(Text('${data['required_hours']} hrs')),
+                          DataCell(Text('₹${data['salary_deduction']}',
+                              style: const TextStyle(color: Colors.red))),
+                          DataCell(Text('₹${data['overtime_bonus']}',
+                              style: const TextStyle(color: Colors.green))),
+                          DataCell(Text('₹${data['commission_earned']}',
+                              style: const TextStyle(color: Colors.purple))),
+                          DataCell(Text('₹${data['tips_earned']}',
+                              style: const TextStyle(color: Colors.teal))),
+                          DataCell(Text('₹${data['advance_deduction']}',
+                              style: const TextStyle(color: Colors.brown))),
+                          DataCell(Text('₹${data['insurance']}')),
+                          DataCell(Text('₹${data['da']}')),
+                          DataCell(Text('₹${data['esi']}')),
+                          DataCell(Text('₹${data['epf']}')),
+                          DataCell(Text('₹${finalSalary.toStringAsFixed(2)}',
                               style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color:
-                                      salaryColor))), // Final Salary (Green or Red)
+                                  fontWeight: FontWeight.bold, color: salaryColor))),
                         ]);
                       }).toList(),
                     ),
@@ -174,7 +153,19 @@ class _SalarySummaryScreenState extends State<SalarySummaryScreen> {
               child: Column(
                 children: [
                   Text(
-                    "Total Salary Paid: ₹${salaryData.fold<double>(0, (sum, data) => sum + (data['final_salary'] as num)).toStringAsFixed(2)}",
+                    "Total Salary Paid: ₹${salaryData.fold<double>(0, (sum, data) {
+                      double finalSalary = (data['base_salary'] as num).toDouble();
+                      if (data.containsKey('commission_earned')) {
+                        finalSalary += (data['commission_earned'] as num).toDouble();
+                      }
+                      if (data.containsKey('tips_earned')) {
+                        finalSalary += (data['tips_earned'] as num).toDouble();
+                      }
+                      if (data.containsKey('advance_deduction')) {
+                        finalSalary -= (data['advance_deduction'] as num).toDouble();
+                      }
+                      return sum + finalSalary;
+                    }).toStringAsFixed(2)}",
                     style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
