@@ -3,6 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import '../../backend/api_config.dart';
+import '../../backend/inventory/InventoryApiService.dart';
+import '../../backend/inventory/closing_balance_api_service.dart';
 
 import 'VendorScreen.dart';
 import 'closingStockReport.dart';
@@ -25,6 +28,21 @@ class InventoryDashboard extends StatefulWidget {
 
 class _InventoryDashboardState extends State<InventoryDashboard> {
   int _selectedIndex = 0;
+
+  final InventoryApiService _inventoryService =
+      InventoryApiService(baseUrl: apiBaseUrl);
+  final ClosingBalanceApiService _closingService =
+      ClosingBalanceApiService(apiBaseUrl);
+
+  List<SalesData> _transactions = [];
+  List<StockItem> _closingStock = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTransactions();
+    _loadClosingStock();
+  }
 
   final List<String> menuItems = [
     "Closing Stock Report",
@@ -83,10 +101,12 @@ class _InventoryDashboardState extends State<InventoryDashboard> {
             return ListTile(
               title: Text(entry.value),
               selected: _selectedIndex == entry.key,
-              onTap: () {
+              onTap: () async {
                 setState(() => _selectedIndex = entry.key);
                 Navigator.pop(context); // Close the drawer
-                navigateToScreen(entry.key);
+                await navigateToScreen(entry.key);
+                _loadTransactions();
+                _loadClosingStock();
               },
             );
           }),
@@ -95,7 +115,7 @@ class _InventoryDashboardState extends State<InventoryDashboard> {
     );
   }
 
-  void navigateToScreen(int index) {
+  Future<void> navigateToScreen(int index) async {
     Widget screen;
     switch (index) {
       case 0:
@@ -135,7 +155,7 @@ class _InventoryDashboardState extends State<InventoryDashboard> {
         return;
     }
 
-    Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => screen),
     );
@@ -205,7 +225,7 @@ class _InventoryDashboardState extends State<InventoryDashboard> {
         title: const ChartTitle(text: 'Last 30 Days Transactions'),
         series: <ColumnSeries>[
           ColumnSeries<SalesData, String>(
-            dataSource: getTransactionData(),
+            dataSource: _transactions,
             xValueMapper: (SalesData data, _) => data.day,
             yValueMapper: (SalesData data, _) => data.value,
             color: Colors.blue,
@@ -215,17 +235,6 @@ class _InventoryDashboardState extends State<InventoryDashboard> {
     );
   }
 
-  List<SalesData> getTransactionData() {
-    return [
-      SalesData('Day 1', 5000),
-      SalesData('Day 2', 7000),
-      SalesData('Day 3', 4000),
-      SalesData('Day 4', 6500),
-      SalesData('Day 5', 8000),
-      SalesData('Day 6', 7200),
-      SalesData('Day 7', 6300),
-    ];
-  }
 
   Widget buildClosingStockReport() {
     return Container(
@@ -264,7 +273,7 @@ class _InventoryDashboardState extends State<InventoryDashboard> {
                     DataColumn(label: Text('Expired')),
                     DataColumn(label: Text('Net Value')),
                   ],
-                  rows: getClosingStockData().map((item) {
+                  rows: _closingStock.map((item) {
                     return DataRow(cells: [
                       DataCell(
                           Text(item.name, style: TextStyle(color: item.color))),
@@ -285,18 +294,42 @@ class _InventoryDashboardState extends State<InventoryDashboard> {
     );
   }
 
-  List<StockItem> getClosingStockData() {
-    return [
-      StockItem('Rice', 100, 70, 30, 5, 2, 2500, Colors.black),
-      StockItem('Flour', 200, 150, 50, 10, 5, 4000, Colors.blue),
-      StockItem('Sugar', 300, 220, 80, 15, 8, 5000, Colors.green),
-      StockItem('Sugar', 300, 220, 80, 15, 8, 5000, Colors.green),
-      StockItem('Sugar', 300, 220, 80, 15, 8, 5000, Colors.green),
-      StockItem('Sugar', 300, 220, 80, 15, 8, 5000, Colors.green),
-      StockItem('Sugar', 300, 220, 80, 15, 8, 5000, Colors.green),
-      StockItem('Sugar', 300, 220, 80, 15, 8, 5000, Colors.green),
-    ];
+  Future<void> _loadTransactions() async {
+    try {
+      final data = await _inventoryService.getInventoryTransactions();
+      setState(() {
+        _transactions = data
+            .map<SalesData>((t) =>
+                SalesData(t['day'].toString(), (t['value'] ?? 0).toDouble()))
+            .toList();
+      });
+    } catch (e) {
+      // handle error
+    }
   }
+
+  Future<void> _loadClosingStock() async {
+    try {
+      final data = await _closingService.fetchAllClosingBalances();
+      setState(() {
+        _closingStock = data
+            .map<StockItem>((item) => StockItem(
+                  item['name'] ?? '',
+                  item['purchase'] ?? 0,
+                  item['sold'] ?? 0,
+                  item['closing'] ?? 0,
+                  item['wasted'] ?? 0,
+                  item['expired'] ?? 0,
+                  (item['netValue'] ?? 0).toDouble(),
+                  Colors.black,
+                ))
+            .toList();
+      });
+    } catch (e) {
+      // handle error
+    }
+  }
+
 }
 
 class SalesData {
