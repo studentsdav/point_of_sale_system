@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
+import '../../backend/loyalty/loyalty_api_service.dart';
+import '../../backend/api_config.dart';
+
 class AppliedDiscountReport extends StatefulWidget {
   const AppliedDiscountReport({super.key});
 

@@ -1,8 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-class CustomerLoyaltyReport extends StatelessWidget {
+import '../../backend/loyalty/loyalty_api_service.dart';
+import '../../backend/api_config.dart';
+
+class CustomerLoyaltyReport extends StatefulWidget {
   const CustomerLoyaltyReport({super.key});
+
+  @override
+  State<CustomerLoyaltyReport> createState() => _CustomerLoyaltyReportState();
+}
+
+class _CustomerLoyaltyReportState extends State<CustomerLoyaltyReport> {
+  final LoyaltyApiService _apiService =
+      LoyaltyApiService('$apiBaseUrl/loyalty');
+
+  List<LoyaltyData> records = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRecords();
+  }
+
+  Future<void> _fetchRecords() async {
+    try {
+      final data = await _apiService.fetchAllLoyaltyRecords();
+      setState(() {
+        records = data
+            .map<LoyaltyData>((d) => LoyaltyData(
+                  d['guest_name'] ?? '',
+                  d['program_name'] ?? '',
+                  d['points'] ?? 0,
+                  d['expiry_date'] ?? '',
+                  false,
+                  Colors.blue,
+                ))
+            .toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching loyalty data: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +65,7 @@ class CustomerLoyaltyReport extends StatelessWidget {
                   DataColumn(label: Text("Total Points")),
                   DataColumn(label: Text("Expiry Date")),
                 ],
-                rows: getLoyaltyData()
+                rows: records
                     .map(
                       (data) => DataRow(
                         color:
@@ -56,7 +97,7 @@ class CustomerLoyaltyReport extends StatelessWidget {
                 legend: const Legend(isVisible: true),
                 series: <CartesianSeries<LoyaltyData, String>>[
                   ColumnSeries<LoyaltyData, String>(
-                    dataSource: getLoyaltyData(),
+                    dataSource: records,
                     xValueMapper: (data, _) => data.guestName,
                     yValueMapper: (data, _) => data.totalPoints,
                     pointColorMapper: (data, _) => data.color,
@@ -71,15 +112,6 @@ class CustomerLoyaltyReport extends StatelessWidget {
     );
   }
 
-  List<LoyaltyData> getLoyaltyData() {
-    return [
-      LoyaltyData("John Doe", "Gold", 1200, "2025-03-12", false, Colors.blue),
-      LoyaltyData(
-          "Jane Smith", "Silver", 800, "2025-02-10", true, Colors.orange),
-      LoyaltyData(
-          "Mark Taylor", "Platinum", 2000, "2026-01-15", false, Colors.green),
-    ];
-  }
 }
 
 class LoyaltyData {
