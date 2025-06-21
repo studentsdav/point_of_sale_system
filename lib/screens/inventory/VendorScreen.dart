@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../backend/api_config.dart';
 import '../../backend/inventory/vendor_service.dart';
 
 final vendorProvider = StateProvider<List<Map<String, String>>>((ref) => [
@@ -18,7 +17,7 @@ class VendorScreen extends ConsumerStatefulWidget {
 class _VendorScreenState extends ConsumerState<VendorScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController contactController = TextEditingController();
-  final VendorService vendorService = VendorService(apiBaseUrl);
+  final VendorService vendorService = VendorService();
 
   @override
   void initState() {

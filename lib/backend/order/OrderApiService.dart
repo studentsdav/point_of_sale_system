@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class OrderApiService {
   final String baseUrl;
 
-  OrderApiService({required this.baseUrl});
+  OrderApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Create Order
   Future<Map<String, dynamic>> createOrder(

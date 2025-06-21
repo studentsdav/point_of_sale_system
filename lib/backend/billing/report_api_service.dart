@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class ReportApiService {
   final String baseUrl;
 
-  ReportApiService({required this.baseUrl});
+  ReportApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   //  Get Daily Sales Summary
   Future<Map<String, dynamic>> getDailySales() async {

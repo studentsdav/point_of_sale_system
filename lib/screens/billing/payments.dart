@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 
 import '../../backend/billing/bill_service.dart';
 import '../../backend/billing/paymentApiService.dart';
-import '../../backend/api_config.dart';
 
 class PaymentFormScreen extends StatefulWidget {
   final tableno;
@@ -21,10 +20,8 @@ class PaymentFormScreen extends StatefulWidget {
 }
 
 class _PaymentFormScreenState extends State<PaymentFormScreen> {
-  PaymentApiService paymentApiService =
-      PaymentApiService(baseUrl: apiBaseUrl);
-  BillingApiService billApiService =
-      BillingApiService(baseUrl: apiBaseUrl);
+  PaymentApiService paymentApiService = PaymentApiService();
+  BillingApiService billApiService = BillingApiService();
   final _formKey = GlobalKey<FormState>();
   String? _paymentMethod;
   double _amount = 0.0;

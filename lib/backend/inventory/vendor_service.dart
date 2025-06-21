@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class VendorService {
   final String baseUrl;
 
-  VendorService(this.baseUrl);
+  VendorService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   Future<List<dynamic>> getAllVendors() async {
     final response = await http.get(Uri.parse('$baseUrl/vendors'));

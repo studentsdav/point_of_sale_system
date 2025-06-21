@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class LoyaltyApiService {
   final String baseUrl;
 
-  LoyaltyApiService(this.baseUrl);
+  LoyaltyApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // Create or update customer loyalty points
   Future<Map<String, dynamic>> addOrUpdateLoyaltyPoints(

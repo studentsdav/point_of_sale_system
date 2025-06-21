@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:point_of_sale_system/backend/order/waiterApiService.dart';
-import '../../backend/api_config.dart';
 
 class WaiterConfigurationForm extends StatefulWidget {
   @override
@@ -10,8 +9,7 @@ class WaiterConfigurationForm extends StatefulWidget {
 }
 
 class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
-  WaiterApiService waiterApiService =
-      WaiterApiService(baseUrl: apiBaseUrl);
+  WaiterApiService waiterApiService = WaiterApiService();
 
   final _formKey = GlobalKey<FormState>();
   String? selectedOutlet;

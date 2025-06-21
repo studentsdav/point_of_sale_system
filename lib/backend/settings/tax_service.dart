@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class TaxService {
   final String baseUrl;
 
-  TaxService(this.baseUrl);
+  TaxService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   Future<List<Map<String, dynamic>>> getTaxes() async {
     final response = await http.get(Uri.parse('$baseUrl/taxes'));

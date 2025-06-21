@@ -13,7 +13,6 @@ import '../../backend/settings/deliveryApiService.dart';
 import '../../backend/settings/discountApiService.dart';
 import '../../backend/settings/packingChargeApiService.dart';
 import '../../backend/settings/serviceChargeApiService.dart';
-import '../../backend/api_config.dart';
 
 class BillingFormScreen extends StatefulWidget {
   final tableno;
@@ -30,16 +29,12 @@ class BillingFormScreen extends StatefulWidget {
 }
 
 class _BillingFormScreenState extends State<BillingFormScreen> {
-  BillingApiService billingApiService = BillingApiService(baseUrl: apiBaseUrl);
-  OrderApiService orderApiService = OrderApiService(baseUrl: apiBaseUrl);
-  GuestRecordApiService guestRecordApiService =
-      GuestRecordApiService(baseUrl: apiBaseUrl);
-  DiscountApiService discountApiService =
-      DiscountApiService(baseUrl: apiBaseUrl);
-  PackingChargeApiService packingApiService =
-      PackingChargeApiService(baseUrl: apiBaseUrl);
-  DeliveryApiService deliveryApiService =
-      DeliveryApiService(baseUrl: apiBaseUrl);
+  BillingApiService billingApiService = BillingApiService();
+  OrderApiService orderApiService = OrderApiService();
+  GuestRecordApiService guestRecordApiService = GuestRecordApiService();
+  DiscountApiService discountApiService = DiscountApiService();
+  PackingChargeApiService packingApiService = PackingChargeApiService();
+  DeliveryApiService deliveryApiService = DeliveryApiService();
   List<Map<dynamic, dynamic>> discountList = [
     {}
   ]; // Variable to store discounts
@@ -49,8 +44,7 @@ class _BillingFormScreenState extends State<BillingFormScreen> {
   ]; // Variable to store discounts
   List<Map<dynamic, dynamic>> serviceList = [{}]; // Variable to store discounts
 
-  ServiceChargeApiService serviceChargeApiService =
-      ServiceChargeApiService(baseUrl: apiBaseUrl);
+  ServiceChargeApiService serviceChargeApiService = ServiceChargeApiService();
 
   final TextEditingController _billNoController = TextEditingController();
   final TextEditingController _orderNoController =

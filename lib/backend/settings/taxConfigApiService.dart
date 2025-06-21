@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class TaxConfigApiService {
   final String baseUrl;
 
-  TaxConfigApiService({required this.baseUrl});
+  TaxConfigApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Get Tax Configuration by ID
   Future<Map<String, dynamic>> getTaxConfigById(String id) async {

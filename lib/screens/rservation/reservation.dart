@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../backend/reservation/reservationApiService.dart';
-import '../../backend/api_config.dart';
 
 class ReservationFormScreen extends StatefulWidget {
   const ReservationFormScreen({super.key});
@@ -13,8 +12,7 @@ class ReservationFormScreen extends StatefulWidget {
 }
 
 class _ReservationFormScreenState extends State<ReservationFormScreen> {
-  ReservationApiService reservationApiService =
-      ReservationApiService(baseUrl: apiBaseUrl);
+  ReservationApiService reservationApiService = ReservationApiService();
   final _formKey = GlobalKey<FormState>();
   String? _guestName;
   String? _contactInfo;

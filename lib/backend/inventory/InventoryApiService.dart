@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class InventoryApiService {
   final String baseUrl;
 
-  InventoryApiService({required this.baseUrl});
+  InventoryApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Create a new inventory transaction
   Future<Map<String, dynamic>> createInventoryTransaction(Map<String, dynamic> inventoryData) async {

@@ -29,8 +29,7 @@ class POSMainScreen extends StatefulWidget {
 
 class _POSMainScreenState extends State<POSMainScreen> {
   final tableapiService = TableApiService(apiUrl: apiBaseUrl);
-  final BillingApiService billingApiService =
-      BillingApiService(baseUrl: apiBaseUrl);
+  final BillingApiService billingApiService = BillingApiService();
   String today_reservations = "0";
   String today_sales = "0";
   String running_orders = "0";

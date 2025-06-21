@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class UserPermissionApiService {
   final String baseUrl;
 
-  UserPermissionApiService({required this.baseUrl});
+  UserPermissionApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Create a new user permission
   Future<Map<String, dynamic>> createUserPermission(Map<String, dynamic> userPermissionData) async {

@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class BillApiService {
   final String baseUrl;
 
-  BillApiService(this.baseUrl);
+  BillApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   Future<List<dynamic>> fetchConfigurations() async {
     final response = await http.get(Uri.parse('$baseUrl/'));

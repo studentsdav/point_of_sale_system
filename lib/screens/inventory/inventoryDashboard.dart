@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import '../../backend/api_config.dart';
 import '../../backend/inventory/InventoryApiService.dart';
 import '../../backend/inventory/closing_balance_api_service.dart';
 
@@ -29,10 +28,8 @@ class InventoryDashboard extends StatefulWidget {
 class _InventoryDashboardState extends State<InventoryDashboard> {
   int _selectedIndex = 0;
 
-  final InventoryApiService _inventoryService =
-      InventoryApiService(baseUrl: apiBaseUrl);
-  final ClosingBalanceApiService _closingService =
-      ClosingBalanceApiService(apiBaseUrl);
+  final InventoryApiService _inventoryService = InventoryApiService();
+  final ClosingBalanceApiService _closingService = ClosingBalanceApiService();
 
   List<SalesData> _transactions = [];
   List<StockItem> _closingStock = [];

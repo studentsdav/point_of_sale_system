@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:point_of_sale_system/screens/payroll/payrollDashboard.dart';
 
 import '../../backend/billing/bill_service.dart';
-import '../../backend/api_config.dart';
 import '../billing/billconfig.dart';
 import '../billing/guest_info.dart';
 import '../expense/expenseDashboard.dart';
@@ -45,8 +44,7 @@ class _AdminDashboard extends State {
   String selectedOutlet = 'Restaurant';
   final List<String> outlets = ['Outlet1', 'Outlet2'];
   ChartType chartType = ChartType.line;
-  final BillingApiService billingApiService =
-      BillingApiService(baseUrl: apiBaseUrl);
+  final BillingApiService billingApiService = BillingApiService();
   String today_growth = "0";
   String today_sales = "0";
   String this_week_sales = "0";

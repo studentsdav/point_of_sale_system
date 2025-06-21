@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class SubcategoryApiService {
   final String baseUrl;
 
-  SubcategoryApiService({required this.baseUrl});
+  SubcategoryApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Get all subcategories
   Future<List<Map<String, dynamic>>> getSubcategories() async {

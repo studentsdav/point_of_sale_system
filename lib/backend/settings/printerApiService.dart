@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class PrinterApiService {
   final String baseUrl;
 
-  PrinterApiService({required this.baseUrl});
+  PrinterApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Get all printer configurations
   Future<List<Map<String, dynamic>>> getPrinters() async {

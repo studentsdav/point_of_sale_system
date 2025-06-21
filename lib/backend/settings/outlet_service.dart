@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class OutletApiService {
   final String baseUrl;
 
-  OutletApiService({required this.baseUrl});
+  OutletApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   Future<List<dynamic>> getAllProperties() async {
     final url = Uri.parse("$baseUrl/properties");

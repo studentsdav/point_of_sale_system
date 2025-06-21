@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class UserApiService {
   final String baseUrl;
 
-  UserApiService({required this.baseUrl});
+  UserApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   Future<List<Map<String, dynamic>>> getUsers() async {
     final response = await http.get(Uri.parse('$baseUrl/users'));

@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class WaiterApiService {
   final String baseUrl;
 
-  WaiterApiService({required this.baseUrl});
+  WaiterApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Create a new waiter
   Future<Map<String, dynamic>> createWaiter(
