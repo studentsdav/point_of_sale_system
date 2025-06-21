@@ -10,7 +10,7 @@ Write-Output "Running npm install..."
 npm install
 
 # Copy environment file if needed
-if (Test-Path '.env.example' -and -not (Test-Path '.env')) {
+if ((Test-Path '.env.example') -and (-not (Test-Path '.env'))) {
     Write-Output "Creating .env from .env.example"
     Copy-Item '.env.example' '.env'
 }
