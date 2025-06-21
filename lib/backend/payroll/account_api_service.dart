@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class AccountApiService {
   final String baseUrl;
 
-  AccountApiService(this.baseUrl);
+  AccountApiService({String? baseUrl})
+      : baseUrl = baseUrl ?? apiBaseUrl;
 
   // Create a new account
   Future<Map<String, dynamic>> createAccount(

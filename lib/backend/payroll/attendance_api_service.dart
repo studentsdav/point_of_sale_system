@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class AttendanceApiService {
   final String baseUrl;
 
-  AttendanceApiService(this.baseUrl);
+  AttendanceApiService({String? baseUrl})
+      : baseUrl = baseUrl ?? apiBaseUrl;
 
   // Add an attendance record
   Future<Map<String, dynamic>> addAttendance(
