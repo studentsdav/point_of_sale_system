@@ -115,8 +115,15 @@ git clone https://github.com/studentsdav/point_of_sale_system.git
 cd point_of_sale_system
 ```
 3. Run the setup script
+
+On macOS/Linux:
 ```bash
 ./scripts/setup.sh
+```
+
+On Windows (PowerShell):
+```powershell
+.\scripts\setup.ps1
 ```
 4. Run the application
 ```bash
