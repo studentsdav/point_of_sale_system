@@ -3,9 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-import '../../backend/loyalty/loyalty_api_service.dart';
 import '../../backend/api_config.dart';
-
+import '../../backend/loyalty/loyalty_api_service.dart';
 import 'appliedDiscountReport.dart';
 import 'customerFeedbackReport.dart';
 import 'customerLoyaltyReport.dart';
@@ -24,10 +23,10 @@ class LoyaltyProgramDashboard extends StatefulWidget {
 
 class _LoyaltyProgramDashboardState extends State<LoyaltyProgramDashboard> {
   final LoyaltyApiService _apiService =
-      LoyaltyApiService('$apiBaseUrl/loyalty');
+      LoyaltyApiService(baseUrl: '$apiBaseUrl/loyalty');
 
-  int pointsEarned = 0;
-  int pointsRedeemed = 0;
+  double pointsEarned = 0;
+  double pointsRedeemed = 0;
   double pointsValue = 0;
   double redeemedValue = 0;
   int feedbackReceived = 120;

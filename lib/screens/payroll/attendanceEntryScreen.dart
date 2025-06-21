@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../../backend/api_config.dart';
 import '../../backend/payroll/attendance_api_service.dart';
 import '../../backend/payroll/employee_api_service.dart';
-import '../../backend/api_config.dart';
 
 class AttendanceEntryScreen extends StatefulWidget {
   const AttendanceEntryScreen({super.key});
@@ -24,7 +25,7 @@ class _AttendanceEntryScreenState extends State<AttendanceEntryScreen> {
   List<dynamic> attendanceRecords = [];
 
   final AttendanceApiService _attendanceService =
-      AttendanceApiService(apiBaseUrl);
+      AttendanceApiService(baseUrl: apiBaseUrl);
   final EmployeeApiService _employeeService = EmployeeApiService();
   bool _loading = true;
   String? _error;
@@ -102,7 +103,7 @@ class _AttendanceEntryScreenState extends State<AttendanceEntryScreen> {
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10),
                         buildDropdownEmployeeField(),
-                        buildDatePickerField(),
+                        buildDatePickerField(context),
                         buildTextField(shiftStartController,
                             'Shift Start (HH:MM)', Icons.access_time),
                         buildTextField(shiftEndController, 'Shift End (HH:MM)',
@@ -153,10 +154,14 @@ class _AttendanceEntryScreenState extends State<AttendanceEntryScreen> {
                                       Color rowColor =
                                           getStatusColor(record['status']);
                                       return DataRow(cells: [
-                                        DataCell(Text('${record['employee_id']}')),
-                                        DataCell(Text(record['work_date'] ?? '')),
-                                        DataCell(Text(record['shift_start'] ?? '')),
-                                        DataCell(Text(record['shift_end'] ?? '')),
+                                        DataCell(
+                                            Text('${record['employee_id']}')),
+                                        DataCell(
+                                            Text(record['work_date'] ?? '')),
+                                        DataCell(
+                                            Text(record['shift_start'] ?? '')),
+                                        DataCell(
+                                            Text(record['shift_end'] ?? '')),
                                         DataCell(
                                           Container(
                                             padding: const EdgeInsets.symmetric(
@@ -184,6 +189,33 @@ class _AttendanceEntryScreenState extends State<AttendanceEntryScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget buildDatePickerField(context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: workDateController,
+        readOnly: true,
+        onTap: () async {
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: DateTime.now(),
+            firstDate: DateTime(2000),
+            lastDate: DateTime(2100),
+          );
+          if (picked != null) {
+            workDateController.text = picked.toIso8601String().split('T').first;
+          }
+        },
+        decoration: InputDecoration(
+          labelText: 'Work Date',
+          prefixIcon: const Icon(Icons.calendar_today),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        validator: (value) => value!.isEmpty ? 'Select Work Date' : null,
       ),
     );
   }
@@ -253,33 +285,6 @@ class _AttendanceEntryScreenState extends State<AttendanceEntryScreen> {
       ),
     );
   }
-}
-
-Widget buildDatePickerField() {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0),
-    child: TextFormField(
-      controller: workDateController,
-      readOnly: true,
-      onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime(2000),
-          lastDate: DateTime(2100),
-        );
-        if (picked != null) {
-          workDateController.text = picked.toIso8601String().split('T').first;
-        }
-      },
-      decoration: InputDecoration(
-        labelText: 'Work Date',
-        prefixIcon: const Icon(Icons.calendar_today),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      validator: (value) => value!.isEmpty ? 'Select Work Date' : null,
-    ),
-  );
 }
 
 Color getStatusColor(String status) {

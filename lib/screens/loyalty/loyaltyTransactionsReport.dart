@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-import '../../backend/loyalty/loyalty_api_service.dart';
 import '../../backend/api_config.dart';
+import '../../backend/loyalty/loyalty_api_service.dart';
 
 class LoyaltyTransactionsReport extends StatefulWidget {
   const LoyaltyTransactionsReport({super.key});
@@ -14,7 +14,7 @@ class LoyaltyTransactionsReport extends StatefulWidget {
 
 class _LoyaltyTransactionsReportState extends State<LoyaltyTransactionsReport> {
   final LoyaltyApiService _apiService =
-      LoyaltyApiService('$apiBaseUrl/loyalty');
+      LoyaltyApiService(baseUrl: '$apiBaseUrl/loyalty');
 
   List<LoyaltyTransaction> transactions = [];
 
