@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import '../../backend/api_config.dart';
+import '../../backend/inventory/InventoryApiService.dart';
+import '../../backend/inventory/closing_balance_api_service.dart';
 
 class ClosingStockReport extends StatefulWidget {
   const ClosingStockReport({super.key});
@@ -9,11 +12,34 @@ class ClosingStockReport extends StatefulWidget {
 }
 
 class _ClosingStockReportState extends State<ClosingStockReport> {
-  List<StockData> stockData = [
-    StockData("Flour", 100, 30, 5, 65),
-    StockData("Cheese", 80, 20, 10, 50),
-    StockData("Tomato", 50, 15, 2, 33),
-  ];
+  final ClosingBalanceApiService _closingService =
+      ClosingBalanceApiService(apiBaseUrl);
+  List<StockData> stockData = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final data = await _closingService.fetchAllClosingBalances();
+      setState(() {
+        stockData = data
+            .map<StockData>((item) => StockData(
+                  item['ingredient'] ?? '',
+                  item['totalPurchased'] ?? 0,
+                  item['totalUsed'] ?? 0,
+                  item['totalWasted'] ?? 0,
+                  item['closingStock'] ?? 0,
+                ))
+            .toList();
+      });
+    } catch (e) {
+      // handle error
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

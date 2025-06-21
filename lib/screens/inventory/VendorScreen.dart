@@ -1,19 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../backend/api_config.dart';
+import '../../backend/inventory/vendor_service.dart';
 
 final vendorProvider = StateProvider<List<Map<String, String>>>((ref) => [
       {"id": "1", "name": "Vendor A", "contact": "John Doe"},
       {"id": "2", "name": "Vendor B", "contact": "Alice Smith"},
     ]);
 
-class VendorScreen extends ConsumerWidget {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController contactController = TextEditingController();
-
+class VendorScreen extends ConsumerStatefulWidget {
   VendorScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VendorScreen> createState() => _VendorScreenState();
+}
+
+class _VendorScreenState extends ConsumerState<VendorScreen> {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController contactController = TextEditingController();
+  final VendorService vendorService = VendorService(apiBaseUrl);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVendors();
+  }
+
+  Future<void> _loadVendors() async {
+    final data = await vendorService.getAllVendors();
+    ref.read(vendorProvider.notifier).state =
+        List<Map<String, String>>.from(data.map((v) => {
+              'id': v['id'].toString(),
+              'name': v['name'] ?? '',
+              'contact': v['contact'] ?? '',
+            }));
+  }
+
+  Future<void> _addVendor() async {
+    if (nameController.text.isNotEmpty && contactController.text.isNotEmpty) {
+      await vendorService.createVendor({
+        'name': nameController.text,
+        'contact': contactController.text,
+      });
+      await _loadVendors();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final vendors = ref.watch(vendorProvider);
     return Scaffold(
       appBar: AppBar(title: const Text("Vendor Management")),
@@ -50,21 +84,7 @@ class VendorScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 20),
                       ElevatedButton(
-                        onPressed: () {
-                          if (nameController.text.isNotEmpty &&
-                              contactController.text.isNotEmpty) {
-                            ref.read(vendorProvider.notifier).state = [
-                              ...vendors,
-                              {
-                                "id": DateTime.now()
-                                    .millisecondsSinceEpoch
-                                    .toString(),
-                                "name": nameController.text,
-                                "contact": contactController.text
-                              },
-                            ];
-                          }
-                        },
+                        onPressed: _addVendor,
                         child: const Text("Add Vendor"),
                       )
                     ],
@@ -104,12 +124,10 @@ class VendorScreen extends ConsumerWidget {
                                 trailing: IconButton(
                                   icon: const Icon(Icons.delete,
                                       color: Colors.red),
-                                  onPressed: () {
-                                    ref.read(vendorProvider.notifier).state =
-                                        vendors
-                                            .where(
-                                                (v) => v["id"] != vendor["id"])
-                                            .toList();
+                                  onPressed: () async {
+                                    await vendorService.deleteVendor(
+                                        int.parse(vendor["id"] ?? '0'));
+                                    await _loadVendors();
                                   },
                                 ),
                               ),

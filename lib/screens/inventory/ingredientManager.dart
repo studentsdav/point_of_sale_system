@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../backend/api_config.dart';
+import '../../backend/inventory/ingredient_api_service.dart';
 
 class IngredientManagementScreen extends StatefulWidget {
   const IngredientManagementScreen({super.key});
@@ -14,6 +16,7 @@ class _IngredientManagementScreenState
   final TextEditingController stockController = TextEditingController();
   final TextEditingController minStockController = TextEditingController();
   final TextEditingController reorderController = TextEditingController();
+  final IngredientApiService ingredientService = IngredientApiService();
 
   String? selectedCategory;
   String? selectedSubcategory;
@@ -31,35 +34,65 @@ class _IngredientManagementScreenState
 
   List<Map<String, String>> ingredients = [];
 
-  void addIngredient() {
+  @override
+  void initState() {
+    super.initState();
+    _loadIngredients();
+  }
+
+  Future<void> _loadIngredients() async {
+    try {
+      final data = await ingredientService.getAllIngredients();
+      setState(() {
+        ingredients = data
+            .map<Map<String, String>>((item) => {
+                  'id': item['id'].toString(),
+                  'name': item['name'] ?? '',
+                  'category': item['category'] ?? '',
+                  'subcategory': item['subcategory'] ?? '',
+                  'brand': item['brand'] ?? '',
+                  'stock': item['stock'].toString(),
+                  'unit': item['unit'] ?? '',
+                  'minStock': item['minStock'].toString(),
+                  'reorderLevel': item['reorderLevel'].toString(),
+                })
+            .toList();
+      });
+    } catch (e) {
+      // handle error
+    }
+  }
+
+  Future<void> addIngredient() async {
     if (nameController.text.isNotEmpty &&
         selectedCategory != null &&
         selectedSubcategory != null &&
         selectedBrand != null &&
         selectedUnit != null) {
-      setState(() {
-        ingredients.add({
-          'name': nameController.text,
-          'category': selectedCategory!,
-          'subcategory': selectedSubcategory!,
-          'brand': selectedBrand!,
-          'stock': stockController.text,
-          'unit': selectedUnit!,
-          'minStock': minStockController.text,
-          'reorderLevel': reorderController.text,
-        });
-        nameController.clear();
-        stockController.clear();
-        minStockController.clear();
-        reorderController.clear();
+      await ingredientService.addIngredient({
+        'name': nameController.text,
+        'category': selectedCategory,
+        'subcategory': selectedSubcategory,
+        'brand': selectedBrand,
+        'stock': stockController.text,
+        'unit': selectedUnit,
+        'minStock': minStockController.text,
+        'reorderLevel': reorderController.text,
       });
+      await _loadIngredients();
+      nameController.clear();
+      stockController.clear();
+      minStockController.clear();
+      reorderController.clear();
     }
   }
 
-  void deleteIngredient(int index) {
-    setState(() {
-      ingredients.removeAt(index);
-    });
+  Future<void> deleteIngredient(int index) async {
+    final id = ingredients[index]['id'];
+    if (id != null) {
+      await ingredientService.deleteIngredient(id);
+    }
+    await _loadIngredients();
   }
 
   @override
@@ -126,7 +159,7 @@ class _IngredientManagementScreenState
                           const InputDecoration(labelText: 'Reorder Level')),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                      onPressed: addIngredient,
+                      onPressed: () => addIngredient(),
                       child: const Text('Add Ingredient')),
                 ],
               ),
