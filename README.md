@@ -43,12 +43,12 @@ This project serves as the starting point for your **Point of Sale** Flutter app
 
 ### **Prerequisites**  
 
-Before you begin, ensure you have the following installed:  
-- **Flutter SDK**: Install Flutter from [Flutter Installation Guide](https://flutter.dev/docs/get-started/install).  
+Before you begin, ensure you have the following installed:
+- **Flutter SDK (3.4+)**: Install Flutter from [Flutter Installation Guide](https://flutter.dev/docs/get-started/install).
 - **Android Studio or VS Code**: For Flutter development. [Install Android Studio](https://developer.android.com/studio) or [VS Code](https://code.visualstudio.com/Download).  
 - **Xcode (for macOS users)**: Required for iOS development. [Install Xcode](https://developer.apple.com/xcode/).  
 - **PostgreSQL**: Install PostgreSQL from [PostgreSQL Downloads](https://www.postgresql.org/download/).  
-- **Node.js**: Install Node.js from [Node.js Downloads](https://nodejs.org/).  
+- **Node.js (18+)**: Install Node.js from [Node.js Downloads](https://nodejs.org/).
 - **Visual Studio**: Install Visual Studio from [Visual Studio Downloads](https://visualstudio.microsoft.com/downloads/), and ensure you select the **Desktop development with C++** workload for building Windows desktop applications.  
 
 ---
@@ -98,10 +98,10 @@ This is a **Point of Sale (POS) system** designed specifically for **restaurants
 
 ## **Installation**  
 
-### **Prerequisites**  
-- **Operating System**: Windows, macOS, or Linux  
-- **Software**: Node.js, npm (for the backend)  
-- **Database**: MySQL/PostgreSQL (for data storage)  
+### **Prerequisites**
+- **Operating System**: Windows, macOS, or Linux
+- **Software**: Node.js (18+), npm (for the backend), and Flutter (3.4+)
+- **Database**: MySQL/PostgreSQL (for data storage)
 
 ### **Steps to Install**  
 
@@ -158,6 +158,14 @@ npm start
 npm run dev
 ```
 ✅ Your Flutter POS application and Node.js backend server are now ready!
+
+### Running Tests
+
+Before submitting changes, ensure all Flutter tests pass:
+
+```bash
+flutter test
+```
 
 ---
 
