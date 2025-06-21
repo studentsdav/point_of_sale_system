@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class PaymentApiService {
   final String baseUrl;
 
-  PaymentApiService({required this.baseUrl});
+  PaymentApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Get all payments
   Future<List<Map<String, dynamic>>> getPayments() async {

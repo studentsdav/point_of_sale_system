@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import '../../backend/api_config.dart';
 import '../../backend/inventory/InventoryApiService.dart';
 import '../../backend/inventory/closing_balance_api_service.dart';
 
@@ -12,8 +11,7 @@ class ClosingStockReport extends StatefulWidget {
 }
 
 class _ClosingStockReportState extends State<ClosingStockReport> {
-  final ClosingBalanceApiService _closingService =
-      ClosingBalanceApiService(apiBaseUrl);
+  final ClosingBalanceApiService _closingService = ClosingBalanceApiService();
   List<StockData> stockData = [];
 
   @override

@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class StockMovementService {
   final String baseUrl;
 
-  StockMovementService({required this.baseUrl});
+  StockMovementService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // Get all stock movements
   Future<List<dynamic>> getAllStockMovements() async {

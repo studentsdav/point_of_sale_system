@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class PurchaseItemService {
   final String baseUrl;
 
-  PurchaseItemService(this.baseUrl);
+  PurchaseItemService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   Future<List<dynamic>> getAllPurchaseItems() async {
     final response = await http.get(Uri.parse('$baseUrl/purchase-items'));

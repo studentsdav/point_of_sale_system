@@ -1,11 +1,12 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class BillingApiService {
   final String baseUrl;
 
-  BillingApiService({required this.baseUrl});
+  BillingApiService({String? baseUrl})
+      : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. GET: Fetch Bill Details by Order ID
   Future<Map<String, dynamic>> getBill(String orderId) async {

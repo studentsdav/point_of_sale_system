@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../backend/order/OrderApiService.dart';
 import '../../backend/order/items_api_service.dart';
-import '../../backend/api_config.dart';
 
 class ModifyOrderList extends StatefulWidget {
   final propertyid;
@@ -20,9 +19,9 @@ class ModifyOrderList extends StatefulWidget {
 }
 
 class _ModifyOrderListState extends State<ModifyOrderList> {
-  OrderApiService orderApiService = OrderApiService(baseUrl: apiBaseUrl);
+  OrderApiService orderApiService = OrderApiService();
   final List<String> _categories = ['Starters', 'Main Course', 'Desserts'];
-  ItemsApiService itemsApiService = ItemsApiService(baseUrl: apiBaseUrl);
+  ItemsApiService itemsApiService = ItemsApiService();
   late Future<Map<String, List<Map<String, String>>>> _menuItemsFuture;
   // Menu items with their tags (Veg/Non-Veg) and rate
   final Map<String, List<Map<String, String>>> _menuItems = {

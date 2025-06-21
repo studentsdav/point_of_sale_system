@@ -1,10 +1,11 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class ItemsApiService {
   final String baseUrl; // Replace with your server URL
-  ItemsApiService({required this.baseUrl});
+  ItemsApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
   // Fetch all items
   Future<List<dynamic>> fetchAllItems() async {
     try {

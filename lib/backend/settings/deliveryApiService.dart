@@ -2,12 +2,13 @@ import 'dart:convert';
 
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 import 'package:point_of_sale_system/model/delivery_charge_model.dart';
 
 class DeliveryApiService {
   final String baseUrl;
 
-  DeliveryApiService({required this.baseUrl});
+  DeliveryApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   Future<void> _ensureBoxesOpen() async {
     if (!Hive.isBoxOpen('delivery')) {

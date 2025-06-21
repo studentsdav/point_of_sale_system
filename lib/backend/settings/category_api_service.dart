@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class CategoryApiService {
   final String baseUrl;
 
-  CategoryApiService({required this.baseUrl});
+  CategoryApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Create a new category
   Future<Map<String, dynamic>> createCategory(

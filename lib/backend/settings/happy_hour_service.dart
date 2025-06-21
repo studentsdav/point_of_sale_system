@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class HappyHourApiService {
   final String baseUrl;
 
-  HappyHourApiService({required this.baseUrl});
+  HappyHourApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Create a new happy hour configuration
   Future<Map<String, dynamic>> createHappyHourConfig(Map<String, dynamic> happyHourData) async {

@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class FeedbackApiService {
   final String baseUrl;
 
-  FeedbackApiService(this.baseUrl);
+  FeedbackApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // Add new feedback
   Future<Map<String, dynamic>> addFeedback(

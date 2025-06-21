@@ -2,12 +2,13 @@ import 'dart:convert';
 
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 import 'package:point_of_sale_system/model/discount_model.dart';
 
 class DiscountApiService {
   final String baseUrl;
 
-  DiscountApiService({required this.baseUrl});
+  DiscountApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Get all discount configurations
   Future<void> _ensureBoxesOpen() async {

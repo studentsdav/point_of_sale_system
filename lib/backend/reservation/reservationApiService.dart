@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class ReservationApiService {
   final String baseUrl;
 
-  ReservationApiService({required this.baseUrl});
+  ReservationApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Get all reservations
   Future<List<Map<String, dynamic>>> getReservations() async {

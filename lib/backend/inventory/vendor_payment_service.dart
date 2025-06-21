@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class VendorPaymentService {
   final String baseUrl;
 
-  VendorPaymentService(this.baseUrl);
+  VendorPaymentService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // Get all vendor payments
   Future<List<dynamic>> getAllVendorPayments() async {

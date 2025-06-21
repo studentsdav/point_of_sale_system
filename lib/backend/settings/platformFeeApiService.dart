@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class PlatformFeeApiService {
   final String baseUrl;
 
-  PlatformFeeApiService({required this.baseUrl});
+  PlatformFeeApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Get all platform fee configurations
   Future<List<Map<String, dynamic>>> getPlatformFees() async {

@@ -3,7 +3,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../backend/settings/outlet_service.dart';
-import '../../backend/api_config.dart';
 import '../../backend/settings/property_service.dart';
 
 class PropertyConfigurationForm extends StatefulWidget {
@@ -36,8 +35,7 @@ class _PropertyConfigurationFormState extends State<PropertyConfigurationForm> {
     _fetchProperties();
   }
 
-  final OutletApiService apiService =
-      OutletApiService(baseUrl: apiBaseUrl);
+  final OutletApiService apiService = OutletApiService();
   List<dynamic> properties = [];
   List<dynamic> outletConfigurations = [];
 

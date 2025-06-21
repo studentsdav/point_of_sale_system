@@ -11,7 +11,6 @@ import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../backend/order/items_api_service.dart';
-import '../../backend/api_config.dart';
 
 class ItemMasterScreen extends StatefulWidget {
   const ItemMasterScreen({super.key});
@@ -21,8 +20,7 @@ class ItemMasterScreen extends StatefulWidget {
 }
 
 class _ItemMasterScreenState extends State<ItemMasterScreen> {
-  final ItemsApiService _apiService =
-      ItemsApiService(baseUrl: apiBaseUrl); // Replace with actual base URL
+  final ItemsApiService _apiService = ItemsApiService();
   final List<String> _categories = ['Starters', 'Main Course', 'Desserts'];
   final List<String> tags = ['Veg', 'Non Veg'];
   final List<String> _brands = ['Brand A', 'Brand B', 'Brand C'];

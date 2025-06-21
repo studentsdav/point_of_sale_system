@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class DateConfigApiService {
   final String baseUrl;
 
-  DateConfigApiService({required this.baseUrl});
+  DateConfigApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Create a new date configuration
   Future<Map<String, dynamic>> createDateConfig(

@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class KOTConfigApiService {
   final String baseUrl;
 
-  KOTConfigApiService({required this.baseUrl});
+  KOTConfigApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. Create a new KOT configuration
   Future<Map<String, dynamic>> createKOTConfig(

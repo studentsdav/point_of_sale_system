@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../backend/settings/date_config_api_service.dart';
-import '../../backend/api_config.dart';
 
 class SoftwareDateConfigForm extends StatefulWidget {
   const SoftwareDateConfigForm({super.key});
@@ -12,8 +11,7 @@ class SoftwareDateConfigForm extends StatefulWidget {
 }
 
 class _SoftwareDateConfigFormState extends State<SoftwareDateConfigForm> {
-  DateConfigApiService dateConfigApiService =
-      DateConfigApiService(baseUrl: apiBaseUrl);
+  DateConfigApiService dateConfigApiService = DateConfigApiService();
 
   final _formKey = GlobalKey<FormState>();
   String? _selectedOutlet;

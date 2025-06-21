@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class ClosingBalanceApiService {
   final String baseUrl;
 
-  ClosingBalanceApiService(this.baseUrl);
+  ClosingBalanceApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // Fetch closing balance for all ingredients
   Future<List<dynamic>> fetchAllClosingBalances() async {

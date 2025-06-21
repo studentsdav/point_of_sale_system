@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'dart:developer';
 import '../api_config.dart';
 
 class PaymentMethodService {
@@ -20,7 +21,7 @@ class PaymentMethodService {
     if (response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
-      print("Error adding payment method: ${response.body}");
+      log('Error adding payment method: ${response.body}');
       return null;
     }
   }
@@ -30,7 +31,7 @@ class PaymentMethodService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      print("Error fetching payment methods: ${response.body}");
+      log('Error fetching payment methods: ${response.body}');
       return null;
     }
   }
@@ -40,7 +41,7 @@ class PaymentMethodService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      print("Error fetching payment method: ${response.body}");
+      log('Error fetching payment method: ${response.body}');
       return null;
     }
   }
@@ -59,7 +60,7 @@ class PaymentMethodService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      print("Error updating payment method: ${response.body}");
+      log('Error updating payment method: ${response.body}');
       return null;
     }
   }
@@ -69,7 +70,7 @@ class PaymentMethodService {
     if (response.statusCode == 200) {
       return true;
     } else {
-      print("Error deleting payment method: ${response.body}");
+      log('Error deleting payment method: ${response.body}');
       return false;
     }
   }

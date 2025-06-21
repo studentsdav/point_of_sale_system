@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../api_config.dart';
 
 class AppliedDiscountApiService {
   final String baseUrl;
 
-  AppliedDiscountApiService(this.baseUrl);
+  AppliedDiscountApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // Fetch all applied discounts
   Future<List<dynamic>> fetchAppliedDiscounts() async {

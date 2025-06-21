@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'dart:developer';
 import '../api_config.dart';
 
 class SalaryAdvanceService {
@@ -28,7 +29,7 @@ class SalaryAdvanceService {
         return jsonDecode(response.body);
       }
     } catch (e) {
-      print("Error adding salary advance: $e");
+      log('Error adding salary advance: $e');
     }
     return null;
   }
@@ -40,7 +41,7 @@ class SalaryAdvanceService {
         return jsonDecode(response.body);
       }
     } catch (e) {
-      print("Error fetching salary advances: $e");
+      log('Error fetching salary advances: $e');
     }
     return null;
   }
@@ -52,7 +53,7 @@ class SalaryAdvanceService {
         return jsonDecode(response.body);
       }
     } catch (e) {
-      print("Error fetching salary advance: $e");
+      log('Error fetching salary advance: $e');
     }
     return null;
   }
@@ -78,7 +79,7 @@ class SalaryAdvanceService {
         return jsonDecode(response.body);
       }
     } catch (e) {
-      print("Error updating salary advance: $e");
+      log('Error updating salary advance: $e');
     }
     return null;
   }
@@ -90,7 +91,7 @@ class SalaryAdvanceService {
         return true;
       }
     } catch (e) {
-      print("Error deleting salary advance: $e");
+      log('Error deleting salary advance: $e');
     }
     return false;
   }
