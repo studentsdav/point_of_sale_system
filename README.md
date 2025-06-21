@@ -92,11 +92,44 @@ This is a **Point of Sale (POS) system** designed specifically for **restaurants
 
 ### **5. Reports and Analytics**  
 ✅ Generate reports for sales, inventory usage, and more.  
-✅ Track revenue and expenses over time.  
+✅ Track revenue and expenses over time.
 
 ---
 
-## **Installation**  
+## **Setup**
+
+Follow these steps to install dependencies and run the project locally:
+
+1. Clone the repository and change into the project directory
+   ```bash
+   git clone https://github.com/studentsdav/point_of_sale_system.git
+   cd point_of_sale_system
+   ```
+2. Install Flutter and Node.js dependencies using the setup script
+   ```bash
+   ./scripts/setup.sh
+   ```
+   On Windows, run the PowerShell script instead:
+   ```powershell
+   .\scripts\setup.ps1
+   ```
+3. Create an environment file for the backend
+   ```bash
+   cp .env.example .env
+   ```
+4. Start the backend server
+   ```bash
+   npm start
+   ```
+   Use `npm run dev` for auto-restarting during development.
+5. Launch the Flutter application
+   ```bash
+   flutter run
+   ```
+
+---
+
+## **Installation**
 
 ### **Prerequisites**
 - **Operating System**: Windows, macOS, or Linux
