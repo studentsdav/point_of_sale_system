@@ -148,13 +148,17 @@ npm install
 ```
 2. Set up environment variables
 ```bash
-Create a `.env` file in the root directory and add the following:
+cp .env.example .env
+```
+Then edit `.env` with your database settings. The example file contains:
 
+```
 PORT=5000
-DB_HOST=your_db_host
+DB_HOST=localhost
+DB_PORT=5432
 DB_USER=your_db_user
 DB_PASSWORD=your_db_password
-DB_NAME=your_db_name
+DB_DATABASE=your_db_name
 ```
 3. Run the server
 ```bash
