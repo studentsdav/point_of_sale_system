@@ -156,10 +156,15 @@ class _MyAppState extends State {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
           useMaterial3: true,
         ),
-        home: POSLoginScreen(
-          propertyid: properties[0]['property_id'] ?? 0,
-          outlet: outlets,
-        ));
+        home: properties.isNotEmpty && outlets.isNotEmpty
+            ? POSLoginScreen(
+                propertyid: properties[0]['property_id'] ?? 0,
+                outlet: outlets,
+              )
+            : const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              ),
+      );
     //   home: const MyHomePage(
     //     title: "POS",
     //   ),
