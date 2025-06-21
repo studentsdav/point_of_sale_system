@@ -3,6 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
+import '../../backend/loyalty/loyalty_api_service.dart';
+import '../../backend/api_config.dart';
+
 import 'appliedDiscountReport.dart';
 import 'customerFeedbackReport.dart';
 import 'customerLoyaltyReport.dart';
@@ -20,10 +23,13 @@ class LoyaltyProgramDashboard extends StatefulWidget {
 }
 
 class _LoyaltyProgramDashboardState extends State<LoyaltyProgramDashboard> {
-  int pointsEarned = 1200;
-  int pointsRedeemed = 950;
-  double pointsValue = 1200 * 0.1; // Assume ₹0.1 per point
-  double redeemedValue = 950 * 0.1;
+  final LoyaltyApiService _apiService =
+      LoyaltyApiService('$apiBaseUrl/loyalty');
+
+  int pointsEarned = 0;
+  int pointsRedeemed = 0;
+  double pointsValue = 0;
+  double redeemedValue = 0;
   int feedbackReceived = 120;
   int positiveFeedback = 90;
   int negativeFeedback = 30;
@@ -44,13 +50,54 @@ class _LoyaltyProgramDashboardState extends State<LoyaltyProgramDashboard> {
     "Promo Code",
   ];
 
-  final List<Map<String, dynamic>> transactions = [
-    {"date": "2025-03-01", "discount": 150},
-    {"date": "2025-03-02", "discount": 200},
-    {"date": "2025-03-03", "discount": 180},
-    {"date": "2025-03-04", "discount": 220},
-    {"date": "2025-03-05", "discount": 250},
-  ];
+  List<Map<String, dynamic>> transactions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTransactions();
+  }
+
+  Future<void> _fetchTransactions() async {
+    try {
+      final data = await _apiService.fetchAllLoyaltyRecords();
+      setState(() {
+        transactions = List<Map<String, dynamic>>.from(data);
+        pointsEarned = transactions.fold(
+            0, (sum, item) => sum + (item['points_earned'] ?? 0));
+        pointsRedeemed = transactions.fold(
+            0, (sum, item) => sum + (item['points_redeemed'] ?? 0));
+        pointsValue = pointsEarned * 0.1;
+        redeemedValue = pointsRedeemed * 0.1;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching loyalty records: $e')),
+      );
+    }
+  }
+
+  Future<void> _earnPoints(int guestId, int programId, int points) async {
+    try {
+      await _apiService.addOrUpdateLoyaltyPoints(guestId, programId, points);
+      await _fetchTransactions();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error earning points: $e')),
+      );
+    }
+  }
+
+  Future<void> _redeemPoints(int guestId, int points) async {
+    try {
+      await _apiService.redeemLoyaltyPoints(guestId, points);
+      await _fetchTransactions();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error redeeming points: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -141,6 +188,20 @@ class _LoyaltyProgramDashboardState extends State<LoyaltyProgramDashboard> {
             Expanded(
                 child: _buildCard('Positive Feedback', Icons.thumb_up,
                     '$positiveFeedback', Colors.green)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ElevatedButton(
+              onPressed: () => _earnPoints(1, 1, 10),
+              child: const Text('Earn 10'),
+            ),
+            ElevatedButton(
+              onPressed: () => _redeemPoints(1, 5),
+              child: const Text('Redeem 5'),
+            ),
           ],
         ),
       ],

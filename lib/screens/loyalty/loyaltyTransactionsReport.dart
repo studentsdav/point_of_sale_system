@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
+import '../../backend/loyalty/loyalty_api_service.dart';
+import '../../backend/api_config.dart';
+
 class LoyaltyTransactionsReport extends StatefulWidget {
   const LoyaltyTransactionsReport({super.key});
 
@@ -10,14 +13,39 @@ class LoyaltyTransactionsReport extends StatefulWidget {
 }
 
 class _LoyaltyTransactionsReportState extends State<LoyaltyTransactionsReport> {
-  List<LoyaltyTransaction> transactions = [
-    LoyaltyTransaction(
-        "John Doe", "Gold Program", 200, 50, "earn", "Cash", "Store A"),
-    LoyaltyTransaction(
-        "Alice Smith", "Silver Program", 100, 20, "redeem", "UPI", "Store B"),
-    LoyaltyTransaction(
-        "Bob Williams", "Gold Program", 300, 100, "earn", "Card", "Store C"),
-  ];
+  final LoyaltyApiService _apiService =
+      LoyaltyApiService('$apiBaseUrl/loyalty');
+
+  List<LoyaltyTransaction> transactions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTransactions();
+  }
+
+  Future<void> _fetchTransactions() async {
+    try {
+      final data = await _apiService.fetchAllLoyaltyRecords();
+      setState(() {
+        transactions = data
+            .map<LoyaltyTransaction>((t) => LoyaltyTransaction(
+                  t['guest_name'] ?? '',
+                  t['program_name'] ?? '',
+                  t['points_earned'] ?? 0,
+                  t['points_redeemed'] ?? 0,
+                  t['transaction_type'] ?? '',
+                  t['payment_method'] ?? '',
+                  t['store'] ?? '',
+                ))
+            .toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching transactions: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
