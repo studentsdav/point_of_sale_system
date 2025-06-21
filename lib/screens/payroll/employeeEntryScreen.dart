@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../backend/payroll/employee_api_service.dart';
 
 class EmployeeEntryScreen extends StatefulWidget {
   const EmployeeEntryScreen({super.key});
@@ -28,22 +29,58 @@ class _EmployeeEntryScreenState extends State<EmployeeEntryScreen> {
     'Sales Executive'
   ];
 
-  List<Map<String, String>> employees = [];
+  final EmployeeApiService _employeeService = EmployeeApiService();
 
-  void submitForm() {
-    if (_formKey.currentState!.validate()) {
+  List<dynamic> employees = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchEmployees();
+  }
+
+  Future<void> _fetchEmployees() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await _employeeService.getAllEmployees();
       setState(() {
-        employees.add({
-          "Name": nameController.text,
-          "Phone": phoneController.text,
-          "Email": emailController.text,
-          "Position": selectedPosition,
-          "Base Salary": "${salaryController.text} ${currencyController.text}",
-          "House Allowance": houseAllowanceController.text,
-          "Insurance Contribution": insuranceController.text,
-          "PF Contribution": pfController.text,
-        });
+        employees = data;
       });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        await _employeeService.createEmployee({
+          'name': nameController.text,
+          'phone': phoneController.text,
+          'email': emailController.text,
+          'position': selectedPosition,
+          'base_salary': double.tryParse(salaryController.text) ?? 0,
+          'currency': currencyController.text,
+          'country_code': 'IN',
+          'hire_date': DateTime.now().toIso8601String(),
+        });
+        _fetchEmployees();
+      } catch (e) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
     }
   }
 
@@ -115,24 +152,30 @@ class _EmployeeEntryScreenState extends State<EmployeeEntryScreen> {
                               fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 10),
                       Expanded(
-                        child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text('Name')),
-                            DataColumn(label: Text('Phone')),
-                            DataColumn(label: Text('Email')),
-                            DataColumn(label: Text('Position')),
-                            DataColumn(label: Text('Salary')),
-                          ],
-                          rows: employees.map((employee) {
-                            return DataRow(cells: [
-                              DataCell(Text(employee["Name"]!)),
-                              DataCell(Text(employee["Phone"]!)),
-                              DataCell(Text(employee["Email"]!)),
-                              DataCell(Text(employee["Position"]!)),
-                              DataCell(Text(employee["Base Salary"]!)),
-                            ]);
-                          }).toList(),
-                        ),
+                        child: _loading
+                            ? const Center(child: CircularProgressIndicator())
+                            : _error != null
+                                ? Center(child: Text(_error!))
+                                : DataTable(
+                                    columns: const [
+                                      DataColumn(label: Text('Name')),
+                                      DataColumn(label: Text('Phone')),
+                                      DataColumn(label: Text('Email')),
+                                      DataColumn(label: Text('Position')),
+                                      DataColumn(label: Text('Salary')),
+                                    ],
+                                    rows: employees.map((employee) {
+                                      return DataRow(cells: [
+                                        DataCell(Text(employee['name'] ?? '')),
+                                        DataCell(Text(employee['phone'] ?? '')),
+                                        DataCell(Text(employee['email'] ?? '')),
+                                        DataCell(
+                                            Text(employee['position'] ?? '')),
+                                        DataCell(Text(
+                                            '${employee['base_salary']} ${employee['currency'] ?? ''}')),
+                                      ]);
+                                    }).toList(),
+                                  ),
                       ),
                     ],
                   ),
