@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import '../../backend/expense/expense_api_service.dart';
 
 class ExpenseScreen extends StatefulWidget {
   const ExpenseScreen({super.key});
@@ -9,6 +10,7 @@ class ExpenseScreen extends StatefulWidget {
 }
 
 class _ExpenseScreenState extends State<ExpenseScreen> {
+  final ExpenseApiService _apiService = ExpenseApiService();
   final TextEditingController categoryController = TextEditingController();
   final TextEditingController subcategoryController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
@@ -22,22 +24,32 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   List<String> vendors = ["Local Market", "Uber", "Supermart"];
   List<String> paymentMethods = ["Cash", "UPI", "Bank Transfer"];
 
-  List<Map<String, dynamic>> expenseList = [];
+  late Future<List<dynamic>> _expenseFuture;
 
-  void addExpense() {
+  @override
+  void initState() {
+    super.initState();
+    _expenseFuture = _apiService.getAllExpenses();
+  }
+
+  Future<void> addExpense() async {
     if (categoryController.text.isNotEmpty &&
         amountController.text.isNotEmpty) {
-      setState(() {
-        expenseList.add({
-          "id": expenseList.length + 1,
-          "category": categoryController.text,
-          "subcategory": subcategoryController.text,
-          "employee": selectedEmployee,
-          "vendor": selectedVendor,
-          "payment_method": selectedPaymentMethod,
-          "amount": double.parse(amountController.text),
-          "date": selectedDate,
-          "description": descriptionController.text,
+      final data = {
+        'category': categoryController.text,
+        'subcategory': subcategoryController.text,
+        'employee': selectedEmployee,
+        'vendor': selectedVendor,
+        'payment_method': selectedPaymentMethod,
+        'amount': double.parse(amountController.text),
+        'date': selectedDate.toIso8601String(),
+        'description': descriptionController.text,
+      };
+
+      try {
+        await _apiService.addExpense(data);
+        setState(() {
+          _expenseFuture = _apiService.getAllExpenses();
         });
         categoryController.clear();
         subcategoryController.clear();
@@ -46,17 +58,21 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         selectedEmployee = null;
         selectedVendor = null;
         selectedPaymentMethod = null;
-      });
+      } catch (e) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: '+e.toString())));
+      }
     }
   }
 
-  List<ExpenseData> getChartData() {
+  List<ExpenseData> getChartData(List<dynamic> expenses) {
     Map<String, double> monthlyExpenses = {};
 
-    for (var expense in expenseList) {
-      String month = "${expense["date"].month}-${expense["date"].year}";
+    for (var expense in expenses) {
+      DateTime date = DateTime.parse(expense['date']);
+      String month = "${date.month}-${date.year}";
       monthlyExpenses[month] =
-          (monthlyExpenses[month] ?? 0) + expense["amount"];
+          (monthlyExpenses[month] ?? 0) + (expense['amount'] as num).toDouble();
     }
 
     return monthlyExpenses.entries
@@ -161,64 +177,64 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
               flex: 2,
               child: Column(
                 children: [
+
                   Expanded(
-                    child: Card(
-                      elevation: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
+                    child: FutureBuilder<List<dynamic>>(
+                      future: _expenseFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (snapshot.hasError) {
+                          return Center(child: Text('Error: ${snapshot.error}'));
+                        }
+                        final expenses = snapshot.data ?? [];
+                        return Column(
                           children: [
-                            const Text("Expense List",
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                            const Text('Expense List',
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                             Expanded(
                               child: ListView.builder(
-                                itemCount: expenseList.length,
+                                itemCount: expenses.length,
                                 itemBuilder: (context, index) {
-                                  final expense = expenseList[index];
+                                  final expense = expenses[index];
                                   return ListTile(
-                                    title: Text(
-                                        "Category: ${expense["category"]} - ₹${expense["amount"]}"),
-                                    subtitle: Text(
-                                        "Employee: ${expense["employee"]}, Vendor: ${expense["vendor"]}, Payment: ${expense["payment_method"]}, Date: ${expense["date"]}"),
+                                    title: Text('Category: ${expense['category']} - ₹${expense['amount']}'),
+                                    subtitle: Text('Employee: ${expense['employee']}, Vendor: ${expense['vendor']}, Payment: ${expense['payment_method']}, Date: ${expense['date']}'),
                                     trailing: IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.red),
-                                      onPressed: () => setState(
-                                          () => expenseList.removeAt(index)),
+                                      icon: const Icon(Icons.delete, color: Colors.red),
+                                      onPressed: () async {
+                                        await _apiService.deleteExpense(expense['id'].toString());
+                                        setState(() {
+                                          _expenseFuture = _apiService.getAllExpenses();
+                                        });
+                                      },
                                     ),
                                   );
                                 },
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Card(
-                    elevation: 4,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: SizedBox(
-                        height: 200,
-                        child: SfCartesianChart(
-                          primaryXAxis: const CategoryAxis(),
-                          series: <CartesianSeries<ExpenseData, String>>[
-                            ColumnSeries<ExpenseData, String>(
-                              dataSource: getChartData(),
-                              xValueMapper: (ExpenseData data, _) => data.month,
-                              yValueMapper: (ExpenseData data, _) =>
-                                  data.amount,
-                              dataLabelSettings:
-                                  const DataLabelSettings(isVisible: true),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              height: 200,
+                              child: SfCartesianChart(
+                                primaryXAxis: const CategoryAxis(),
+                                series: <CartesianSeries<ExpenseData, String>>[
+                                  ColumnSeries<ExpenseData, String>(
+                                    dataSource: getChartData(expenses),
+                                    xValueMapper: (ExpenseData data, _) => data.month,
+                                    yValueMapper: (ExpenseData data, _) => data.amount,
+                                    dataLabelSettings: const DataLabelSettings(isVisible: true),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ),
+
                 ],
               ),
             ),
