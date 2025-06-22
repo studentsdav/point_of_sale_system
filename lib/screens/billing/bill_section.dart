@@ -62,11 +62,14 @@ class _BillPageState extends State<BillPage> {
           'discount_percentage': bill['discount_percentage']?.toString() ?? '0',
           'service_charge_percentage':
               bill['service_charge_percentage']?.toString() ?? '0',
-          'service_charge_value': bill['service_charge_value']?.toString() ?? '0',
+          'service_charge_value':
+              bill['service_charge_value']?.toString() ?? '0',
           'delivery_charge': bill['delivery_charge']?.toString() ?? '0',
           'packing_charge': bill['packing_charge']?.toString() ?? '0',
-          'delivery_charge_value': bill['delivery_charge_value']?.toString() ?? '0',
-          'packing_charge_value': bill['packing_charge_value']?.toString() ?? '0',
+          'delivery_charge_value':
+              bill['delivery_charge_value']?.toString() ?? '0',
+          'packing_charge_value':
+              bill['packing_charge_value']?.toString() ?? '0',
           'total_amount': bill['total_amount']?.toString() ?? '0',
           'country': 'India'
         };
@@ -231,7 +234,8 @@ class _BillPageState extends State<BillPage> {
     final sanitized = <String, dynamic>{};
     bill.forEach((key, value) {
       if (value == null || value.toString().toLowerCase() == 'null') {
-        sanitized[key] = double.tryParse(value?.toString() ?? '') == null ? '' : '0';
+        sanitized[key] =
+            double.tryParse(value?.toString() ?? '') == null ? '' : '0';
       } else {
         sanitized[key] = value;
       }
@@ -276,7 +280,8 @@ class _BillPageState extends State<BillPage> {
                                 subtitle:
                                     Text('Amount: ${bill['grand_total']}'),
                                 onTap: () async {
-                                  await _fetchOrders(bill['bill_id'].toString());
+                                  await _fetchOrders(
+                                      bill['bill_id'].toString());
                                   _selectBill(bill);
                                 }),
                           );
@@ -553,14 +558,13 @@ class _BillPageState extends State<BillPage> {
                                             child: const Text('Reprint'),
                                           ),
                                           ElevatedButton(
-
                                             onPressed: () =>
                                                 _modifyBillDialog(),
                                             child: const Text('Modify'),
                                           ),
                                           ElevatedButton(
-                                            onPressed: () =>
-                                                _modifyBill(orders, _selectedBill?['bill_id']),
+                                            onPressed: () => _modifyBill(orders,
+                                                _selectedBill?['bill_id']),
                                             child: const Text('Edit'),
                                           ),
                                           ElevatedButton(
@@ -658,13 +662,13 @@ class _BillPageState extends State<BillPage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                await _saveModifiedBill(
-                  guestNameController.text,
-                  double.tryParse(discountController.text) ?? 0,
-                  double.tryParse(serviceChargeController.text) ?? 0,
-                  double.tryParse(packingChargeController.text) ?? 0,
-                  double.tryParse(deliveryChargeController.text) ?? 0,
-                );
+                // await _saveModifiedBill(
+                //   guestNameController.text,
+                //   double.tryParse(discountController.text) ?? 0,
+                //   double.tryParse(serviceChargeController.text) ?? 0,
+                //   double.tryParse(packingChargeController.text) ?? 0,
+                //   double.tryParse(deliveryChargeController.text) ?? 0,
+                // );
                 Navigator.of(context).pop();
               },
               child: const Text('Save'),
@@ -675,77 +679,77 @@ class _BillPageState extends State<BillPage> {
     );
   }
 
-  Future<void> _saveModifiedBill(String guestName, double discount,
-      double serviceCharge, double packingCharge, double deliveryCharge) async {
-    // Update bill locally with the provided values
-    setState(() {
-      _selectedBill?['guest_name'] = guestName;
-      _selectedBill?['discount_value'] = discount.toStringAsFixed(2);
-      _selectedBill?['service_charge_value'] = serviceCharge.toStringAsFixed(2);
-      _selectedBill?['packing_charge'] = packingCharge.toStringAsFixed(2);
-      _selectedBill?['delivery_charge'] = deliveryCharge.toStringAsFixed(2);
-    });
+  // Future<void> _saveModifiedBill(String guestName, double discount,
+  //     double serviceCharge, double packingCharge, double deliveryCharge) async {
+  //   // Update bill locally with the provided values
+  //   setState(() {
+  //     _selectedBill?['guest_name'] = guestName;
+  //     _selectedBill?['discount_value'] = discount.toStringAsFixed(2);
+  //     _selectedBill?['service_charge_value'] = serviceCharge.toStringAsFixed(2);
+  //     _selectedBill?['packing_charge'] = packingCharge.toStringAsFixed(2);
+  //     _selectedBill?['delivery_charge'] = deliveryCharge.toStringAsFixed(2);
+  //   });
 
-    // Compute totals from the current order items
-    double totalAmount = orderItems.fold<double>(0, (sum, item) {
-      final dynamic total = item['total'];
-      if (total is num) {
-        return sum + total.toDouble();
-      }
-      final qty = item['quantity'] is num
-          ? (item['quantity'] as num).toDouble()
-          : double.tryParse(item['quantity'].toString()) ?? 0;
-      final price = item['price'] is num
-          ? (item['price'] as num).toDouble()
-          : double.tryParse(item['price'].toString()) ?? 0;
-      return sum + (qty * price);
-    });
+  //   // Compute totals from the current order items
+  //   double totalAmount = orderItems.fold<double>(0, (sum, item) {
+  //     final dynamic total = item['total'];
+  //     if (total is num) {
+  //       return sum + total.toDouble();
+  //     }
+  //     final qty = item['quantity'] is num
+  //         ? (item['quantity'] as num).toDouble()
+  //         : double.tryParse(item['quantity'].toString()) ?? 0;
+  //     final price = item['price'] is num
+  //         ? (item['price'] as num).toDouble()
+  //         : double.tryParse(item['price'].toString()) ?? 0;
+  //     return sum + (qty * price);
+  //   });
 
-    double taxValue = orderItems.fold<double>(0, (sum, item) {
-      final dynamic total = item['total'];
-      double baseTotal;
-      if (total is num) {
-        baseTotal = total.toDouble();
-      } else {
-        final qty = item['quantity'] is num
-            ? (item['quantity'] as num).toDouble()
-            : double.tryParse(item['quantity'].toString()) ?? 0;
-        final price = item['price'] is num
-            ? (item['price'] as num).toDouble()
-            : double.tryParse(item['price'].toString()) ?? 0;
-        baseTotal = qty * price;
-      }
-      final rate = item['tax'] is num
-          ? (item['tax'] as num).toDouble()
-          : double.tryParse(item['tax'].toString()) ?? 0;
-      return sum + (baseTotal * rate / 100);
-    });
+  //   double taxValue = orderItems.fold<double>(0, (sum, item) {
+  //     final dynamic total = item['total'];
+  //     double baseTotal;
+  //     if (total is num) {
+  //       baseTotal = total.toDouble();
+  //     } else {
+  //       final qty = item['quantity'] is num
+  //           ? (item['quantity'] as num).toDouble()
+  //           : double.tryParse(item['quantity'].toString()) ?? 0;
+  //       final price = item['price'] is num
+  //           ? (item['price'] as num).toDouble()
+  //           : double.tryParse(item['price'].toString()) ?? 0;
+  //       baseTotal = qty * price;
+  //     }
+  //     final rate = item['tax'] is num
+  //         ? (item['tax'] as num).toDouble()
+  //         : double.tryParse(item['tax'].toString()) ?? 0;
+  //     return sum + (baseTotal * rate / 100);
+  //   });
 
-    double subtotal = totalAmount - discount;
-    double grandTotal =
-        subtotal + taxValue + serviceCharge + packingCharge + deliveryCharge;
+  //   double subtotal = totalAmount - discount;
+  //   double grandTotal =
+  //       subtotal + taxValue + serviceCharge + packingCharge + deliveryCharge;
 
-    // Ensure the bill object reflects the recalculated values
-    setState(() {
-      _selectedBill?['total_amount'] = totalAmount.toStringAsFixed(2);
-      _selectedBill?['tax_value'] = taxValue.toStringAsFixed(2);
-      _selectedBill?['subtotal'] = subtotal.toStringAsFixed(2);
-      _selectedBill?['grand_total'] = grandTotal.toStringAsFixed(2);
-    });
+  //   // Ensure the bill object reflects the recalculated values
+  //   setState(() {
+  //     _selectedBill?['total_amount'] = totalAmount.toStringAsFixed(2);
+  //     _selectedBill?['tax_value'] = taxValue.toStringAsFixed(2);
+  //     _selectedBill?['subtotal'] = subtotal.toStringAsFixed(2);
+  //     _selectedBill?['grand_total'] = grandTotal.toStringAsFixed(2);
+  //   });
 
-    try {
-      await billApiService.editBill(
-          _selectedBill!['bill_id'].toString(), sanitizeBill(_selectedBill!));
-      final updatedBill = await billApiService
-          .getBill(_selectedBill!['bill_id'].toString());
-      setState(() {
-        _selectedBill = Map<String, dynamic>.from(updatedBill);
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to save bill: $e')));
-    }
-  }
+  //   try {
+  //     await billApiService.editBill(
+  //         _selectedBill!['bill_id'].toString(), sanitizeBill(_selectedBill!));
+  //     final updatedBill =
+  //         await billApiService.getBill(_selectedBill!['bill_id'].toString());
+  //     setState(() {
+  //       _selectedBill = Map<String, dynamic>.from(updatedBill);
+  //     });
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context)
+  //         .showSnackBar(SnackBar(content: Text('Failed to save bill: $e')));
+  //   }
+  // }
 
   // Method to select a bill
   void _selectBill(Map<String, dynamic> bill) {
@@ -772,10 +776,9 @@ class _BillPageState extends State<BillPage> {
     // Existing charges
     double discount =
         double.tryParse(_selectedBill?['discount_value'] ?? '0') ?? 0;
-    double serviceCharge = double.tryParse(
-            _selectedBill?['service_charge'] ??
-                _selectedBill?['service_charge_value'] ??
-                '0') ??
+    double serviceCharge = double.tryParse(_selectedBill?['service_charge'] ??
+            _selectedBill?['service_charge_value'] ??
+            '0') ??
         0;
     double packingCharge =
         double.tryParse(_selectedBill?['packing_charge'] ?? '0') ?? 0;
@@ -884,8 +887,7 @@ class _BillPageState extends State<BillPage> {
     double discount = double.tryParse(bill['discount_value'] ?? '0') ?? 0;
     double serviceCharge =
         double.tryParse(bill['service_charge_value'] ?? '0') ?? 0;
-    double packingCharge =
-        double.tryParse(bill['packing_charge'] ?? '0') ?? 0;
+    double packingCharge = double.tryParse(bill['packing_charge'] ?? '0') ?? 0;
     double deliveryCharge =
         double.tryParse(bill['delivery_charge'] ?? '0') ?? 0;
     double grandTotal = double.tryParse(bill['grand_total'] ?? '0') ?? 0;
