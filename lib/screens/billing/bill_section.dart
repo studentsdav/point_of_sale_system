@@ -126,7 +126,7 @@ class _BillPageState extends State<BillPage> {
             orders.map((order) => order['order_id'].toString()).toList();
 
         // Fetch items for all selected orders
-        _fetchOrderItems(orderIds);
+        await _fetchOrderItems(orderIds);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -263,8 +263,8 @@ class _BillPageState extends State<BillPage> {
                                 title: Text('Bill ID: ${bill['bill_number']}'),
                                 subtitle:
                                     Text('Amount: ${bill['grand_total']}'),
-                                onTap: () {
-                                  _fetchOrders(bill['bill_id'].toString());
+                                onTap: () async {
+                                  await _fetchOrders(bill['bill_id'].toString());
                                   _selectBill(bill);
                                 }),
                           );
