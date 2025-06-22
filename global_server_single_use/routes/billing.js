@@ -497,80 +497,143 @@ router.post('/', async (req, res) => {
   }
 });
 
+
 // Update bill details and recalculate totals
 router.put('/:id', async (req, res) => {
   const billId = req.params.id;
   const {
     bill_number,
     tax_value,
-    discount_value,
     outlet_name,
     status,
     bill_generated_at,
     guest_name,
-    grand_total,
+    total_amount,
     discount_percentage,
     service_charge_percentage,
-    service_charge_value,
-    delivery_charge,
-    packing_charge,
-    total_amount,
-    country,
-    subtotal
+    delivery_charge_percentage,
+    packing_charge_percentage,
+    subtotal,    // unused here, we'll recalc from total_amount
+    items
   } = req.body;
 
   try {
+    // 1) parse inputs
     const totalAmt = parseFloat(total_amount) || 0;
     const discPct = parseFloat(discount_percentage) || 0;
     const taxVal = parseFloat(tax_value) || 0;
     const svcPct = parseFloat(service_charge_percentage) || 0;
-    const delCharge = parseFloat(delivery_charge) || 0;
-    const packCharge = parseFloat(packing_charge) || 0;
+    const delPct = parseFloat(delivery_charge_percentage) || 0;
+    const packPct = parseFloat(packing_charge_percentage) || 0;
 
-    const calculatedDiscountValue = (totalAmt * (discPct / 100)).toFixed(2);
-    const calculatedServiceCharge = (totalAmt * (svcPct / 100)).toFixed(2);
+    // 2) compute discount and base
+    const calculatedDiscountValue = parseFloat(
+      (totalAmt * (discPct / 100)).toFixed(2)
+    );
+    const baseAfterDiscount = totalAmt - calculatedDiscountValue;
 
-    const calculatedGrandTotal = (
-      totalAmt - parseFloat(calculatedDiscountValue) + taxVal +
-      parseFloat(calculatedServiceCharge) + delCharge + packCharge
-    ).toFixed(2);
+    // 3) compute each charge on that base
+    const calculatedServiceCharge = parseFloat(
+      (baseAfterDiscount * (svcPct / 100)).toFixed(2)
+    );
+    const calculatedDeliveryCharge = parseFloat(
+      (baseAfterDiscount * (delPct / 100)).toFixed(2)
+    );
+    const calculatedPackingCharge = parseFloat(
+      (baseAfterDiscount * (packPct / 100)).toFixed(2)
+    );
 
+    // 4) final grand total
+    const calculatedGrandTotal = parseFloat(
+      (
+        baseAfterDiscount +
+        taxVal +
+        calculatedServiceCharge +
+        calculatedDeliveryCharge +
+        calculatedPackingCharge
+      ).toFixed(2)
+    );
+
+    // 5) update each order item
+    for (const item of items) {
+      const {
+        order_id,
+        item_name,
+        total,
+        dis_amt,
+        tax,
+        discount_percentage: itemDiscPct,
+        subtotal: itemSub,
+        grandtotal: itemGrand
+      } = item;
+      const total_item_value = (total + tax).toFixed(2);
+
+      await pool.query(
+        `UPDATE order_items 
+         SET 
+           total_item_value     = $1, 
+           total_discount_value = $2, 
+           item_tax             = $3, 
+           discount_percentage  = $4, 
+           subtotal             = $5, 
+           grandtotal           = $6
+         WHERE order_id = $7 AND item_name = $8`,
+        [
+          total_item_value,
+          dis_amt,
+          tax,
+          itemDiscPct,
+          itemSub,
+          itemGrand,
+          order_id,
+          item_name
+        ]
+      );
+    }
+
+    // 6) update the bill record
     const updateQuery = `
       UPDATE bills SET
-        bill_number = $1,
-        tax_value = $2,
-        discount_value = $3,
-        outlet_name = $4,
-        status = $5,
-        bill_generated_at = $6,
-        guestName = $7,
-        grand_total = $8,
-        discount_percentage = $9,
-        service_charge_percentage = $10,
-        service_charge_value = $11,
-        delivery_charge = $12,
-        packing_charge = $13,
-        total_amount = $14,
-        subtotal = $15,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = $16 RETURNING id, grand_total`;
+        bill_number               = $1,
+        tax_value                 = $2,
+        discount_value            = $3,
+        outlet_name               = $4,
+        status                    = $5,
+        bill_generated_at         = $6,
+        guestName                = $7,
+        total_amount              = $8,
+        subtotal                  = $9,
+        discount_percentage       = $10,
+        service_charge_percentage = $11,
+        service_charge_value      = $12,
+        delivery_charge_percentage= $13,
+        delivery_charge           = $14,
+        packing_charge_percentage = $15,
+        packing_charge            = $16,
+        grand_total               = $17,
+        updated_at                = CURRENT_TIMESTAMP
+      WHERE id = $18
+      RETURNING id, grand_total;
+    `;
 
     const updateValues = [
       bill_number,
-      tax_value,
+      taxVal,
       calculatedDiscountValue,
       outlet_name,
       status,
       bill_generated_at,
       guest_name,
-      calculatedGrandTotal,
-      discount_percentage,
-      service_charge_percentage,
+      totalAmt,
+      baseAfterDiscount,
+      discPct,
+      svcPct,
       calculatedServiceCharge,
-      delivery_charge,
-      packing_charge,
-      total_amount,
-      subtotal,
+      delPct,
+      calculatedDeliveryCharge,
+      packPct,
+      calculatedPackingCharge,
+      calculatedGrandTotal,
       billId
     ];
 
@@ -581,13 +644,15 @@ router.put('/:id', async (req, res) => {
       billId: result.rows[0].id,
       grand_total: result.rows[0].grand_total
     });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to update bill', details: error.message });
+    res.status(500).json({
+      error: 'Failed to update bill',
+      details: error.message
+    });
   }
 });
-
-
 
 async function fetchSalesData() {
   const salesQuery = `
