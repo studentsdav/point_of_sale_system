@@ -950,8 +950,12 @@ class _BillPageState extends State<BillPage> {
       SnackBar(content: Text('PDF saved at: $filePath')),
     );
 
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    if (Platform.isWindows) {
       await Process.run('explorer', [filePath]);
+    } else if (Platform.isMacOS) {
+      await Process.run('open', [filePath]);
+    } else if (Platform.isLinux) {
+      await Process.run('xdg-open', [filePath]);
     }
   }
 
