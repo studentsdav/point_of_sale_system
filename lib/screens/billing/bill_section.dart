@@ -543,7 +543,7 @@ class _BillPageState extends State<BillPage> {
                                           ElevatedButton(
                                             onPressed: () =>
                                                 _modifyBillDialog(),
-                                            child: const Text('Modidy'),
+                                            child: const Text('Modify'),
                                           ),
                                           ElevatedButton(
                                             onPressed: () => _modifyBill(orders,
