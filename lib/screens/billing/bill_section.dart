@@ -690,56 +690,94 @@ class _BillPageState extends State<BillPage> {
       _selectedBill?['delivery_charge'] = deliveryCharge.toStringAsFixed(2);
     });
 
-    // Compute totals from the current order items
-    double totalAmount = orderItems.fold<double>(0, (sum, item) {
-      final dynamic total = item['total'];
-      if (total is num) {
-        return sum + total.toDouble();
-      }
+    // Updated items with discount calculations similar to billing.dart
+    List<Map<String, dynamic>> updatedItems = [];
+
+    // Calculate combined total for discountable items
+    double combinedTotal = 0.0;
+    for (var item in orderItems) {
       final qty = item['quantity'] is num
           ? (item['quantity'] as num).toDouble()
-          : double.tryParse(item['quantity'].toString()) ?? 0;
+          : double.tryParse(item['quantity'].toString()) ?? 0.0;
       final price = item['price'] is num
           ? (item['price'] as num).toDouble()
-          : double.tryParse(item['price'].toString()) ?? 0;
-      return sum + (qty * price);
-    });
+          : double.tryParse(item['price'].toString()) ?? 0.0;
+      final bool discountable = (item['discountable'] is bool)
+          ? item['discountable'] as bool
+          : item['discountable'].toString().toLowerCase() == 'true';
 
-    double taxValue = orderItems.fold<double>(0, (sum, item) {
-      final dynamic total = item['total'];
-      double baseTotal;
-      if (total is num) {
-        baseTotal = total.toDouble();
-      } else {
-        final qty = item['quantity'] is num
-            ? (item['quantity'] as num).toDouble()
-            : double.tryParse(item['quantity'].toString()) ?? 0;
-        final price = item['price'] is num
-            ? (item['price'] as num).toDouble()
-            : double.tryParse(item['price'].toString()) ?? 0;
-        baseTotal = qty * price;
+      if (discountable) {
+        combinedTotal += qty * price;
       }
-      final rate = item['tax'] is num
-          ? (item['tax'] as num).toDouble()
-          : double.tryParse(item['tax'].toString()) ?? 0;
-      return sum + (baseTotal * rate / 100);
-    });
+    }
 
-    double subtotal = totalAmount - discount;
+    // Determine discount percentage based on provided discount amount
+    double discountPercentage =
+        combinedTotal > 0 ? (discount / combinedTotal) * 100 : 0.0;
+
+    // Iterate items and compute discount/value/tax
+    for (var item in orderItems) {
+      final qty = item['quantity'] is num
+          ? (item['quantity'] as num).toDouble()
+          : double.tryParse(item['quantity'].toString()) ?? 0.0;
+      final price = item['price'] is num
+          ? (item['price'] as num).toDouble()
+          : double.tryParse(item['price'].toString()) ?? 0.0;
+      final int taxRate = item['tax'] is num
+          ? (item['tax'] as num).toInt()
+          : int.tryParse(item['tax'].toString()) ?? 0;
+      final bool discountable = (item['discountable'] is bool)
+          ? item['discountable'] as bool
+          : item['discountable'].toString().toLowerCase() == 'true';
+
+      double itemTotal = qty * price;
+      double itemDiscount =
+          discountable ? (itemTotal * discountPercentage) / 100 : 0.0;
+      double itemSubtotal = itemTotal - itemDiscount;
+      double itemTax = (itemSubtotal * taxRate) / 100;
+
+      updatedItems.add({
+        'sno': updatedItems.length + 1,
+        'item_name': item['item_name'],
+        'quantity': qty,
+        'price': price,
+        'tax': itemTax,
+        'total': itemTotal,
+        'subtotal': itemSubtotal,
+        'grandtotal': itemSubtotal + itemTax,
+        'discountable': discountable,
+        'discount_percentage': discountable ? discountPercentage : 0.0,
+        'dis_amt': itemDiscount,
+        'order_id': item['order_id'],
+      });
+    }
+
+    // Recalculate totals based on updated items
+    double totalAmount =
+        updatedItems.fold(0.0, (sum, i) => sum + (i['total'] as double));
+    double totalDiscount =
+        updatedItems.fold(0.0, (sum, i) => sum + (i['dis_amt'] as double));
+    double taxValue =
+        updatedItems.fold(0.0, (sum, i) => sum + (i['tax'] as double));
+    double subtotal = totalAmount - totalDiscount;
     double grandTotal =
         subtotal + taxValue + serviceCharge + packingCharge + deliveryCharge;
 
-    // Ensure the bill object reflects the recalculated values
+    // Update bill with recalculated values and discount percentage
     setState(() {
       _selectedBill?['total_amount'] = totalAmount.toStringAsFixed(2);
       _selectedBill?['tax_value'] = taxValue.toStringAsFixed(2);
       _selectedBill?['subtotal'] = subtotal.toStringAsFixed(2);
       _selectedBill?['grand_total'] = grandTotal.toStringAsFixed(2);
+      _selectedBill?['discount_percentage'] = discountPercentage.toStringAsFixed(2);
+      _selectedBill?['items'] = updatedItems;
     });
 
     try {
+      Map<String, dynamic> billData = sanitizeBill(_selectedBill!);
+      billData['items'] = updatedItems;
       await billApiService.editBill(
-          _selectedBill!['bill_id'].toString(), sanitizeBill(_selectedBill!));
+          _selectedBill!['bill_id'].toString(), billData);
       final updatedBill =
           await billApiService.getBill(_selectedBill!['bill_id'].toString());
       setState(() {
