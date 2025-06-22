@@ -126,7 +126,7 @@ class _BillPageState extends State<BillPage> {
             orders.map((order) => order['order_id'].toString()).toList();
 
         // Fetch items for all selected orders
-        _fetchOrderItems(orderIds);
+        await _fetchOrderItems(orderIds);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -263,8 +263,8 @@ class _BillPageState extends State<BillPage> {
                                 title: Text('Bill ID: ${bill['bill_number']}'),
                                 subtitle:
                                     Text('Amount: ${bill['grand_total']}'),
-                                onTap: () {
-                                  _fetchOrders(bill['bill_id'].toString());
+                                onTap: () async {
+                                  await _fetchOrders(bill['bill_id'].toString());
                                   _selectBill(bill);
                                 }),
                           );
@@ -541,8 +541,10 @@ class _BillPageState extends State<BillPage> {
                                             child: const Text('Reprint'),
                                           ),
                                           ElevatedButton(
-                                            onPressed: () => _modifyBillDialog(),
-                                            child: const Text('Modidy'),
+
+                                            onPressed: () =>
+                                                _modifyBillDialog(),
+                                            child: const Text('Modify'),
                                           ),
                                           ElevatedButton(
                                             onPressed: () =>
@@ -586,7 +588,8 @@ class _BillPageState extends State<BillPage> {
     // Pre-fill the fields with current values
     guestNameController.text = _selectedBill?['guest_name'] ?? '';
     discountController.text = _selectedBill?['discount_value'] ?? '0';
-    serviceChargeController.text = _selectedBill?['service_charge'] ?? '0';
+    serviceChargeController.text =
+        _selectedBill?['service_charge_value'] ?? '0';
     packingChargeController.text = _selectedBill?['packing_charge'] ?? '0';
     deliveryChargeController.text = _selectedBill?['delivery_charge'] ?? '0';
 
@@ -666,7 +669,7 @@ class _BillPageState extends State<BillPage> {
     setState(() {
       _selectedBill?['guest_name'] = guestName;
       _selectedBill?['discount_value'] = discount.toStringAsFixed(2);
-      _selectedBill?['service_charge'] = serviceCharge.toStringAsFixed(2);
+      _selectedBill?['service_charge_value'] = serviceCharge.toStringAsFixed(2);
       _selectedBill?['packing_charge'] = packingCharge.toStringAsFixed(2);
       _selectedBill?['delivery_charge'] = deliveryCharge.toStringAsFixed(2);
     });
@@ -868,8 +871,7 @@ class _BillPageState extends State<BillPage> {
     double tax = double.tryParse(bill['tax_value'] ?? '0') ?? 0;
     double discount = double.tryParse(bill['discount_value'] ?? '0') ?? 0;
     double serviceCharge =
-        double.tryParse(bill['service_charge'] ?? bill['service_charge_value'] ?? '0') ??
-            0;
+        double.tryParse(bill['service_charge_value'] ?? '0') ?? 0;
     double packingCharge =
         double.tryParse(bill['packing_charge'] ?? '0') ?? 0;
     double deliveryCharge =
@@ -1032,8 +1034,12 @@ class _BillPageState extends State<BillPage> {
       SnackBar(content: Text('PDF saved at: $filePath')),
     );
 
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    if (Platform.isWindows) {
       await Process.run('explorer', [filePath]);
+    } else if (Platform.isMacOS) {
+      await Process.run('open', [filePath]);
+    } else if (Platform.isLinux) {
+      await Process.run('xdg-open', [filePath]);
     }
   }
 

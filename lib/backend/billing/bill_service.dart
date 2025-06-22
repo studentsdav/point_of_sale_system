@@ -110,7 +110,7 @@ class BillingApiService {
   Future<Map<String, dynamic>> editBill(
       String orderId, Map<String, dynamic> billData) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/$orderId/edit-bill'),
+      Uri.parse('$baseUrl/bill/$orderId'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(billData),
     );
