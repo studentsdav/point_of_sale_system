@@ -443,8 +443,28 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
               ),
               body: Row(
                 children: [
+                  // Category Strip
+                  Container(
+                    width: 120,
+                    color: Colors.grey.shade200,
+                    child: ListView.builder(
+                      itemCount: _categories.length,
+                      itemBuilder: (context, index) {
+                        final category = _categories[index];
+                        return ListTile(
+                          selected: _selectedCategory == category,
+                          title: Text(category, style: const TextStyle(fontSize: 14)),
+                          onTap: () {
+                            setState(() {
+                              _selectedCategory = category;
+                            });
+                          },
+                        );
+                      },
+                    ),
+                  ),
                   Expanded(
-                    flex: 1,
+                    flex: 2,
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
@@ -459,23 +479,6 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                               hintText: 'Search Items',
                               prefixIcon: Icon(Icons.search),
                             ),
-                          ),
-                          const SizedBox(height: 10),
-                          DropdownButton<String>(
-                            value: _selectedCategory,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedCategory = value!;
-                              });
-                            },
-                            items: _categories
-                                .map((category) => DropdownMenuItem(
-                                      value: category,
-                                      child: Text(category),
-                                    ))
-                                .toList(),
-                            hint: const Text(
-                                "Select a category"), // Placeholder when no category is selected
                           ),
                           const SizedBox(height: 10),
                           Expanded(
