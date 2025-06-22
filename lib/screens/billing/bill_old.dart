@@ -64,12 +64,12 @@ class _BillPageState extends State<OldBillPage> {
               bill['service_charge_percentage']?.toString() ?? '0',
           'service_charge_value':
               bill['service_charge_value']?.toString() ?? '0',
-          'delivery_charge': bill['delivery_charge']?.toString() ?? '0',
-          'packing_charge': bill['packing_charge']?.toString() ?? '0',
-          'delivery_charge_value':
-              bill['delivery_charge_value']?.toString() ?? '0',
-          'packing_charge_value':
-              bill['packing_charge_value']?.toString() ?? '0',
+          'delivery_charge_percentage':
+              bill['delivery_charge_percentage']?.toString() ?? '0',
+          'packing_charge_percentage':
+              bill['packing_charge_percentage']?.toString() ?? '0',
+          'delivery_charge_value': bill['delivery_charge']?.toString() ?? '0',
+          'packing_charge_value': bill['packing_charge']?.toString() ?? '0',
           'total_amount': bill['total_amount']?.toString() ?? '0',
           'country': 'India'
         };
@@ -191,6 +191,7 @@ class _BillPageState extends State<OldBillPage> {
             'tax': taxRate,
             'total': itemQuantity * itemRate,
             'order_id': item['order_id'],
+            'discountable': item['discountable']
           };
         }
       }
@@ -412,22 +413,22 @@ class _BillPageState extends State<OldBillPage> {
                                           ),
                                         ],
                                       ),
-
                                       const SizedBox(height: 8),
-
-                                      // Tax Details
-                                      // if (_selectedBill?['country'] ==
-                                      //     'India') ...[
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          const Text('Tax:'),
                                           Text(
-                                            '₹${_selectedBill?['tax_value'] ?? '0.00'}',
+                                              'Discount: ${_selectedBill?['discount_percentage'] ?? '0'}% '),
+                                          Text(
+                                            '₹${_selectedBill?['discount_value'] ?? '0.00'}',
                                           ),
                                         ],
                                       ),
+
+                                      // Tax Details
+                                      // if (_selectedBill?['country'] ==
+                                      //     'India') ...[
 
                                       // Row(
                                       //   mainAxisAlignment:
@@ -472,15 +473,25 @@ class _BillPageState extends State<OldBillPage> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
+                                          const Text('Subtotal: '),
                                           Text(
-                                              'Discount: ${_selectedBill?['discount_percentage'] ?? '0'}% '),
+                                            '₹${double.parse(_selectedBill?['total_amount']) - double.parse(_selectedBill?['discount_value']) ?? '0.00'}',
+                                          ),
+                                        ],
+                                      ),
+
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text('Tax:'),
                                           Text(
-                                            '₹${_selectedBill?['discount_value'] ?? '0.00'}',
+                                            '₹${_selectedBill?['tax_value'] ?? '0.00'}',
                                           ),
                                         ],
                                       ),
                                       const SizedBox(height: 8),
-
                                       // Service Charge
                                       Row(
                                         mainAxisAlignment:
@@ -503,7 +514,7 @@ class _BillPageState extends State<OldBillPage> {
                                           Text(
                                               'Packing Charge: ${_selectedBill?['packing_charge_percentage'] ?? '0'}%'),
                                           Text(
-                                            '₹${_selectedBill?['packing_charge'] ?? '0.00'}',
+                                            '₹${_selectedBill?['packing_charge_value'] ?? '0.00'}',
                                           ),
                                         ],
                                       ),
@@ -517,7 +528,7 @@ class _BillPageState extends State<OldBillPage> {
                                           Text(
                                               'Delivery Charge: ${_selectedBill?['delivery_charge_percentage'] ?? '0'}%'),
                                           Text(
-                                            '₹${_selectedBill?['delivery_charge'] ?? '0.00'}',
+                                            '₹${_selectedBill?['delivery_charge_value'] ?? '0.00'}',
                                           ),
                                         ],
                                       ),
@@ -572,7 +583,20 @@ class _BillPageState extends State<OldBillPage> {
                                             child: const Text('Cancel'),
                                           ),
                                           ElevatedButton(
-                                            onPressed: _finalSaveBill,
+                                            onPressed: () {
+                                              _saveModifiedBill(
+                                                  _selectedBill?[
+                                                          'guest_name'] ??
+                                                      '',
+                                                  double.parse(_selectedBill?[
+                                                      'discount_percentage']),
+                                                  double.parse(_selectedBill?[
+                                                      'service_charge_percentage']),
+                                                  double.parse(_selectedBill?[
+                                                      'packing_charge_percentage']),
+                                                  double.parse(_selectedBill?[
+                                                      'delivery_charge_percentage']));
+                                            },
                                             child: const Text('Final Save'),
                                           ),
                                         ],
@@ -592,105 +616,236 @@ class _BillPageState extends State<OldBillPage> {
 
   void _modifyBillDialog() {
     // Controllers for text fields
-    final TextEditingController guestNameController = TextEditingController();
-    final TextEditingController discountController = TextEditingController();
-    final TextEditingController serviceChargeController =
-        TextEditingController();
-    final TextEditingController packingChargeController =
-        TextEditingController();
-    final TextEditingController deliveryChargeController =
-        TextEditingController();
+    final guestNameController = TextEditingController();
+    final discountController = TextEditingController();
+    final serviceChargeController = TextEditingController();
+    final packingChargeController = TextEditingController();
+    final deliveryChargeController = TextEditingController();
 
-    // Pre-fill the fields with current values
+    // Pre-fill the fields with current percentage values
     guestNameController.text = _selectedBill?['guest_name'] ?? '';
-    discountController.text = _selectedBill?['discount_value'] ?? '0';
+    discountController.text = _selectedBill?['discount_percentage'] ?? '0';
     serviceChargeController.text =
-        _selectedBill?['service_charge_value'] ?? '0';
-    packingChargeController.text = _selectedBill?['packing_charge'] ?? '0';
-    deliveryChargeController.text = _selectedBill?['delivery_charge'] ?? '0';
+        _selectedBill?['service_charge_percentage'] ?? '0';
+    packingChargeController.text =
+        _selectedBill?['packing_charge_percentage'] ?? '0';
+    deliveryChargeController.text =
+        _selectedBill?['delivery_charge_percentage'] ?? '0';
 
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Modify Bill'),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: guestNameController,
-                  decoration: const InputDecoration(labelText: 'Guest Name'),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: discountController,
-                  keyboardType: TextInputType.number,
-                  decoration:
-                      const InputDecoration(labelText: 'Discount Amount'),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: serviceChargeController,
-                  keyboardType: TextInputType.number,
-                  decoration:
-                      const InputDecoration(labelText: 'Service Charge'),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: packingChargeController,
-                  keyboardType: TextInputType.number,
-                  decoration:
-                      const InputDecoration(labelText: 'Packing Charge'),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: deliveryChargeController,
-                  keyboardType: TextInputType.number,
-                  decoration:
-                      const InputDecoration(labelText: 'Delivery Charge'),
-                ),
-              ],
-            ),
+      builder: (_) => AlertDialog(
+        title: const Text('Modify Bill'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: guestNameController,
+                decoration: const InputDecoration(labelText: 'Guest Name'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: discountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Discount %'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: serviceChargeController,
+                keyboardType: TextInputType.number,
+                decoration:
+                    const InputDecoration(labelText: 'Service Charge %'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: packingChargeController,
+                keyboardType: TextInputType.number,
+                decoration:
+                    const InputDecoration(labelText: 'Packing Charge %'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: deliveryChargeController,
+                keyboardType: TextInputType.number,
+                decoration:
+                    const InputDecoration(labelText: 'Delivery Charge %'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                // await _saveModifiedBill(
-                //   guestNameController.text,
-                //   double.tryParse(discountController.text) ?? 0,
-                //   double.tryParse(serviceChargeController.text) ?? 0,
-                //   double.tryParse(packingChargeController.text) ?? 0,
-                //   double.tryParse(deliveryChargeController.text) ?? 0,
-                // );
-                Navigator.of(context).pop();
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              await _saveModifiedBill(
+                guestNameController.text,
+                double.tryParse(discountController.text) ?? 0.0,
+                double.tryParse(serviceChargeController.text) ?? 0.0,
+                double.tryParse(packingChargeController.text) ?? 0.0,
+                double.tryParse(deliveryChargeController.text) ?? 0.0,
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 
-  // Future<void> _saveModifiedBill(String guestName, double discount,
-  //     double serviceCharge, double packingCharge, double deliveryCharge) async {
-  //   // Update bill locally with the provided values
-  //   setState(() {
-  //     _selectedBill?['guest_name'] = guestName;
-  //     _selectedBill?['discount_value'] = discount.toStringAsFixed(2);
-  //     _selectedBill?['service_charge_value'] = serviceCharge.toStringAsFixed(2);
-  //     _selectedBill?['packing_charge'] = packingCharge.toStringAsFixed(2);
-  //     _selectedBill?['delivery_charge'] = deliveryCharge.toStringAsFixed(2);
-  //   });
+  Future<void> _saveModifiedBill(
+    String guestName,
+    double discountPercent,
+    double serviceChargePercent,
+    double packingChargePercent,
+    double deliveryChargePercent,
+  ) async {
+    // 1) Update basic fields (percentages)
+    setState(() {
+      _selectedBill?['guest_name'] = guestName;
+      _selectedBill?['discount_percentage'] =
+          discountPercent.toStringAsFixed(2);
+      _selectedBill?['service_charge_percentage'] =
+          serviceChargePercent.toStringAsFixed(2);
+      _selectedBill?['packing_charge_percentage'] =
+          packingChargePercent.toStringAsFixed(2);
+      _selectedBill?['delivery_charge_percentage'] =
+          deliveryChargePercent.toStringAsFixed(2);
+    });
 
-  //   // Compute totals from the current order items
+    // 2) Rebuild items with discount (using percent) and tax
+    List<Map<String, dynamic>> updatedItems = [];
+    for (var item in orderItems) {
+      final qty = (item['quantity'] is num)
+          ? (item['quantity'] as num).toDouble()
+          : double.tryParse(item['quantity'].toString()) ?? 0.0;
+      final price = (item['price'] is num)
+          ? (item['price'] as num).toDouble()
+          : double.tryParse(item['price'].toString()) ?? 0.0;
+      final taxRate = (item['tax'] is num)
+          ? (item['tax'] as num).toInt()
+          : int.tryParse(item['tax'].toString()) ?? 0;
+      final discountable = (item['discountable'] is bool)
+          ? item['discountable'] as bool
+          : item['discountable'].toString().toLowerCase() == 'true';
+
+      final itemTotal = qty * price;
+      final itemDiscount =
+          discountable ? (itemTotal * discountPercent) / 100 : 0.0;
+      final itemSubtotal = itemTotal - itemDiscount;
+      final itemTax = (itemSubtotal * taxRate) / 100;
+
+      updatedItems.add({
+        'sno': updatedItems.length + 1,
+        'item_name': item['item_name'],
+        'quantity': qty,
+        'price': price,
+        'tax': itemTax,
+        'total': itemTotal,
+        'subtotal': itemSubtotal,
+        'grandtotal': itemSubtotal + itemTax,
+        'discountable': discountable,
+        'discount_percentage': discountable ? discountPercent : 0.0,
+        'dis_amt': itemDiscount,
+        'order_id': item['order_id'],
+      });
+    }
+
+    // 3) Totals & subtotal
+    final totalAmount = updatedItems.fold<double>(0, (s, i) => s + i['total']);
+    final totalDiscount =
+        updatedItems.fold<double>(0, (s, i) => s + i['dis_amt']);
+    final taxValue = updatedItems.fold<double>(0, (s, i) => s + i['tax']);
+    final subtotal = totalAmount - totalDiscount;
+
+    // 4) Convert percentages → absolute charges
+    final serviceChargeValue = subtotal * serviceChargePercent / 100;
+    final packingChargeValue = subtotal * packingChargePercent / 100;
+    final deliveryChargeValue = subtotal * deliveryChargePercent / 100;
+
+    // 5) Grand total
+    final grandTotal = subtotal +
+        taxValue +
+        serviceChargeValue +
+        packingChargeValue +
+        deliveryChargeValue;
+
+    // 6) Update bill with calculated values
+    setState(() {
+      _selectedBill?['total_amount'] = totalAmount.toStringAsFixed(2);
+      _selectedBill?['tax_value'] = taxValue.toStringAsFixed(2);
+      _selectedBill?['subtotal'] = subtotal.toStringAsFixed(2);
+      _selectedBill?['service_charge_value'] =
+          serviceChargeValue.toStringAsFixed(2);
+      _selectedBill?['packing_charge_value'] =
+          packingChargeValue.toStringAsFixed(2);
+      _selectedBill?['delivery_charge_value'] =
+          deliveryChargeValue.toStringAsFixed(2);
+      _selectedBill?['grand_total'] = grandTotal.toStringAsFixed(2);
+    });
+
+    // 7) Persist to backend
+    try {
+      final billData = sanitizeBill(_selectedBill!);
+      billData['items'] = updatedItems;
+      // also persist both % and absolute values if your API supports them:
+      billData['service_charge_percentage'] = serviceChargePercent;
+      billData['packing_charge_percentage'] = packingChargePercent;
+      billData['delivery_charge_percentage'] = deliveryChargePercent;
+      billData['service_charge_value'] = serviceChargeValue;
+      billData['packing_charge_value'] = packingChargeValue;
+      billData['delivery_charge_value'] = deliveryChargeValue;
+
+      await billApiService.editBill(
+        _selectedBill!['bill_id'].toString(),
+        billData,
+      );
+      //  _billingFuture = getbillByStatusnew('UnPaid');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save bill: $e')),
+      );
+    }
+  }
+
+  // Method to select a bill
+  void _selectBill(Map<String, dynamic> bill) {
+    setState(() {
+      _selectedBill = bill;
+    });
+  }
+
+  // Method to handle Edit
+  void _editBill() {
+    print('Editing bill: ${_selectedBill!['bill_number']}');
+  }
+
+  // Method to handle Cancel
+  void _cancelBill() {
+    print('Cancelling bill: ${_selectedBill!['bill_number']}');
+    // Add your cancel functionality here
+  }
+
+  // Recalculate totals and persist the bill
+  // Future<void> _finalSaveBill() async {
+  //   if (_selectedBill == null) return;
+
+  //   // Existing charges
+  //   double discount =
+  //       double.tryParse(_selectedBill?['discount_value'] ?? '0') ?? 0;
+  //   double serviceCharge = double.tryParse(_selectedBill?['service_charge'] ??
+  //           _selectedBill?['service_charge_value'] ??
+  //           '0') ??
+  //       0;
+  //   double packingCharge =
+  //       double.tryParse(_selectedBill?['packing_charge'] ?? '0') ?? 0;
+  //   double deliveryCharge =
+  //       double.tryParse(_selectedBill?['delivery_charge'] ?? '0') ?? 0;
+
+  //   // Totals from order items
   //   double totalAmount = orderItems.fold<double>(0, (sum, item) {
   //     final dynamic total = item['total'];
   //     if (total is num) {
@@ -729,7 +884,6 @@ class _BillPageState extends State<OldBillPage> {
   //   double grandTotal =
   //       subtotal + taxValue + serviceCharge + packingCharge + deliveryCharge;
 
-  //   // Ensure the bill object reflects the recalculated values
   //   setState(() {
   //     _selectedBill?['total_amount'] = totalAmount.toStringAsFixed(2);
   //     _selectedBill?['tax_value'] = taxValue.toStringAsFixed(2);
@@ -745,107 +899,13 @@ class _BillPageState extends State<OldBillPage> {
   //     setState(() {
   //       _selectedBill = Map<String, dynamic>.from(updatedBill);
   //     });
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text('Bill saved successfully')));
   //   } catch (e) {
   //     ScaffoldMessenger.of(context)
   //         .showSnackBar(SnackBar(content: Text('Failed to save bill: $e')));
   //   }
   // }
-
-  // Method to select a bill
-  void _selectBill(Map<String, dynamic> bill) {
-    setState(() {
-      _selectedBill = bill;
-    });
-  }
-
-  // Method to handle Edit
-  void _editBill() {
-    print('Editing bill: ${_selectedBill!['bill_number']}');
-  }
-
-  // Method to handle Cancel
-  void _cancelBill() {
-    print('Cancelling bill: ${_selectedBill!['bill_number']}');
-    // Add your cancel functionality here
-  }
-
-  // Recalculate totals and persist the bill
-  Future<void> _finalSaveBill() async {
-    if (_selectedBill == null) return;
-
-    // Existing charges
-    double discount =
-        double.tryParse(_selectedBill?['discount_value'] ?? '0') ?? 0;
-    double serviceCharge = double.tryParse(_selectedBill?['service_charge'] ??
-            _selectedBill?['service_charge_value'] ??
-            '0') ??
-        0;
-    double packingCharge =
-        double.tryParse(_selectedBill?['packing_charge'] ?? '0') ?? 0;
-    double deliveryCharge =
-        double.tryParse(_selectedBill?['delivery_charge'] ?? '0') ?? 0;
-
-    // Totals from order items
-    double totalAmount = orderItems.fold<double>(0, (sum, item) {
-      final dynamic total = item['total'];
-      if (total is num) {
-        return sum + total.toDouble();
-      }
-      final qty = item['quantity'] is num
-          ? (item['quantity'] as num).toDouble()
-          : double.tryParse(item['quantity'].toString()) ?? 0;
-      final price = item['price'] is num
-          ? (item['price'] as num).toDouble()
-          : double.tryParse(item['price'].toString()) ?? 0;
-      return sum + (qty * price);
-    });
-
-    double taxValue = orderItems.fold<double>(0, (sum, item) {
-      final dynamic total = item['total'];
-      double baseTotal;
-      if (total is num) {
-        baseTotal = total.toDouble();
-      } else {
-        final qty = item['quantity'] is num
-            ? (item['quantity'] as num).toDouble()
-            : double.tryParse(item['quantity'].toString()) ?? 0;
-        final price = item['price'] is num
-            ? (item['price'] as num).toDouble()
-            : double.tryParse(item['price'].toString()) ?? 0;
-        baseTotal = qty * price;
-      }
-      final rate = item['tax'] is num
-          ? (item['tax'] as num).toDouble()
-          : double.tryParse(item['tax'].toString()) ?? 0;
-      return sum + (baseTotal * rate / 100);
-    });
-
-    double subtotal = totalAmount - discount;
-    double grandTotal =
-        subtotal + taxValue + serviceCharge + packingCharge + deliveryCharge;
-
-    setState(() {
-      _selectedBill?['total_amount'] = totalAmount.toStringAsFixed(2);
-      _selectedBill?['tax_value'] = taxValue.toStringAsFixed(2);
-      _selectedBill?['subtotal'] = subtotal.toStringAsFixed(2);
-      _selectedBill?['grand_total'] = grandTotal.toStringAsFixed(2);
-    });
-
-    try {
-      await billApiService.editBill(
-          _selectedBill!['bill_id'].toString(), sanitizeBill(_selectedBill!));
-      final updatedBill =
-          await billApiService.getBill(_selectedBill!['bill_id'].toString());
-      setState(() {
-        _selectedBill = Map<String, dynamic>.from(updatedBill);
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bill saved successfully')));
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to save bill: $e')));
-    }
-  }
 
   // Method to handle Modify
   void _modifyBill(orders, billid) {

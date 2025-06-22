@@ -3,6 +3,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:point_of_sale_system/backend/order/waiterApiService.dart';
 
 class WaiterConfigurationForm extends StatefulWidget {
+  const WaiterConfigurationForm({super.key});
+
   @override
   _WaiterConfigurationFormState createState() =>
       _WaiterConfigurationFormState();
@@ -51,7 +53,7 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
       setState(() {
         this.properties = properties ?? [];
         this.outletConfigurations = outletConfigurations ?? [];
-        this.outlets = outletslist; // Set the outlets list
+        outlets = outletslist; // Set the outlets list
       });
     }
     _fetchAllWaiters();
@@ -90,7 +92,7 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
         await waiterApiService.createWaiter(waiterData);
         _fetchAllWaiters();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Waiter saved successfully')),
+          const SnackBar(content: Text('Waiter saved successfully')),
         );
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -106,7 +108,7 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill all required fields.')),
+        const SnackBar(content: Text('Please fill all required fields.')),
       );
     }
   }
@@ -129,7 +131,7 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
         waiters.removeWhere((waiter) => waiter['waiterId'] == waiterId);
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Waiter deleted successfully')),
+        const SnackBar(content: Text('Waiter deleted successfully')),
       );
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -186,17 +188,17 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Waiter Configuration')),
+      appBar: AppBar(title: const Text('Waiter Configuration')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Outlet Selection (Mandatory)
-            Text('Select Outlet',
+            const Text('Select Outlet',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             DropdownButtonFormField<String>(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Select Outlet',
                 icon: Icon(Icons.store),
               ),
@@ -210,14 +212,14 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
             const SizedBox(height: 20),
 
             // Waiter Configuration Form
-            Text('Enter Waiter Details',
+            const Text('Enter Waiter Details',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Form(
               key: _formKey,
               child: Column(
                 children: [
                   TextFormField(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Waiter Name',
                       icon: Icon(Icons.person),
                     ),
@@ -226,7 +228,7 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
                     onSaved: (value) => waiterName = value!,
                   ),
                   TextFormField(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Contact Number',
                       icon: Icon(Icons.phone),
                     ),
@@ -236,7 +238,7 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
                     onSaved: (value) => contactNumber = value!,
                   ),
                   TextFormField(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Hire Date',
                       icon: Icon(Icons.date_range),
                     ),
@@ -260,7 +262,7 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
                     ),
                   ),
                   DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Status',
                       icon: Icon(Icons
                           .check_circle), // Replaced icon with check_circle
@@ -281,7 +283,7 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: _saveWaiterConfiguration,
-                    child: Text('Save Waiter Configuration'),
+                    child: const Text('Save Waiter Configuration'),
                   ),
                 ],
               ),
@@ -289,7 +291,7 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
             const SizedBox(height: 20),
 
             // Show Waiter Profiles (List of saved waiters)
-            Text('Saved Waiter Profiles:',
+            const Text('Saved Waiter Profiles:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ListView.builder(
               shrinkWrap: true,
@@ -306,7 +308,7 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
                           : Colors.red,
                     ),
                     title: Text(waiter['waiter_name'],
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -319,11 +321,11 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.edit),
+                          icon: const Icon(Icons.edit),
                           onPressed: () => _editWaiterConfiguration(index),
                         ),
                         IconButton(
-                            icon: Icon(Icons.delete),
+                            icon: const Icon(Icons.delete),
                             onPressed: () {
                               _deleteWaiter(index);
                               _deleteWaiterConfiguration(
@@ -379,5 +381,5 @@ class _WaiterConfigurationFormState extends State<WaiterConfigurationForm> {
 }
 
 void main() {
-  runApp(MaterialApp(home: WaiterConfigurationForm()));
+  runApp(const MaterialApp(home: WaiterConfigurationForm()));
 }
