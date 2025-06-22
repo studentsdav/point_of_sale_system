@@ -784,19 +784,24 @@ class _BillPageState extends State<BillPage> {
       });
     }
     double tax = double.tryParse(bill['tax_value'] ?? '0') ?? 0;
-    double discount = double.tryParse(bill['discount_value'] ?? '0') ?? 0;
-    double serviceCharge =
-        double.tryParse(bill['service_charge'] ?? bill['service_charge_value'] ?? '0') ??
-            0;
-    double packingCharge =
-        double.tryParse(bill['packing_charge'] ?? '0') ?? 0;
-    double deliveryCharge =
-        double.tryParse(bill['delivery_charge'] ?? '0') ?? 0;
-    double grandTotal = double.tryParse(bill['grand_total'] ?? '0') ?? 0;
 
-    double discountPer = totalAmount == 0 ? 0 : (discount / totalAmount) * 100;
+    double discountPer =
+        double.tryParse(bill['discount_percentage'] ?? '0') ?? 0;
+    double serviceChargePer =
+        double.tryParse(bill['service_charge_percentage'] ?? '0') ?? 0;
+    double packingChargePer =
+        double.tryParse(bill['packing_charge_percentage'] ?? '0') ?? 0;
+    double deliveryChargePer =
+        double.tryParse(bill['delivery_charge_percentage'] ?? '0') ?? 0;
+
+    double discount = totalAmount * (discountPer / 100);
+    double serviceCharge = totalAmount * (serviceChargePer / 100);
+    double packingCharge = totalAmount * (packingChargePer / 100);
+    double deliveryCharge = totalAmount * (deliveryChargePer / 100);
+
     double subtotal = totalAmount - discount;
     double totalCharges = serviceCharge + packingCharge + deliveryCharge;
+    double grandTotal = subtotal + tax + totalCharges;
 
     pdf.addPage(pw.Page(
       pageFormat: PdfPageFormat.roll80,
@@ -898,7 +903,20 @@ class _BillPageState extends State<BillPage> {
                   'Discount (${discountPer.toStringAsFixed(1)}%):', -discount),
             _summaryRow('Subtotal:', subtotal),
             _summaryRow('Tax (5%):', tax),
-            _summaryRow('Service Charge (10%):', totalCharges),
+            if (serviceCharge > 0)
+              _summaryRow(
+                  'Service Charge (${serviceChargePer.toStringAsFixed(1)}%):',
+                  serviceCharge),
+            if (packingCharge > 0)
+              _summaryRow(
+                  'Packing Charge (${packingChargePer.toStringAsFixed(1)}%):',
+                  packingCharge),
+            if (deliveryCharge > 0)
+              _summaryRow(
+                  'Delivery Charge (${deliveryChargePer.toStringAsFixed(1)}%):',
+                  deliveryCharge),
+            if (totalCharges > 0)
+              _summaryRow('Total Charges:', totalCharges),
 
             pw.SizedBox(height: 6),
             pw.Divider(thickness: 0.8),
