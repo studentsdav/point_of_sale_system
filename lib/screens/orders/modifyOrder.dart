@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../backend/order/OrderApiService.dart';
 import '../../backend/order/items_api_service.dart';
+import '../../backend/billing/bill_service.dart';
 
 class ModifyOrderList extends StatefulWidget {
   final propertyid;
@@ -20,6 +21,7 @@ class ModifyOrderList extends StatefulWidget {
 
 class _ModifyOrderListState extends State<ModifyOrderList> {
   OrderApiService orderApiService = OrderApiService();
+  final BillingApiService billApiService = BillingApiService();
   final List<String> _categories = ['Starters', 'Main Course', 'Desserts'];
   ItemsApiService itemsApiService = ItemsApiService();
   late Future<Map<String, List<Map<String, String>>>> _menuItemsFuture;
@@ -280,6 +282,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
 
       // Save the order to the API
       await orderApiService.updateOrder(orderId, orderData);
+      await _updateBillTotals();
 
       setState(() {
         orderItems.clear();
@@ -292,6 +295,84 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving order: $e')),
+      );
+    }
+  }
+
+  Future<void> _updateBillTotals() async {
+    try {
+      final bill = await billApiService.getBill(widget.billid.toString());
+      final billOrders =
+          await orderApiService.getOrdersBybillid(widget.billid.toString());
+
+      if (billOrders.isEmpty) return;
+
+      final orderIds =
+          billOrders.map((o) => o['order_id'].toString()).toList();
+      final fetchedItems = await orderApiService.getOrderItemsByIds(orderIds);
+
+      double totalAmount = 0.0;
+      double totalTax = 0.0;
+
+      for (var item in fetchedItems) {
+        int qty = 0;
+        if (item['item_quantity'] != null) {
+          if (item['item_quantity'] is String) {
+            qty = int.tryParse(item['item_quantity']) ?? 0;
+          } else if (item['item_quantity'] is int) {
+            qty = item['item_quantity'] as int;
+          }
+        }
+
+        double rate = 0.0;
+        if (item['item_rate'] != null) {
+          if (item['item_rate'] is String) {
+            rate = double.tryParse(item['item_rate']) ?? 0.0;
+          } else if (item['item_rate'] is num) {
+            rate = (item['item_rate'] as num).toDouble();
+          }
+        }
+
+        int taxRate = 0;
+        if (item['taxrate'] != null) {
+          if (item['taxrate'] is String) {
+            taxRate = int.tryParse(item['taxrate']) ?? 0;
+          } else if (item['taxrate'] is int) {
+            taxRate = item['taxrate'];
+          }
+        }
+
+        final amount = qty * rate;
+        final tax = (amount * taxRate) / 100;
+        totalAmount += amount;
+        totalTax += tax;
+      }
+
+      double discount =
+          double.tryParse(bill['discount_value']?.toString() ?? '0') ?? 0.0;
+      double serviceCharge = double.tryParse(
+              bill['service_charge']?.toString() ??
+                  bill['service_charge_value']?.toString() ??
+                  '0') ??
+          0.0;
+      double packingCharge =
+          double.tryParse(bill['packing_charge']?.toString() ?? '0') ?? 0.0;
+      double deliveryCharge =
+          double.tryParse(bill['delivery_charge']?.toString() ?? '0') ?? 0.0;
+
+      double subtotal = totalAmount - discount;
+      double grandTotal =
+          subtotal + totalTax + serviceCharge + packingCharge + deliveryCharge;
+
+      final updatedBill = Map<String, dynamic>.from(bill);
+      updatedBill['total_amount'] = totalAmount.toStringAsFixed(2);
+      updatedBill['tax_value'] = totalTax.toStringAsFixed(2);
+      updatedBill['grand_total'] = grandTotal.toStringAsFixed(2);
+
+      await billApiService.editBill(widget.billid.toString(), updatedBill);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update bill totals: $e')),
       );
     }
   }
