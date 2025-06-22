@@ -662,13 +662,13 @@ class _BillPageState extends State<BillPage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                // await _saveModifiedBill(
-                //   guestNameController.text,
-                //   double.tryParse(discountController.text) ?? 0,
-                //   double.tryParse(serviceChargeController.text) ?? 0,
-                //   double.tryParse(packingChargeController.text) ?? 0,
-                //   double.tryParse(deliveryChargeController.text) ?? 0,
-                // );
+                await _saveModifiedBill(
+                  guestNameController.text,
+                  double.tryParse(discountController.text) ?? 0,
+                  double.tryParse(serviceChargeController.text) ?? 0,
+                  double.tryParse(packingChargeController.text) ?? 0,
+                  double.tryParse(deliveryChargeController.text) ?? 0,
+                );
                 Navigator.of(context).pop();
               },
               child: const Text('Save'),
@@ -679,77 +679,77 @@ class _BillPageState extends State<BillPage> {
     );
   }
 
-  // Future<void> _saveModifiedBill(String guestName, double discount,
-  //     double serviceCharge, double packingCharge, double deliveryCharge) async {
-  //   // Update bill locally with the provided values
-  //   setState(() {
-  //     _selectedBill?['guest_name'] = guestName;
-  //     _selectedBill?['discount_value'] = discount.toStringAsFixed(2);
-  //     _selectedBill?['service_charge_value'] = serviceCharge.toStringAsFixed(2);
-  //     _selectedBill?['packing_charge'] = packingCharge.toStringAsFixed(2);
-  //     _selectedBill?['delivery_charge'] = deliveryCharge.toStringAsFixed(2);
-  //   });
+  Future<void> _saveModifiedBill(String guestName, double discount,
+      double serviceCharge, double packingCharge, double deliveryCharge) async {
+    // Update bill locally with the provided values
+    setState(() {
+      _selectedBill?['guest_name'] = guestName;
+      _selectedBill?['discount_value'] = discount.toStringAsFixed(2);
+      _selectedBill?['service_charge_value'] = serviceCharge.toStringAsFixed(2);
+      _selectedBill?['packing_charge'] = packingCharge.toStringAsFixed(2);
+      _selectedBill?['delivery_charge'] = deliveryCharge.toStringAsFixed(2);
+    });
 
-  //   // Compute totals from the current order items
-  //   double totalAmount = orderItems.fold<double>(0, (sum, item) {
-  //     final dynamic total = item['total'];
-  //     if (total is num) {
-  //       return sum + total.toDouble();
-  //     }
-  //     final qty = item['quantity'] is num
-  //         ? (item['quantity'] as num).toDouble()
-  //         : double.tryParse(item['quantity'].toString()) ?? 0;
-  //     final price = item['price'] is num
-  //         ? (item['price'] as num).toDouble()
-  //         : double.tryParse(item['price'].toString()) ?? 0;
-  //     return sum + (qty * price);
-  //   });
+    // Compute totals from the current order items
+    double totalAmount = orderItems.fold<double>(0, (sum, item) {
+      final dynamic total = item['total'];
+      if (total is num) {
+        return sum + total.toDouble();
+      }
+      final qty = item['quantity'] is num
+          ? (item['quantity'] as num).toDouble()
+          : double.tryParse(item['quantity'].toString()) ?? 0;
+      final price = item['price'] is num
+          ? (item['price'] as num).toDouble()
+          : double.tryParse(item['price'].toString()) ?? 0;
+      return sum + (qty * price);
+    });
 
-  //   double taxValue = orderItems.fold<double>(0, (sum, item) {
-  //     final dynamic total = item['total'];
-  //     double baseTotal;
-  //     if (total is num) {
-  //       baseTotal = total.toDouble();
-  //     } else {
-  //       final qty = item['quantity'] is num
-  //           ? (item['quantity'] as num).toDouble()
-  //           : double.tryParse(item['quantity'].toString()) ?? 0;
-  //       final price = item['price'] is num
-  //           ? (item['price'] as num).toDouble()
-  //           : double.tryParse(item['price'].toString()) ?? 0;
-  //       baseTotal = qty * price;
-  //     }
-  //     final rate = item['tax'] is num
-  //         ? (item['tax'] as num).toDouble()
-  //         : double.tryParse(item['tax'].toString()) ?? 0;
-  //     return sum + (baseTotal * rate / 100);
-  //   });
+    double taxValue = orderItems.fold<double>(0, (sum, item) {
+      final dynamic total = item['total'];
+      double baseTotal;
+      if (total is num) {
+        baseTotal = total.toDouble();
+      } else {
+        final qty = item['quantity'] is num
+            ? (item['quantity'] as num).toDouble()
+            : double.tryParse(item['quantity'].toString()) ?? 0;
+        final price = item['price'] is num
+            ? (item['price'] as num).toDouble()
+            : double.tryParse(item['price'].toString()) ?? 0;
+        baseTotal = qty * price;
+      }
+      final rate = item['tax'] is num
+          ? (item['tax'] as num).toDouble()
+          : double.tryParse(item['tax'].toString()) ?? 0;
+      return sum + (baseTotal * rate / 100);
+    });
 
-  //   double subtotal = totalAmount - discount;
-  //   double grandTotal =
-  //       subtotal + taxValue + serviceCharge + packingCharge + deliveryCharge;
+    double subtotal = totalAmount - discount;
+    double grandTotal =
+        subtotal + taxValue + serviceCharge + packingCharge + deliveryCharge;
 
-  //   // Ensure the bill object reflects the recalculated values
-  //   setState(() {
-  //     _selectedBill?['total_amount'] = totalAmount.toStringAsFixed(2);
-  //     _selectedBill?['tax_value'] = taxValue.toStringAsFixed(2);
-  //     _selectedBill?['subtotal'] = subtotal.toStringAsFixed(2);
-  //     _selectedBill?['grand_total'] = grandTotal.toStringAsFixed(2);
-  //   });
+    // Ensure the bill object reflects the recalculated values
+    setState(() {
+      _selectedBill?['total_amount'] = totalAmount.toStringAsFixed(2);
+      _selectedBill?['tax_value'] = taxValue.toStringAsFixed(2);
+      _selectedBill?['subtotal'] = subtotal.toStringAsFixed(2);
+      _selectedBill?['grand_total'] = grandTotal.toStringAsFixed(2);
+    });
 
-  //   try {
-  //     await billApiService.editBill(
-  //         _selectedBill!['bill_id'].toString(), sanitizeBill(_selectedBill!));
-  //     final updatedBill =
-  //         await billApiService.getBill(_selectedBill!['bill_id'].toString());
-  //     setState(() {
-  //       _selectedBill = Map<String, dynamic>.from(updatedBill);
-  //     });
-  //   } catch (e) {
-  //     ScaffoldMessenger.of(context)
-  //         .showSnackBar(SnackBar(content: Text('Failed to save bill: $e')));
-  //   }
-  // }
+    try {
+      await billApiService.editBill(
+          _selectedBill!['bill_id'].toString(), sanitizeBill(_selectedBill!));
+      final updatedBill =
+          await billApiService.getBill(_selectedBill!['bill_id'].toString());
+      setState(() {
+        _selectedBill = Map<String, dynamic>.from(updatedBill);
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to save bill: $e')));
+    }
+  }
 
   // Method to select a bill
   void _selectBill(Map<String, dynamic> bill) {
