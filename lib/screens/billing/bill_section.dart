@@ -639,8 +639,8 @@ class _BillPageState extends State<BillPage> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
-                _saveModifiedBill(
+              onPressed: () async {
+                await _saveModifiedBill(
                   guestNameController.text,
                   double.tryParse(discountController.text) ?? 0,
                   double.tryParse(serviceChargeController.text) ?? 0,
@@ -657,32 +657,56 @@ class _BillPageState extends State<BillPage> {
     );
   }
 
-  void _saveModifiedBill(String guestName, double discount,
-      double serviceCharge, double packingCharge, double deliveryCharge) {
+  Future<void> _saveModifiedBill(String guestName, double discount,
+      double serviceCharge, double packingCharge, double deliveryCharge) async {
+    // Update bill locally
     setState(() {
-      // Update the selected bill fields
       _selectedBill?['guest_name'] = guestName;
       _selectedBill?['discount_value'] = discount.toStringAsFixed(2);
       _selectedBill?['service_charge'] = serviceCharge.toStringAsFixed(2);
       _selectedBill?['packing_charge'] = packingCharge.toStringAsFixed(2);
       _selectedBill?['delivery_charge'] = deliveryCharge.toStringAsFixed(2);
+    });
 
-      // Recalculate the total
-      double subtotal = double.tryParse(_selectedBill?['subtotal'] ?? '0') ?? 0;
-      double taxValue =
-          double.tryParse(_selectedBill?['tax_value'] ?? '0') ?? 0;
-      double grandTotal = subtotal +
-          taxValue +
-          serviceCharge +
-          packingCharge +
-          deliveryCharge -
-          discount;
+    // Calculate subtotal from total_amount or from order items
+    double totalAmount =
+        double.tryParse(_selectedBill?['total_amount'] ?? '0') ?? 0;
+    if (totalAmount == 0 && orderItems.isNotEmpty) {
+      totalAmount = orderItems.fold<double>(0, (sum, item) {
+        final dynamic total = item['total'];
+        if (total is num) {
+          return sum + total.toDouble();
+        }
+        final qty = item['quantity'] is num ? item['quantity'] as num : 0;
+        final price = item['price'] is num ? item['price'] as num : 0;
+        return sum + (qty * price);
+      });
+    }
+    double subtotal = totalAmount - discount;
+    double taxValue = double.tryParse(_selectedBill?['tax_value'] ?? '0') ?? 0;
+    double grandTotal = subtotal +
+        taxValue +
+        serviceCharge +
+        packingCharge +
+        deliveryCharge;
+
+    setState(() {
+      _selectedBill?['total_amount'] = totalAmount.toStringAsFixed(2);
       _selectedBill?['grand_total'] = grandTotal.toStringAsFixed(2);
     });
 
-    // Optionally, save changes to the backend
-    // Example:
-    // billApiService.updateBill(_selectedBill!['bill_id'], _selectedBill!);
+    try {
+      await billApiService.editBill(
+          _selectedBill!['bill_id'].toString(), _selectedBill!);
+      final updatedBill = await billApiService
+          .getBill(_selectedBill!['bill_id'].toString());
+      setState(() {
+        _selectedBill = Map<String, dynamic>.from(updatedBill);
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to save bill: $e')));
+    }
   }
 
   // Method to select a bill
@@ -728,13 +752,31 @@ class _BillPageState extends State<BillPage> {
     final pdf = pw.Document();
 
     double totalAmount = double.tryParse(bill['total_amount'] ?? '0') ?? 0;
+    if (totalAmount == 0 && orderItems.isNotEmpty) {
+      totalAmount = orderItems.fold<double>(0, (sum, item) {
+        final dynamic total = item['total'];
+        if (total is num) {
+          return sum + total.toDouble();
+        }
+        final qty = item['quantity'] is num ? item['quantity'] as num : 0;
+        final price = item['price'] is num ? item['price'] as num : 0;
+        return sum + (qty * price);
+      });
+    }
     double tax = double.tryParse(bill['tax_value'] ?? '0') ?? 0;
     double discount = double.tryParse(bill['discount_value'] ?? '0') ?? 0;
+    double serviceCharge =
+        double.tryParse(bill['service_charge'] ?? bill['service_charge_value'] ?? '0') ??
+            0;
+    double packingCharge =
+        double.tryParse(bill['packing_charge'] ?? '0') ?? 0;
+    double deliveryCharge =
+        double.tryParse(bill['delivery_charge'] ?? '0') ?? 0;
     double grandTotal = double.tryParse(bill['grand_total'] ?? '0') ?? 0;
 
     double discountPer = totalAmount == 0 ? 0 : (discount / totalAmount) * 100;
     double subtotal = totalAmount - discount;
-    double serviceCharge = grandTotal - subtotal - tax;
+    double totalCharges = serviceCharge + packingCharge + deliveryCharge;
 
     pdf.addPage(pw.Page(
       pageFormat: PdfPageFormat.roll80,
@@ -836,7 +878,7 @@ class _BillPageState extends State<BillPage> {
                   'Discount (${discountPer.toStringAsFixed(1)}%):', -discount),
             _summaryRow('Subtotal:', subtotal),
             _summaryRow('Tax (5%):', tax),
-            _summaryRow('Service Charge (10%):', serviceCharge),
+            _summaryRow('Service Charge (10%):', totalCharges),
 
             pw.SizedBox(height: 6),
             pw.Divider(thickness: 0.8),
