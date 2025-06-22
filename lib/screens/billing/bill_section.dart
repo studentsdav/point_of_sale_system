@@ -541,18 +541,21 @@ class _BillPageState extends State<BillPage> {
                                             child: const Text('Reprint'),
                                           ),
                                           ElevatedButton(
-                                            onPressed: () =>
-                                                _modifyBillDialog(),
+                                            onPressed: () => _modifyBillDialog(),
                                             child: const Text('Modidy'),
                                           ),
                                           ElevatedButton(
-                                            onPressed: () => _modifyBill(orders,
-                                                _selectedBill?['bill_id']),
+                                            onPressed: () =>
+                                                _modifyBill(orders, _selectedBill?['bill_id']),
                                             child: const Text('Edit'),
                                           ),
                                           ElevatedButton(
                                             onPressed: () => _cancelBill(),
                                             child: const Text('Cancel'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: _finalSaveBill,
+                                            child: const Text('Final Save'),
                                           ),
                                         ],
                                       ),
@@ -745,6 +748,85 @@ class _BillPageState extends State<BillPage> {
   void _cancelBill() {
     print('Cancelling bill: ${_selectedBill!['bill_number']}');
     // Add your cancel functionality here
+  }
+
+  // Recalculate totals and persist the bill
+  Future<void> _finalSaveBill() async {
+    if (_selectedBill == null) return;
+
+    // Existing charges
+    double discount =
+        double.tryParse(_selectedBill?['discount_value'] ?? '0') ?? 0;
+    double serviceCharge = double.tryParse(
+            _selectedBill?['service_charge'] ??
+                _selectedBill?['service_charge_value'] ??
+                '0') ??
+        0;
+    double packingCharge =
+        double.tryParse(_selectedBill?['packing_charge'] ?? '0') ?? 0;
+    double deliveryCharge =
+        double.tryParse(_selectedBill?['delivery_charge'] ?? '0') ?? 0;
+
+    // Totals from order items
+    double totalAmount = orderItems.fold<double>(0, (sum, item) {
+      final dynamic total = item['total'];
+      if (total is num) {
+        return sum + total.toDouble();
+      }
+      final qty = item['quantity'] is num
+          ? (item['quantity'] as num).toDouble()
+          : double.tryParse(item['quantity'].toString()) ?? 0;
+      final price = item['price'] is num
+          ? (item['price'] as num).toDouble()
+          : double.tryParse(item['price'].toString()) ?? 0;
+      return sum + (qty * price);
+    });
+
+    double taxValue = orderItems.fold<double>(0, (sum, item) {
+      final dynamic total = item['total'];
+      double baseTotal;
+      if (total is num) {
+        baseTotal = total.toDouble();
+      } else {
+        final qty = item['quantity'] is num
+            ? (item['quantity'] as num).toDouble()
+            : double.tryParse(item['quantity'].toString()) ?? 0;
+        final price = item['price'] is num
+            ? (item['price'] as num).toDouble()
+            : double.tryParse(item['price'].toString()) ?? 0;
+        baseTotal = qty * price;
+      }
+      final rate = item['tax'] is num
+          ? (item['tax'] as num).toDouble()
+          : double.tryParse(item['tax'].toString()) ?? 0;
+      return sum + (baseTotal * rate / 100);
+    });
+
+    double subtotal = totalAmount - discount;
+    double grandTotal =
+        subtotal + taxValue + serviceCharge + packingCharge + deliveryCharge;
+
+    setState(() {
+      _selectedBill?['total_amount'] = totalAmount.toStringAsFixed(2);
+      _selectedBill?['tax_value'] = taxValue.toStringAsFixed(2);
+      _selectedBill?['subtotal'] = subtotal.toStringAsFixed(2);
+      _selectedBill?['grand_total'] = grandTotal.toStringAsFixed(2);
+    });
+
+    try {
+      await billApiService.editBill(
+          _selectedBill!['bill_id'].toString(), _selectedBill!);
+      final updatedBill =
+          await billApiService.getBill(_selectedBill!['bill_id'].toString());
+      setState(() {
+        _selectedBill = Map<String, dynamic>.from(updatedBill);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bill saved successfully')));
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to save bill: $e')));
+    }
   }
 
   // Method to handle Modify
