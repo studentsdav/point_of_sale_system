@@ -583,7 +583,8 @@ class _BillPageState extends State<BillPage> {
     // Pre-fill the fields with current values
     guestNameController.text = _selectedBill?['guest_name'] ?? '';
     discountController.text = _selectedBill?['discount_value'] ?? '0';
-    serviceChargeController.text = _selectedBill?['service_charge'] ?? '0';
+    serviceChargeController.text =
+        _selectedBill?['service_charge_value'] ?? '0';
     packingChargeController.text = _selectedBill?['packing_charge'] ?? '0';
     deliveryChargeController.text = _selectedBill?['delivery_charge'] ?? '0';
 
@@ -663,7 +664,7 @@ class _BillPageState extends State<BillPage> {
     setState(() {
       _selectedBill?['guest_name'] = guestName;
       _selectedBill?['discount_value'] = discount.toStringAsFixed(2);
-      _selectedBill?['service_charge'] = serviceCharge.toStringAsFixed(2);
+      _selectedBill?['service_charge_value'] = serviceCharge.toStringAsFixed(2);
       _selectedBill?['packing_charge'] = packingCharge.toStringAsFixed(2);
       _selectedBill?['delivery_charge'] = deliveryCharge.toStringAsFixed(2);
     });
@@ -786,8 +787,7 @@ class _BillPageState extends State<BillPage> {
     double tax = double.tryParse(bill['tax_value'] ?? '0') ?? 0;
     double discount = double.tryParse(bill['discount_value'] ?? '0') ?? 0;
     double serviceCharge =
-        double.tryParse(bill['service_charge'] ?? bill['service_charge_value'] ?? '0') ??
-            0;
+        double.tryParse(bill['service_charge_value'] ?? '0') ?? 0;
     double packingCharge =
         double.tryParse(bill['packing_charge'] ?? '0') ?? 0;
     double deliveryCharge =
