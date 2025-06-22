@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../backend/billing/bill_service.dart';
 import '../../backend/order/OrderApiService.dart';
 import '../../backend/order/items_api_service.dart';
-import '../../backend/billing/bill_service.dart';
 
 class ModifyOrderList extends StatefulWidget {
   final propertyid;
@@ -282,7 +282,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
 
       // Save the order to the API
       await orderApiService.updateOrder(orderId, orderData);
-      await _updateBillTotals();
+      // await _updateBillTotals();
 
       setState(() {
         orderItems.clear();
@@ -307,8 +307,7 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
 
       if (billOrders.isEmpty) return;
 
-      final orderIds =
-          billOrders.map((o) => o['order_id'].toString()).toList();
+      final orderIds = billOrders.map((o) => o['order_id'].toString()).toList();
       final fetchedItems = await orderApiService.getOrderItemsByIds(orderIds);
 
       double totalAmount = 0.0;
@@ -815,9 +814,9 @@ class _ModifyOrderListState extends State<ModifyOrderList> {
                                                                   item["item_name"]
                                                                       .toString());
                                                             });
-                                                            // _saveOrder(
-                                                            //     selectedOrderId
-                                                            //         .toString());
+                                                            _saveOrder(
+                                                                selectedOrderId
+                                                                    .toString());
                                                             // Close the dialog
                                                             Navigator.pop(
                                                                 context);

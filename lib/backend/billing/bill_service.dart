@@ -1,12 +1,13 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+
 import '../api_config.dart';
 
 class BillingApiService {
   final String baseUrl;
 
-  BillingApiService({String? baseUrl})
-      : baseUrl = baseUrl ?? apiBaseUrl;
+  BillingApiService({String? baseUrl}) : baseUrl = baseUrl ?? apiBaseUrl;
 
   // 1. GET: Fetch Bill Details by Order ID
   Future<Map<String, dynamic>> getBill(String orderId) async {
@@ -115,6 +116,7 @@ class BillingApiService {
       body: json.encode(billData),
     );
 
+    print(billData);
     if (response.statusCode == 200) {
       return json.decode(response.body); // Returning the success message
     } else if (response.statusCode == 404) {
