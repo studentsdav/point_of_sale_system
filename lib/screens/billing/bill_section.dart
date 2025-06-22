@@ -50,25 +50,24 @@ class _BillPageState extends State<BillPage> {
       // Map the API response to the structure of _bills
       _bills = billJson.map((bill) {
         return {
-          'bill_id': bill['id']
-              .toString(), // Adjust based on the field name in your API response
-          'bill_number': bill['bill_number'].toString(),
-          'tax_value': bill['tax_value'].toString(),
-          'discount_value': bill['discount_value'].toString(),
-          'outlet_name': bill['outlet_name'].toString(),
-          'status': bill['status'].toString(),
-          'bill_generated_at': bill['bill_generated_at'].toString(),
-          'guest_name': bill['guestname'].toString(),
-          'grand_total': bill['grand_total'].toString(),
-          'discount_percentage': bill['discount_percentage'].toString(),
+          'bill_id': bill['id']?.toString() ?? '',
+          'bill_number': bill['bill_number']?.toString() ?? '',
+          'tax_value': bill['tax_value']?.toString() ?? '0',
+          'discount_value': bill['discount_value']?.toString() ?? '0',
+          'outlet_name': bill['outlet_name']?.toString() ?? '',
+          'status': bill['status']?.toString() ?? '',
+          'bill_generated_at': bill['bill_generated_at']?.toString() ?? '',
+          'guest_name': bill['guestname']?.toString() ?? '',
+          'grand_total': bill['grand_total']?.toString() ?? '0',
+          'discount_percentage': bill['discount_percentage']?.toString() ?? '0',
           'service_charge_percentage':
-              bill['service_charge_percentage'].toString(),
-          'service_charge_value': bill['service_charge_value'].toString(),
-          'delivery_charge': bill['delivery_charge'].toString(),
-          'packing_charge': bill['packing_charge'].toString(),
-          'delivery_charge_value': bill['delivery_charge_value'].toString(),
-          'packing_charge_value': bill['packing_charge_value'].toString(),
-          'total_amount': bill['total_amount'].toString(),
+              bill['service_charge_percentage']?.toString() ?? '0',
+          'service_charge_value': bill['service_charge_value']?.toString() ?? '0',
+          'delivery_charge': bill['delivery_charge']?.toString() ?? '0',
+          'packing_charge': bill['packing_charge']?.toString() ?? '0',
+          'delivery_charge_value': bill['delivery_charge_value']?.toString() ?? '0',
+          'packing_charge_value': bill['packing_charge_value']?.toString() ?? '0',
+          'total_amount': bill['total_amount']?.toString() ?? '0',
           'country': 'India'
         };
       }).toList();
@@ -226,6 +225,19 @@ class _BillPageState extends State<BillPage> {
 
 // Helper function to ensure two digits for day, month, hour, and minute
   String _twoDigits(int n) => n.toString().padLeft(2, '0');
+
+  // Replace null or "null" values with defaults
+  Map<String, dynamic> sanitizeBill(Map<String, dynamic> bill) {
+    final sanitized = <String, dynamic>{};
+    bill.forEach((key, value) {
+      if (value == null || value.toString().toLowerCase() == 'null') {
+        sanitized[key] = double.tryParse(value?.toString() ?? '') == null ? '' : '0';
+      } else {
+        sanitized[key] = value;
+      }
+    });
+    return sanitized;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -723,7 +735,7 @@ class _BillPageState extends State<BillPage> {
 
     try {
       await billApiService.editBill(
-          _selectedBill!['bill_id'].toString(), _selectedBill!);
+          _selectedBill!['bill_id'].toString(), sanitizeBill(_selectedBill!));
       final updatedBill = await billApiService
           .getBill(_selectedBill!['bill_id'].toString());
       setState(() {
@@ -818,7 +830,7 @@ class _BillPageState extends State<BillPage> {
 
     try {
       await billApiService.editBill(
-          _selectedBill!['bill_id'].toString(), _selectedBill!);
+          _selectedBill!['bill_id'].toString(), sanitizeBill(_selectedBill!));
       final updatedBill =
           await billApiService.getBill(_selectedBill!['bill_id'].toString());
       setState(() {
