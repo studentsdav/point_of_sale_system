@@ -436,502 +436,365 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
             // Data is available
 
             // If no category is selected, default to the first one
-
-return Scaffold(
-  appBar: AppBar(
-    title: const Text('Create KOT'),
-    backgroundColor: Colors.teal,
-  ),
-  body: LayoutBuilder(builder: (context, constraints) {
-    final isWide = constraints.maxWidth > 600;
-    final filteredItems = _menuItems[_selectedCategory]!
-        .where((item) => item['name']!
-            .toLowerCase()
-            .contains(_searchController.text.toLowerCase()))
-        .toList();
-
-    final tabs = CategoryTabs(
-      categories: _categories,
-      selected: _selectedCategory,
-      onSelect: (c) => setState(() => _selectedCategory = c),
-      isVertical: isWide,
-    );
-
-    final grid = MenuItemGrid(
-      items: filteredItems,
-      orderItems: _orderItems,
-      category: _selectedCategory,
-      onAdd: _addItem,
-      onRemove: _removeItem,
-    );
-
-    final summary = OrderSummaryPanel(
-      orderItems: _orderItems,
-      menuItems: _menuItems,
-      remarksController: _remarksController,
-      waiters: _waiters,
-      waiterName: _waiterName,
-      personCount: _personCount,
-      tableNumber: _tableNumber,
-      onWaiterChanged: (v) => setState(() => _waiterName = v),
-      onTableChanged: (v) => setState(() => _tableNumber = v),
-      onPersonChanged: (v) => setState(() => _personCount = v),
-      onSave: _saveOrder,
-      onPrint: _printOrder,
-      onAdd: _addItem,
-      onRemove: _removeItem,
-      onDelete: _deleteItem,
-      isWide: isWide,
-    );
-
-    final content = Column(
-      children: [
-        Text('Order Number: \$_orderNumber',
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        TextField(
-          controller: _searchController,
-          decoration: const InputDecoration(
-            hintText: 'Search Items',
-            prefixIcon: Icon(Icons.search),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Expanded(child: grid),
-      ],
-    );
-
-    if (isWide) {
-      return Row(
-        children: [
-          tabs,
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: content,
-            ),
-          ),
-          summary,
-        ],
-      );
-    } else {
-      return Column(
-        children: [
-          tabs,
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SizedBox(height: 230, child: content),
-          ),
-          summary,
-        ],
-      );
-    }
-  }),
-  );
-          }
-          return const CircularProgressIndicator();
-        });
-  void _deleteItem(String item) {
-    setState(() {
-      if (_orderItems[_selectedCategory] != null) {
-        _orderItems[_selectedCategory]!
-            .remove(item); // Completely remove the item from the order
-      }
-    });
-  }
-}
-
-// Reusable widget for displaying category tabs. Shows a vertical list on wide
-// screens and a horizontal strip on narrow screens.
-class CategoryTabs extends StatelessWidget {
-  final List<String> categories;
-  final String selected;
-  final ValueChanged<String> onSelect;
-  final bool isVertical;
-
-  const CategoryTabs({
-    super.key,
-    required this.categories,
-    required this.selected,
-    required this.onSelect,
-    this.isVertical = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (isVertical) {
-      return Container(
-        width: 120,
-        color: Colors.grey.shade200,
-        child: ListView.builder(
-          itemCount: categories.length,
-          itemBuilder: (context, index) {
-            final category = categories[index];
-            return ListTile(
-              selected: selected == category,
-              title: Text(category, style: const TextStyle(fontSize: 14)),
-              onTap: () => onSelect(category),
-            );
-          },
-        ),
-      );
-    } else {
-      return SizedBox(
-        height: 50,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: categories.length,
-          itemBuilder: (context, index) {
-            final category = categories[index];
-            return GestureDetector(
-              onTap: () => onSelect(category),
-              child: Container(
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: selected == category
-                      ? Colors.teal.shade200
-                      : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(category,
-                    style: const TextStyle(fontSize: 14)),
+            return Scaffold(
+              appBar: AppBar(
+                title: const Text('Create KOT'),
+                backgroundColor: Colors.teal,
               ),
-            );
-          },
-        ),
-      );
-    }
-  }
-}
-
-// Grid widget for menu items with icon placeholders and quantity controls.
-class MenuItemGrid extends StatelessWidget {
-  final List<Map<String, String>> items;
-  final Map<String, Map<String, int>> orderItems;
-  final String category;
-  final void Function(String) onAdd;
-  final void Function(String) onRemove;
-
-  const MenuItemGrid({
-    super.key,
-    required this.items,
-    required this.orderItems,
-    required this.category,
-    required this.onAdd,
-    required this.onRemove,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
-      return GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          childAspectRatio: 3 / 4,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-        ),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              body: Row(
                 children: [
+                  // Category Strip
+                  Container(
+                    width: 120,
+                    color: Colors.grey.shade200,
+                    child: ListView.builder(
+                      itemCount: _categories.length,
+                      itemBuilder: (context, index) {
+                        final category = _categories[index];
+                        return ListTile(
+                          selected: _selectedCategory == category,
+                          title: Text(category, style: const TextStyle(fontSize: 14)),
+                          onTap: () {
+                            setState(() {
+                              _selectedCategory = category;
+                            });
+                          },
+                        );
+                      },
+                    ),
+                  ),
                   Expanded(
-                    child: Center(
-                      child: Icon(
-                        item['tag'] == 'Veg'
-                            ? Icons.local_dining
-                            : Icons.set_meal,
-                        size: 32,
-                        color: item['tag'] == 'Veg'
-                            ? Colors.green
-                            : Colors.red,
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          Text('Order Number: $_orderNumber',
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 10),
+                          TextField(
+                            controller: _searchController,
+                            decoration: const InputDecoration(
+                              hintText: 'Search Items',
+                              prefixIcon: Icon(Icons.search),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Expanded(
+                            child: ListView(
+                              children: _menuItems[_selectedCategory]!
+                                  .where((item) => item['name']!
+                                      .toLowerCase()
+                                      .contains(
+                                          _searchController.text.toLowerCase()))
+                                  .map((item) => ListTile(
+                                        title: Row(
+                                          children: [
+                                            Text(item['name']!),
+                                            const SizedBox(width: 10),
+                                            Container(
+                                              width: 10,
+                                              height: 10,
+                                              decoration: BoxDecoration(
+                                                color: item['tag'] == 'Veg'
+                                                    ? Colors.green
+                                                    : Colors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Text('₹${item['rate']}',
+                                                style: const TextStyle(
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                          ],
+                                        ),
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.remove),
+                                              onPressed: () =>
+                                                  _removeItem(item['name']!),
+                                            ),
+                                            Text(
+                                                '${_orderItems[_selectedCategory]?[item['name']!] ?? 0}'),
+                                            IconButton(
+                                              icon: const Icon(Icons.add),
+                                              onPressed: () =>
+                                                  _addItem(item['name']!),
+                                            ),
+                                          ],
+                                        ),
+                                      ))
+                                  .toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            controller: _remarksController,
+                            decoration: const InputDecoration(
+                              labelText: 'Remarks',
+                              prefixIcon: Icon(Icons.comment),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          DropdownButtonFormField<String>(
+                            value: _waiters.isNotEmpty
+                                ? _waiters.any((waiter) =>
+                                        waiter['waiter_id'].toString() ==
+                                        _waiterName)
+                                    ? _waiterName
+                                    : null
+                                : null, // Ensure value is valid or null
+                            decoration: const InputDecoration(
+                              labelText: 'Select Waiter',
+                              prefixIcon: Icon(Icons.person),
+                              border: OutlineInputBorder(),
+                            ),
+                            items: _waiters.map((waiter) {
+                              return DropdownMenuItem<String>(
+                                value:
+                                    waiter['waiter_id'].toString(), // Store ID
+                                child:
+                                    Text(waiter['waiter_name']), // Display Name
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _waiterName = value!;
+                              });
+                              print('Selected Waiter ID: $value');
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            initialValue: _tableNumber.toString(),
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) =>
+                                setState(() => _tableNumber = value ?? "1"),
+                            decoration: const InputDecoration(
+                              labelText: 'Table Number',
+                              prefixIcon: Icon(Icons.table_bar),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            initialValue: _personCount.toString(),
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) => setState(
+                                () => _personCount = int.tryParse(value) ?? 1),
+                            decoration: const InputDecoration(
+                              labelText: 'Person Count',
+                              prefixIcon: Icon(Icons.people),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton(
+                                onPressed: _saveOrder,
+                                child: const Text('Save Order'),
+                              ),
+                              ElevatedButton(
+                                onPressed: _printOrder,
+                                child: const Text('Print Order'),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  Text(item['name']!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
-                  Text('₹${item['rate']}',
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        onPressed: () => onRemove(item['name']!),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                      Text('${orderItems[category]?[item['name']] ?? 0}'),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () => onAdd(item['name']!),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-    });
-  }
-}
-
-// Side or bottom panel that shows ordered items and actions.
-class OrderSummaryPanel extends StatelessWidget {
-  final Map<String, Map<String, int>> orderItems;
-  final Map<String, List<Map<String, String>>> menuItems;
-  final TextEditingController remarksController;
-  final List<Map<String, dynamic>> waiters;
-  final String waiterName;
-  final int personCount;
-  final String tableNumber;
-  final Function(String) onWaiterChanged;
-  final Function(String) onTableChanged;
-  final Function(int) onPersonChanged;
-  final VoidCallback onSave;
-  final VoidCallback onPrint;
-  final void Function(String) onAdd;
-  final void Function(String) onRemove;
-  final void Function(String) onDelete;
-  final bool isWide;
-
-  const OrderSummaryPanel({
-    super.key,
-    required this.orderItems,
-    required this.menuItems,
-    required this.remarksController,
-    required this.waiters,
-    required this.waiterName,
-    required this.personCount,
-    required this.tableNumber,
-    required this.onWaiterChanged,
-    required this.onTableChanged,
-    required this.onPersonChanged,
-    required this.onSave,
-    required this.onPrint,
-    required this.onAdd,
-    required this.onRemove,
-    required this.onDelete,
-    required this.isWide,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final summary = _buildSummaryList();
-    final panel = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Ordered Items',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        Expanded(child: summary),
-        const SizedBox(height: 10),
-        TextFormField(
-          controller: remarksController,
-          decoration: const InputDecoration(
-            labelText: 'Remarks',
-            prefixIcon: Icon(Icons.comment),
-          ),
-        ),
-        const SizedBox(height: 20),
-        DropdownButtonFormField<String>(
-          value: waiters.isNotEmpty &&
-                  waiters.any((w) => w['waiter_id'].toString() == waiterName)
-              ? waiterName
-              : null,
-          decoration: const InputDecoration(
-            labelText: 'Select Waiter',
-            prefixIcon: Icon(Icons.person),
-            border: OutlineInputBorder(),
-          ),
-          items: waiters.map((waiter) {
-            return DropdownMenuItem<String>(
-              value: waiter['waiter_id'].toString(),
-              child: Text(waiter['waiter_name']),
-            );
-          }).toList(),
-          onChanged: (value) {
-            if (value != null) onWaiterChanged(value);
-          },
-        ),
-        const SizedBox(height: 10),
-        TextFormField(
-          initialValue: tableNumber,
-          keyboardType: TextInputType.number,
-          onChanged: onTableChanged,
-          decoration: const InputDecoration(
-            labelText: 'Table Number',
-            prefixIcon: Icon(Icons.table_bar),
-          ),
-        ),
-        const SizedBox(height: 10),
-        TextFormField(
-          initialValue: personCount.toString(),
-          keyboardType: TextInputType.number,
-          onChanged: (v) => onPersonChanged(int.tryParse(v) ?? 1),
-          decoration: const InputDecoration(
-            labelText: 'Person Count',
-            prefixIcon: Icon(Icons.people),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ElevatedButton(onPressed: onSave, child: const Text('Save Order')),
-            ElevatedButton(onPressed: onPrint, child: const Text('Print Order')),
-          ],
-        ),
-      ],
-    );
-
-    return Container(
-      width: isWide ? 300 : double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        border: Border(
-          left: isWide ? const BorderSide(color: Colors.grey) : BorderSide.none,
-          top: !isWide ? const BorderSide(color: Colors.grey) : BorderSide.none,
-        ),
-      ),
-      child: panel,
-    );
-  }
-
-  ListView _buildSummaryList() {
-    return ListView(
-      children: [
-        ...orderItems.entries.expand((entry) {
-          return entry.value.entries.map((itemEntry) {
-            final itemName = itemEntry.key;
-            final quantity = itemEntry.value;
-            final itemRate = double.tryParse(
-                  menuItems.values
-                      .expand((categoryItems) => categoryItems)
-                      .firstWhere((item) => item['name'] == itemName,
-                          orElse: () => {'rate': '0'})['rate']!,
-                ) ??
-                0.0;
-            final itemTax = double.tryParse(
-                  menuItems.values
-                      .expand((categoryItems) => categoryItems)
-                      .firstWhere((item) => item['name'] == itemName,
-                          orElse: () => {'tax': '0'})['tax']!,
-                ) ??
-                0.0;
-
-            final itemAmount = itemRate * quantity;
-            final taxValue = (itemAmount * itemTax) / 100;
-
-            return Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
-              child: Card(
-                elevation: 2,
-                child: ListTile(
-                  title: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(itemName,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text('₹$itemRate'),
-                    ],
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Expanded(
+                    flex: 1,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Qty: $quantity'),
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.remove),
-                                onPressed: quantity > 0
-                                    ? () => onRemove(itemName)
-                                    : null,
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.add),
-                                onPressed: () => onAdd(itemName),
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () => onDelete(itemName),
-                                visualDensity: VisualDensity.compact,
-                              ),
-                            ],
-                          )
+                          const Text('Ordered Items',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 10),
+                          Expanded(
+                            child: ListView(
+                              children: [
+                                ..._orderItems.entries.expand((entry) {
+                                  return entry.value.entries.map((itemEntry) {
+                                    final itemName = itemEntry.key;
+                                    final quantity = itemEntry.value;
+                                    final itemRate = double.tryParse(
+                                          _menuItems.values
+                                              .expand((categoryItems) =>
+                                                  categoryItems)
+                                              .firstWhere(
+                                                  (item) =>
+                                                      item['name'] == itemName,
+                                                  orElse: () =>
+                                                      {'rate': '0'})['rate']!,
+                                        ) ??
+                                        0.0;
+                                    final itemtax = double.tryParse(
+                                          _menuItems.values
+                                              .expand((categoryItems) =>
+                                                  categoryItems)
+                                              .firstWhere(
+                                                  (item) =>
+                                                      item['name'] == itemName,
+                                                  orElse: () =>
+                                                      {'tax': '0'})['tax']!,
+                                        ) ??
+                                        0.0;
+
+                                    final itemAmount = itemRate * quantity;
+                                    final itemTax =
+                                        (itemAmount * itemtax) / 100;
+
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 8.0, horizontal: 16.0),
+                                      child: Card(
+                                        elevation: 3.0,
+                                        child: ListTile(
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 10.0,
+                                                  horizontal: 16.0),
+                                          title: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(itemName,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                              Text('₹$itemRate',
+                                                  style: const TextStyle(
+                                                      fontSize: 16,
+                                                      color: Colors.black)),
+                                            ],
+                                          ),
+                                          subtitle: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text('Qty: $quantity',
+                                                      style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w500)),
+                                                  Row(
+                                                    children: [
+                                                      IconButton(
+                                                        icon: const Icon(
+                                                            Icons.remove),
+                                                        onPressed: quantity > 0
+                                                            ? () => _removeItem(
+                                                                itemName)
+                                                            : null,
+                                                      ),
+                                                      IconButton(
+                                                        icon: const Icon(
+                                                            Icons.add),
+                                                        onPressed: () =>
+                                                            _addItem(itemName),
+                                                      ),
+                                                      IconButton(
+                                                        icon: const Icon(
+                                                            Icons.delete),
+                                                        onPressed: () =>
+                                                            _deleteItem(
+                                                                itemName),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 5),
+                                              Text(
+                                                  'Amount: ₹${itemAmount.toStringAsFixed(2)}',
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                              Text(
+                                                  'Tax: ₹${itemTax.toStringAsFixed(2)}',
+                                                  style: const TextStyle(
+                                                      color: Colors.grey)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList();
+                                }),
+
+                                // Summary section for Total Amount and Total Tax
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 16.0, horizontal: 16.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Divider(thickness: 1.5),
+                                      const Text('Summary',
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold)),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                          'Total Amount: ₹${_calculateTotalAmount().toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold)),
+                                      Text(
+                                          'Total Tax: ₹${_calculateTotalTax().toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold)),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        'Grand Total: ₹${(_calculateTotalAmount() + _calculateTotalTax()).toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blueAccent),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                      Text('Amount: ₹${itemAmount.toStringAsFixed(2)}'),
-                      Text('Tax: ₹${taxValue.toStringAsFixed(2)}'),
-                    ],
-                  ),
-                ),
+                    ),
+                  )
+                ],
               ),
             );
-          });
-        }),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Divider(thickness: 1.5),
-              const Text('Summary',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              Text(
-                'Total Amount: ₹${_calculateTotalAmount(orderItems, menuItems).toStringAsFixed(2)}',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                'Total Tax: ₹${_calculateTotalTax(orderItems, menuItems).toStringAsFixed(2)}',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Grand Total: ₹${(_calculateTotalAmount(orderItems, menuItems) + _calculateTotalTax(orderItems, menuItems)).toStringAsFixed(2)}',
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blueAccent),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+          }
+          return const CircularProgressIndicator();
+        });
   }
 
-  static double _calculateTotalAmount(
-      Map<String, Map<String, int>> orderItems,
-      Map<String, List<Map<String, String>>> menuItems) {
-    return orderItems.entries.fold(0.0, (total, entry) {
-      return total + entry.value.entries.fold(0.0, (subtotal, itemEntry) {
+// Helper methods to calculate total amount and total tax
+  double _calculateTotalAmount() {
+    return _orderItems.entries.fold(0.0, (total, entry) {
+      return total +
+          entry.value.entries.fold(0.0, (subtotal, itemEntry) {
             final itemName = itemEntry.key;
             final quantity = itemEntry.value;
             final itemRate = double.tryParse(
-                  menuItems.values
+                  _menuItems.values
                       .expand((categoryItems) => categoryItems)
                       .firstWhere((item) => item['name'] == itemName,
                           orElse: () => {'rate': '0'})['rate']!,
@@ -942,15 +805,15 @@ class OrderSummaryPanel extends StatelessWidget {
     });
   }
 
-  static double _calculateTotalTax(
-      Map<String, Map<String, int>> orderItems,
-      Map<String, List<Map<String, String>>> menuItems) {
-    return orderItems.entries.fold(0.0, (total, entry) {
-      return total + entry.value.entries.fold(0.0, (subtotal, itemEntry) {
+  double _calculateTotalTax() {
+    return _orderItems.entries.fold(0.0, (total, entry) {
+      return total +
+          entry.value.entries.fold(0.0, (subtotal, itemEntry) {
             final itemName = itemEntry.key;
             final itemQuantity = itemEntry.value;
 
-            final itemData = menuItems.values
+            // Find the item in _menuItems and handle missing items
+            final itemData = _menuItems.values
                 .expand((categoryItems) => categoryItems)
                 .firstWhere(
                   (item) => item['name'] == itemName,
@@ -958,18 +821,25 @@ class OrderSummaryPanel extends StatelessWidget {
                 );
 
             if (itemData.isEmpty || !itemData.containsKey('tax')) {
-              return subtotal;
+              return subtotal; // Skip if no tax info
             }
 
-            final itemTaxRate =
-                double.tryParse(itemData['tax'] ?? '0') ?? 0.0;
-            final itemPrice =
-                double.tryParse(itemData['rate'] ?? '0') ?? 0.0;
+            final itemTaxRate = double.tryParse(itemData['tax'] ?? '0') ?? 0.0;
+            final itemPrice = double.tryParse(itemData['rate'] ?? '0') ?? 0.0;
 
-            final itemTax =
-                (itemPrice * itemTaxRate / 100) * itemQuantity;
+            // Calculate tax for this item and quantity
+            final itemTax = (itemPrice * itemTaxRate / 100) * itemQuantity;
             return subtotal + itemTax;
           });
+    });
+  }
+
+  void _deleteItem(String item) {
+    setState(() {
+      if (_orderItems[_selectedCategory] != null) {
+        _orderItems[_selectedCategory]!
+            .remove(item); // Completely remove the item from the order
+      }
     });
   }
 }
