@@ -441,24 +441,29 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                 title: const Text('Create KOT'),
                 backgroundColor: Colors.teal,
               ),
-              body: Row(
+              body: Stack(
                 children: [
-                  // Category Strip replaced with NavigationRail
-                  NavigationRail(
-                    selectedIndex: _categories.indexOf(_selectedCategory),
-                    onDestinationSelected: (index) {
-                      setState(() {
-                        _selectedCategory = _categories[index];
-                      });
-                    },
-                    labelType: NavigationRailLabelType.all,
-                    destinations: _categories
-                        .map((category) => NavigationRailDestination(
-                              icon: const Icon(Icons.restaurant_menu),
-                              selectedIcon: const Icon(Icons.restaurant_menu),
-                              label: Text(category),
-                            ))
-                        .toList(),
+                  Row(
+                    children: [
+                      // Category Strip
+                      Container(
+                        width: 120,
+                        color: Colors.grey.shade200,
+                        child: ListView.builder(
+                      itemCount: _categories.length,
+                      itemBuilder: (context, index) {
+                        final category = _categories[index];
+                        return ListTile(
+                          selected: _selectedCategory == category,
+                          title: Text(category, style: const TextStyle(fontSize: 14)),
+                          onTap: () {
+                            setState(() {
+                              _selectedCategory = category;
+                            });
+                          },
+                        );
+                      },
+                    ),
                   ),
                   Expanded(
                     flex: 2,
@@ -624,175 +629,138 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                       ),
                     ),
                   ),
-                  Expanded(
-                    flex: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Ordered Items',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 10),
-                          Expanded(
-                            child: ListView(
-                              children: [
-                                ..._orderItems.entries.expand((entry) {
-                                  return entry.value.entries.map((itemEntry) {
-                                    final itemName = itemEntry.key;
-                                    final quantity = itemEntry.value;
-                                    final itemRate = double.tryParse(
-                                          _menuItems.values
-                                              .expand((categoryItems) =>
-                                                  categoryItems)
-                                              .firstWhere(
-                                                  (item) =>
-                                                      item['name'] == itemName,
-                                                  orElse: () =>
-                                                      {'rate': '0'})['rate']!,
-                                        ) ??
-                                        0.0;
-                                    final itemtax = double.tryParse(
-                                          _menuItems.values
-                                              .expand((categoryItems) =>
-                                                  categoryItems)
-                                              .firstWhere(
-                                                  (item) =>
-                                                      item['name'] == itemName,
-                                                  orElse: () =>
-                                                      {'tax': '0'})['tax']!,
-                                        ) ??
-                                        0.0;
+                  DraggableScrollableSheet(
+                    initialChildSize: 0.3,
+                    minChildSize: 0.2,
+                    maxChildSize: 0.8,
+                    builder: (context, scrollController) {
+                      return Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
+                        ),
+                        child: ListView(
+                          controller: scrollController,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text('Ordered Items',
+                                  style: TextStyle(
+                                      fontSize: 18, fontWeight: FontWeight.bold)),
+                            ),
+                            ..._orderItems.entries.expand((entry) {
+                              return entry.value.entries.map((itemEntry) {
+                                final itemName = itemEntry.key;
+                                final quantity = itemEntry.value;
+                                final itemRate = double.tryParse(
+                                      _menuItems.values
+                                          .expand((categoryItems) => categoryItems)
+                                          .firstWhere(
+                                              (item) => item['name'] == itemName,
+                                              orElse: () => {'rate': '0'})['rate']!,
+                                    ) ??
+                                    0.0;
+                                final itemtax = double.tryParse(
+                                      _menuItems.values
+                                          .expand((categoryItems) => categoryItems)
+                                          .firstWhere(
+                                              (item) => item['name'] == itemName,
+                                              orElse: () => {'tax': '0'})['tax']!,
+                                    ) ??
+                                    0.0;
 
-                                    final itemAmount = itemRate * quantity;
-                                    final itemTax =
-                                        (itemAmount * itemtax) / 100;
+                                final itemAmount = itemRate * quantity;
+                                final itemTax = (itemAmount * itemtax) / 100;
 
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8.0, horizontal: 16.0),
-                                      child: Card(
-                                        elevation: 3.0,
-                                        child: ListTile(
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                                  vertical: 10.0,
-                                                  horizontal: 16.0),
-                                          title: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 8.0, horizontal: 16.0),
+                                  child: Card(
+                                    elevation: 3.0,
+                                    child: ListTile(
+                                      contentPadding: const EdgeInsets.symmetric(
+                                          vertical: 10.0, horizontal: 16.0),
+                                      title: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(itemName,
+                                              style: const TextStyle(fontWeight: FontWeight.bold)),
+                                          Text('₹$itemRate',
+                                              style: const TextStyle(fontSize: 16, color: Colors.black)),
+                                        ],
+                                      ),
+                                      subtitle: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Text(itemName,
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                              Text('₹$itemRate',
-                                                  style: const TextStyle(
-                                                      fontSize: 16,
-                                                      color: Colors.black)),
-                                            ],
-                                          ),
-                                          subtitle: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
+                                              Text('Qty: $quantity',
+                                                  style: const TextStyle(fontWeight: FontWeight.w500)),
                                               Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
                                                 children: [
-                                                  Text('Qty: $quantity',
-                                                      style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w500)),
-                                                  Row(
-                                                    children: [
-                                                      IconButton(
-                                                        icon: const Icon(
-                                                            Icons.remove),
-                                                        onPressed: quantity > 0
-                                                            ? () => _removeItem(
-                                                                itemName)
-                                                            : null,
-                                                      ),
-                                                      IconButton(
-                                                        icon: const Icon(
-                                                            Icons.add),
-                                                        onPressed: () =>
-                                                            _addItem(itemName),
-                                                      ),
-                                                      IconButton(
-                                                        icon: const Icon(
-                                                            Icons.delete),
-                                                        onPressed: () =>
-                                                            _deleteItem(
-                                                                itemName),
-                                                      ),
-                                                    ],
+                                                  IconButton(
+                                                    icon: const Icon(Icons.remove),
+                                                    onPressed: quantity > 0
+                                                        ? () => _removeItem(itemName)
+                                                        : null,
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.add),
+                                                    onPressed: () => _addItem(itemName),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.delete),
+                                                    onPressed: () => _deleteItem(itemName),
                                                   ),
                                                 ],
                                               ),
-                                              const SizedBox(height: 5),
-                                              Text(
-                                                  'Amount: ₹${itemAmount.toStringAsFixed(2)}',
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                              Text(
-                                                  'Tax: ₹${itemTax.toStringAsFixed(2)}',
-                                                  style: const TextStyle(
-                                                      color: Colors.grey)),
                                             ],
                                           ),
-                                        ),
+                                          const SizedBox(height: 5),
+                                          Text('Amount: ₹${itemAmount.toStringAsFixed(2)}',
+                                              style: const TextStyle(fontWeight: FontWeight.bold)),
+                                          Text('Tax: ₹${itemTax.toStringAsFixed(2)}',
+                                              style: const TextStyle(color: Colors.grey)),
+                                        ],
                                       ),
-                                    );
-                                  }).toList();
-                                }),
-
-                                // Summary section for Total Amount and Total Tax
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 16.0, horizontal: 16.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Divider(thickness: 1.5),
-                                      const Text('Summary',
-                                          style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold)),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                          'Total Amount: ₹${_calculateTotalAmount().toStringAsFixed(2)}',
-                                          style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold)),
-                                      Text(
-                                          'Total Tax: ₹${_calculateTotalTax().toStringAsFixed(2)}',
-                                          style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold)),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        'Grand Total: ₹${(_calculateTotalAmount() + _calculateTotalTax()).toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.blueAccent),
-                                      ),
-                                    ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                );
+                              }).toList();
+                            }),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 16.0, horizontal: 16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Divider(thickness: 1.5),
+                                  const Text('Summary',
+                                      style: TextStyle(
+                                          fontSize: 18, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 10),
+                                  Text('Total Amount: ₹${_calculateTotalAmount().toStringAsFixed(2)}',
+                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                  Text('Total Tax: ₹${_calculateTotalTax().toStringAsFixed(2)}',
+                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Grand Total: ₹${(_calculateTotalAmount() + _calculateTotalTax()).toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blueAccent),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             );
