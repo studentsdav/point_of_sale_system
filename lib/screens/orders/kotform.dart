@@ -443,25 +443,22 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
               ),
               body: Row(
                 children: [
-                  // Category Strip
-                  Container(
-                    width: 120,
-                    color: Colors.grey.shade200,
-                    child: ListView.builder(
-                      itemCount: _categories.length,
-                      itemBuilder: (context, index) {
-                        final category = _categories[index];
-                        return ListTile(
-                          selected: _selectedCategory == category,
-                          title: Text(category, style: const TextStyle(fontSize: 14)),
-                          onTap: () {
-                            setState(() {
-                              _selectedCategory = category;
-                            });
-                          },
-                        );
-                      },
-                    ),
+                  // Category Strip replaced with NavigationRail
+                  NavigationRail(
+                    selectedIndex: _categories.indexOf(_selectedCategory),
+                    onDestinationSelected: (index) {
+                      setState(() {
+                        _selectedCategory = _categories[index];
+                      });
+                    },
+                    labelType: NavigationRailLabelType.all,
+                    destinations: _categories
+                        .map((category) => NavigationRailDestination(
+                              icon: const Icon(Icons.restaurant_menu),
+                              selectedIcon: const Icon(Icons.restaurant_menu),
+                              label: Text(category),
+                            ))
+                        .toList(),
                   ),
                   Expanded(
                     flex: 2,
