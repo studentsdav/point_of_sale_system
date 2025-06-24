@@ -607,19 +607,6 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              ElevatedButton(
-                                onPressed: _saveOrder,
-                                child: const Text('Save Order'),
-                              ),
-                              ElevatedButton(
-                                onPressed: _printOrder,
-                                child: const Text('Print Order'),
-                              ),
-                            ],
-                          ),
                         ],
                       ),
                     ),
@@ -793,6 +780,24 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                       ),
                     ),
                   )
+                ],
+              ),
+              floatingActionButtonLocation:
+                  FloatingActionButtonLocation.centerFloat,
+              floatingActionButton: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FloatingActionButton.extended(
+                    onPressed: _saveOrder,
+                    icon: const Icon(Icons.save),
+                    label: const Text('Save'),
+                  ),
+                  const SizedBox(width: 10),
+                  FloatingActionButton.extended(
+                    onPressed: _printOrder,
+                    icon: const Icon(Icons.print),
+                    label: const Text('Print'),
+                  ),
                 ],
               ),
             );
