@@ -484,51 +484,69 @@ class _KOTFormScreenState extends State<KOTFormScreen> {
                           ),
                           const SizedBox(height: 10),
                           Expanded(
-                            child: ListView(
+                            child: GridView.count(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 3 / 2,
                               children: _menuItems[_selectedCategory]!
                                   .where((item) => item['name']!
                                       .toLowerCase()
                                       .contains(
                                           _searchController.text.toLowerCase()))
-                                  .map((item) => ListTile(
-                                        title: Row(
-                                          children: [
-                                            Text(item['name']!),
-                                            const SizedBox(width: 10),
-                                            Container(
-                                              width: 10,
-                                              height: 10,
-                                              decoration: BoxDecoration(
-                                                color: item['tag'] == 'Veg'
-                                                    ? Colors.green
-                                                    : Colors.red,
-                                                shape: BoxShape.circle,
+                                  .map((item) => Card(
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8.0)),
+                                        elevation: 3,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                      child:
+                                                          Text(item['name']!)),
+                                                  Container(
+                                                    width: 10,
+                                                    height: 10,
+                                                    decoration: BoxDecoration(
+                                                      color: item['tag'] == 'Veg'
+                                                          ? Colors.green
+                                                          : Colors.red,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Text('₹${item['rate']}',
-                                                style: const TextStyle(
-                                                    color: Colors.black,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                          ],
-                                        ),
-                                        trailing: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            IconButton(
-                                              icon: const Icon(Icons.remove),
-                                              onPressed: () =>
-                                                  _removeItem(item['name']!),
-                                            ),
-                                            Text(
-                                                '${_orderItems[_selectedCategory]?[item['name']!] ?? 0}'),
-                                            IconButton(
-                                              icon: const Icon(Icons.add),
-                                              onPressed: () =>
-                                                  _addItem(item['name']!),
-                                            ),
-                                          ],
+                                              Text('₹${item['rate']}',
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  IconButton(
+                                                    icon:
+                                                        const Icon(Icons.remove),
+                                                    onPressed: () =>
+                                                        _removeItem(item['name']!),
+                                                  ),
+                                                  Text(
+                                                      '${_orderItems[_selectedCategory]?[item['name']!] ?? 0}'),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.add),
+                                                    onPressed: () =>
+                                                        _addItem(item['name']!),
+                                                  ),
+                                                ],
+                                              )
+                                            ],
+                                          ),
                                         ),
                                       ))
                                   .toList(),
